@@ -1,31 +1,34 @@
-reader-engagement-pro/
+/wp-content/plugins/pro-reader/
 │
-├── assets/
-│   ├── css/
-│   │   └── style.css                # Główny plik CSS
-│   ├── js/
-│   │   └── script.js                # Skrypty JavaScript
-│   └── images/
-│       └── placeholder.jpg          # Obrazki (np. placeholdery)
+├── assets/                           # Folder na pliki frontendowe
+│   ├── css/                          # Folder na pliki CSS
+│   │   └── style.css                 # Główny plik CSS
+│   ├── js/                           # Folder na pliki JavaScript
+│   │   ├── script.js                 # Główny plik JS (wejściowy dla Webpack)
+│   │   ├── progress-bar.js           # Skrypt odpowiedzialny za pasek postępu
+│   │   ├── popup.js                  # Skrypt odpowiedzialny za popup "Czytaj więcej"
+│   │   └── recommendations.js        # Skrypt odpowiedzialny za rekomendacje artykułów
+│   └── images/                       # Folder na obrazki
+│       └── placeholder.jpg           # Obrazki (np. placeholdery)
 │
-├── includes/
-│   ├── class-progress-bar.php      # Klasa do obsługi paska postępu
-│   ├── class-popup.php             # Klasa do obsługi popupów
-│   ├── class-recommendations.php   # Klasa do obsługi rekomendacji
-│   ├── class-integration.php       # Klasa do integracji z page builderami
-│   └── class-settings.php          # Klasa do konfiguracji w panelu administracyjnym
+├── includes/                         # Folder na pliki PHP
+│   ├── class-progress-bar.php        # Klasa do obsługi paska postępu
+│   ├── class-popup.php               # Klasa do obsługi popupów
+│   ├── class-recommendations.php     # Klasa do obsługi rekomendacji
+│   ├── class-integration.php         # Klasa do integracji z page builderami
+│   └── class-settings.php            # Klasa do konfiguracji w panelu administracyjnym
 │
-├── templates/
-│   ├── progress-bar-template.php   # Szablon HTML dla paska postępu
-│   ├── popup-template.php          # Szablon HTML dla popupu
-│   └── recommendations-template.php # Szablon HTML dla rekomendacji
+├── templates/                        # Folder na szablony HTML
+│   ├── progress-bar-template.php     # Szablon HTML dla paska postępu
+│   ├── popup-template.php            # Szablon HTML dla popupu
+│   └── recommendations-template.php  # Szablon HTML dla rekomendacji
 │
-├── languages/
-│   └── reader-engagement-pro.pot   # Plik do tłumaczeń (POT)
+├── languages/                        # Folder na pliki tłumaczeń
+│   └── reader-engagement-pro.pot     # Plik do tłumaczeń
 │
-├── reader-engagement-pro.php       # Główny plik wtyczki
-├── uninstall.php                   # Plik odpowiedzialny za deinstalację wtyczki
-└── readme.txt                      # Dokumentacja wtyczki
+├── reader-engagement-pro.php         # Główny plik wtyczki
+├── uninstall.php                     # Plik odpowiedzialny za deinstalację wtyczki
+└── readme.txt                        # Dokumentacja wtyczki
 
 
 
