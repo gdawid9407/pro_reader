@@ -1,0 +1,11 @@
+{
+  "name": "twojenamespace/pro_reader",
+  "description": "Modułowa wtyczka Pro Reader dla WordPress",
+  "type": "wordpress-plugin",
+  "autoload": {
+    "psr-4": {
+      "ProReader\\": "includes/"
+    }
+  },
+  "require": {}
+}

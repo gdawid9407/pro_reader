@@ -1,0 +1,24 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# Composer dependencies
+/vendor/
+
+# NPM dependencies
+/node_modules/
+
+# Build artifacts
+/assets/js/bundle.js
+/assets/js/bundle.js.map
+/assets/css/*.map
+
+# IDE settings
+/.idea/
+/.vscode/
+*.iml
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
