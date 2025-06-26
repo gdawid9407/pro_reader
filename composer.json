@@ -4,13 +4,14 @@
     "type": "wordpress-plugin",
     "require": {
         "php": ">=7.4",
-        "composer/installers": "^1.10"
+        "composer/installers": "^2.2"
     },
     "autoload": {
-        "psr-4": {
-            "ReaderEngagementPro\\": "includes/"
-        }
-    },
+  "psr-4": {
+    "ReaderEngagementPro\\": "includes/"
+  }
+},
+    
     "config": {
         "allow-plugins": {
             "composer/installers": true

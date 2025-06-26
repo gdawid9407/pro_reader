@@ -1,7 +1,7 @@
 <?php
 namespace ReaderEngagementPro;
 
-class ProgressBar {
+class Class_Progress_Bar {
     public function __construct() {
         add_action('wp_enqueue_scripts', [ $this, 'enqueue_assets' ]);
         add_action('wp_footer',          [ $this, 'render_bar' ]);
@@ -47,4 +47,3 @@ class ProgressBar {
     }
 }
 
-new ProgressBar();

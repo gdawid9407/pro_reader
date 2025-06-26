@@ -1,22 +1,27 @@
 <?php
 
-class Reader_Engagement_Pro_Settings {
+namespace ReaderEngagementPro;
+
+class Settings {
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
     }
 
     public function add_plugin_page() {
-        add_options_page(
-            'Reader Engagement Pro Settings',
-            'Reader Engagement Pro',
-            'manage_options',
-            'reader-engagement-pro',
-            array( $this, 'create_admin_page' )
-        );
+        add_menu_page(
+    'Ustawienia Reader Engagement Pro',     // tytuł strony
+    'Reader Engagement Pro',                // tytuł menu
+    'manage_options',                       // uprawnienia
+    'reader_engagement_pro',                // slug
+    [$this, 'create_admin_page'],           // callback
+    'dashicons-feedback',                   // ikona
+    61                                      // pozycja
+);
     }
 
     public function create_admin_page() {
+    $options = get_option('reader_engagement_pro_options');
         ?>
         <div class="wrap">
             <h1>Ustawienia Paska Postępu</h1>
@@ -82,5 +87,3 @@ class Reader_Engagement_Pro_Settings {
     }
 }
 
-if( is_admin() )
-    $reader_engagement_pro_settings = new Reader_Engagement_Pro_Settings();
