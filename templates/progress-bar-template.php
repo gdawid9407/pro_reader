@@ -1,5 +1,5 @@
-<div id="progress-bar-container">
-    <div id="progress-bar"></div> <!-- Pasek postępu -->
+<div id="progress-bar-container-template">
+    <div id="progress-bar-template"></div> <!-- Pasek postępu -->
 </div>
 
 <!-- Dodajemy do strony -->

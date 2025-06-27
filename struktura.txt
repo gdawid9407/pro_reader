@@ -1,0 +1,33 @@
+PRO_READER
+├ .git/
+├ assets/
+│  ├ css/
+│  │  └ style.css
+│  └ js/
+│     ├ popup.js
+│     ├ progress-bar.js
+│     ├ recommendations.js
+│     └ script.js
+├ includes/
+│  ├ class-progress-bar.php
+│  ├ class-integration.php
+│  ├ class-popup.php
+│  ├ class-recommendations.php
+│  └ Settings.php
+├ languages/
+├ node_modules/
+├ templates/
+│  └ progress-bar-template.php
+├ vendor/
+│  ├ bin/
+│  ├ composer/
+│  └ autoload.php
+├ .gitignore
+├ composer.json
+├ composer.lock
+├ package-lock.json
+├ package.json
+├ reader-engagement.php
+├ readme.txt
+├ uninstall.php
+└ webpack.config.js

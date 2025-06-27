@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+define( 'REP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+
 require __DIR__ . '/vendor/autoload.php';
 
 
@@ -22,9 +24,5 @@ add_action('plugins_loaded', function(){
     new Settings();
 });
 
-add_action('wp_enqueue_scripts', function(){
-    wp_enqueue_style( 'pro-reader-style', plugin_dir_url(__FILE__).'assets/css/style.css' );
-    wp_enqueue_script( 'pro-reader-script', plugin_dir_url(__FILE__).'assets/js/bundle.js', ['jquery'], null, true );
-});
 
 
