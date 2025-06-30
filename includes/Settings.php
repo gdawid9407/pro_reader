@@ -12,6 +12,22 @@ class Settings {
         add_action('admin_init', array($this, 'page_init'));
     }
     
+     public function enqueue_admin_assets($hook) {
+        if ('toplevel_page_reader-engagement-pro' != $hook) {
+            return;
+        }
+        wp_enqueue_style('wp-color-picker');
+        wp_enqueue_script('wp-color-picker');
+        add_action('admin_footer', function() {
+            ?>
+            <script type="text/javascript">
+                jQuery(document).ready(function($){
+                    $('.rep-color-picker').wpColorPicker();
+                });
+            </script>
+            <?php
+        });
+    }
     
     public function create_admin_page() {
     ?>

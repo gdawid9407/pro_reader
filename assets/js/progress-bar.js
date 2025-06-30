@@ -1,28 +1,57 @@
-// Skrypt do śledzenia scrolla
 
-document.addEventListener('DOMContentLoaded', function() {
-    const observerOptions = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.1,
-    };
+(function() {
+    // Czekamy, aż cały dokument (DOM) zostanie wczytany
+    document.addEventListener('DOMContentLoaded', function() {
 
-    const progressBar = document.getElementById('progress-bar');
-    if (!progressBar) return;
+        // Logowanie startowe - sprawdź to w konsoli deweloperskiej (F12)
+        console.log('[Pro Reader] Script initialized.');
 
-    const sections = document.querySelectorAll('.post-content');
+        // 1. Znajdź element paska postępu na stronie
+        const progressBar = document.getElementById('progress-bar');
+        
+        // Jeśli z jakiegoś powodu paska nie ma na stronie, zakończ działanie skryptu
+        if (!progressBar) {
+            console.error('[Pro Reader] Progress bar element (#progress-bar) not found.');
+            return;
+        }
 
-    const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            // Oblicz procent widocznej części sekcji
-            const progress = Math.round(entry.intersectionRatio * 100);
-            // Aktualizacja paska tylko przy zmianie wartości
-            if (parseInt(progressBar.style.width) !== progress) {
-                progressBar.style.width = `${progress}%`;
+        // Logowanie, że element został znaleziony
+        console.log('[Pro Reader] Progress bar element found:', progressBar);
+
+        // 2. Funkcja aktualizująca szerokość paska
+        const updateProgressBar = () => {
+            // Całkowita wysokość dokumentu, którą można przewinąć.
+            // document.documentElement.scrollHeight jest najbardziej niezawodną wartością.
+            const totalScrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+
+            // Obecna pozycja przewinięcia (jak daleko od góry)
+            const currentScrollTop = window.scrollY;
+
+            // Zabezpieczenie przed dzieleniem przez zero, jeśli strona nie jest przewijalna
+            if (totalScrollableHeight <= 0) {
+                progressBar.style.width = '100%';
+                return;
             }
-        });
-    }, observerOptions);
 
-    sections.forEach(section => observer.observe(section));
-});
+            // Oblicz postęp jako procent
+            const progressPercentage = (currentScrollTop / totalScrollableHeight) * 100;
+            
+            // Ustaw szerokość paska, upewniając się, że nie przekracza 100%
+            progressBar.style.width = `${Math.min(progressPercentage, 100)}%`;
+
+            // Logowanie wartości w trakcie przewijania (możesz to usunąć po testach)
+            // console.log(`Scroll: ${currentScrollTop}, Total: ${totalScrollableHeight}, Progress: ${progressPercentage.toFixed(2)}%`);
+        };
+
+        // 3. Nasłuchuj na zdarzenie przewijania
+        // Opcja { passive: true } to ważna optymalizacja wydajności
+        window.addEventListener('scroll', updateProgressBar, { passive: true });
+
+        // 4. Nasłuchuj na zmianę rozmiaru okna (np. obrót telefonu)
+        window.addEventListener('resize', updateProgressBar, { passive: true });
+
+        // 5. Wywołaj funkcję raz na starcie, aby ustawić początkową pozycję
+        // Używamy setTimeout, aby dać przeglądarce chwilę na obliczenie wymiarów
+        setTimeout(updateProgressBar, 100);
+    });
+})();
