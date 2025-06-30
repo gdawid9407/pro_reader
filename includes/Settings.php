@@ -58,13 +58,7 @@ class Settings {
             'reader-engagement-pro',
             'main_section'
         );
-        add_settings_field(
-            'color',
-            'Kolor paska',
-            [$this, 'color_callback'],
-            'reader-engagement-pro',
-            'main_section'
-        );
+        
         add_settings_field(
             'color_start',
             'Kolor startowy paska',
@@ -79,6 +73,14 @@ class Settings {
             'reader-engagement-pro',
             'main_section'
         );
+        add_settings_field(
+            'opacity',
+            'Przezroczystość paska',
+            [$this, 'opacity_callback'],
+            'reader-engagement-pro',
+            'main_section'
+        );
+        
     }
 
     public function sanitize($input): array {
@@ -87,24 +89,26 @@ class Settings {
         $sanitized['color']        = sanitize_hex_color($input['color'] ?? '');
         $sanitized['color_start']  = sanitize_hex_color($input['color_start'] ?? '');
         $sanitized['color_end']    = sanitize_hex_color($input['color_end'] ?? '');
+        if (isset($input['opacity'])) {
+            $opacity = floatval($input['opacity']);
+            // Ograniczamy wartość do przedziału od 0.0 do 1.0
+            $sanitized['opacity'] = max(0.0, min(1.0, $opacity));
+        } else {
+            $sanitized['opacity'] = '1.0'; // Domyślna wartość
+        }
         return $sanitized;
     }
 
     public function position_callback() {
         $opts = get_option('reader_engagement_pro_options', []);
-        printf(
-            '<input type="text" id="position" name="reader_engagement_pro_options[position]" value="%s" />',
-            esc_attr($opts['position'] ?? '')
-        );
+        $current_position = esc_attr($opts['position'] ?? 'top');
+        echo '<select id="position" name="reader_engagement_pro_options[position]">';
+        echo '<option value="top"' . selected($current_position, 'top', false) . '>Góra</option>';
+        echo '<option value="bottom"' . selected($current_position, 'bottom', false) . '>Dół</option>';
+        echo '</select>';
+        
     }
 
-    public function color_callback() {
-        $opts = get_option('reader_engagement_pro_options', []);
-        printf(
-            '<input type="text" id="color" name="reader_engagement_pro_options[color]" value="%s" class="wp-color-picker-field" data-default-color="#4facfe" />',
-            esc_attr($opts['color'] ?? '')
-        );
-    }
 
     public function color_start_callback() {
         $opts = get_option('reader_engagement_pro_options', []);
@@ -119,6 +123,15 @@ class Settings {
         printf(
             '<input type="text" id="color_end" name="reader_engagement_pro_options[color_end]" value="%s" class="wp-color-picker-field" data-default-color="#43e97b" />',
             esc_attr($opts['color_end'] ?? '')
+        );
+    }
+
+    public function opacity_callback() {
+        $opts = get_option('reader_engagement_pro_options', []);
+        printf(
+            '<input type="number" id="opacity" name="reader_engagement_pro_options[opacity]" value="%s" min="0" max="1" step="0.1" />
+            <p class="description">Wprowadź wartość od 0.0 (całkowicie przezroczysty) do 1.0 (całkowicie widoczny).</p>',
+            esc_attr($opts['opacity'] ?? '1.0')
         );
     }
 
