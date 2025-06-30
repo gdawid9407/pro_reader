@@ -1,36 +1,39 @@
 (function() {
     document.addEventListener('DOMContentLoaded', function() {
 
-        // ZMIANA: Pobieramy teraz dwa elementy: maskę/kurtynę i tło z gradientem.
         const progressBarMask = document.getElementById('progress-bar');
         const gradientBackground = document.getElementById('progress-bar-gradient');
 
-        // Sprawdzamy, czy oba kluczowe elementy istnieją.
         if (!progressBarMask || !gradientBackground) {
             console.error('[Pro Reader] Progress bar elements not found.');
             return;
         }
 
-        // ZMIANA: Ustawiamy tło z gradientem na elemencie tła, a nie na masce.
         if (typeof REP_Progress_Settings !== 'undefined' && REP_Progress_Settings.colorStart && REP_Progress_Settings.colorEnd) {
             gradientBackground.style.background = `linear-gradient(to right, ${REP_Progress_Settings.colorStart}, ${REP_Progress_Settings.colorEnd})`;
         }
 
-        // ZMIANA: Zaktualizowana funkcja do sterowania "kurtyną".
         const updateProgressBar = () => {
-            const totalScrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+            // ZMIANA: Bardziej niezawodna metoda obliczania całkowitej wysokości strony.
+            // Porównujemy wysokości kilku kluczowych elementów, aby znaleźć faktyczną pełną wysokość.
+            const pageHeight = Math.max(
+                document.body.scrollHeight,
+                document.documentElement.scrollHeight,
+                document.body.offsetHeight,
+                document.documentElement.offsetHeight,
+                document.body.clientHeight,
+                document.documentElement.clientHeight
+            );
+
+            const totalScrollableHeight = pageHeight - window.innerHeight;
             const currentScrollTop = window.scrollY;
 
             if (totalScrollableHeight <= 0) {
-                // Jeśli nie ma przewijania, kurtyna ma 0% szerokości (pasek jest pełny).
                 progressBarMask.style.width = '0%';
                 return;
             }
 
             const progressPercentage = (currentScrollTop / totalScrollableHeight) * 100;
-
-            // Obliczamy szerokość kurtyny. Jeśli postęp to 10%, kurtyna ma 90% szerokości.
-            // Jeśli postęp to 100%, kurtyna ma 0% szerokości.
             const maskWidthPercentage = 100 - progressPercentage;
 
             // Ustawiamy szerokość kurtyny, upewniając się, że jest w zakresie 0-100.
@@ -39,7 +42,9 @@
 
         window.addEventListener('scroll', updateProgressBar, { passive: true });
         window.addEventListener('resize', updateProgressBar, { passive: true });
-
+        
+        // Wywołujemy funkcję po krótkim opóźnieniu, aby upewnić się, że strona (w tym obrazy)
+        // zdążyła się w pełni wyrenderować i jej wysokość jest ostateczna.
         setTimeout(updateProgressBar, 100);
     });
 })();

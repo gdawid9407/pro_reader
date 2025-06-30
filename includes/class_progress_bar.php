@@ -29,52 +29,58 @@ class Class_Progress_Bar {
                 'colorStart'       => $opts['color_start'] ?? '', // Dodano kolor startowy
                 'colorEnd'         => $opts['color_end'] ?? '',   // Dodano kolor końcowy
                 'opacity'          => $opts['opacity'] ?? '1.0',
-                'excludeSelectors' => $opts['exclude_selectors'] ?? '',
+                'contentSelector'  => $opts['content_selector'] ?? '',
             ]
         );
     }
 
-    public function render_bar() {
-        // Renderowanie paska w stopce strony
-        $opts     = get_option('reader_engagement_pro_options', []);
+      /**
+     * Generuje spójny kod HTML dla paska postępu.
+     * Używane przez render_bar() i render_bar_shortcode() w celu unikania duplikacji kodu.
+     *
+     * @return string
+     */
+    private function generate_bar_html(): string {
+        $opts = get_option('reader_engagement_pro_options', []);
         $posClass = ($opts['position'] ?? 'top') === 'bottom' ? 'position-bottom' : 'position-top';
-        $color    = $opts['color'] ?? '#000';
-        $opacity  = $opts['opacity'] ?? '1.0';
-
-        printf(
-            '<div id="progress-bar-container-wrapper" class="proreader-container %s" style="opacity:%s">
-                <div id="progress-bar-gradient" class="proreader-gradient">
-                    <div id="progress-bar" class="proreader-bar"></div>
-                </div>
-            </div>',
-            esc_attr($posClass),
-            esc_attr($opacity)
-        );
-    }
-
-    public function register_shortcodes() : void{
-        // Rejestracja shortcode [progress_bar]
-        add_shortcode('progress_bar', [ $this, 'render_bar_shortcode' ]);
-    }
-
-    public function render_bar_shortcode( array $atts = [] ) : string {
-        $opts     = get_option( 'reader_engagement_pro_options', [] );
-        $posClass = ( $opts['position'] ?? 'top' ) === 'bottom'
-            ? 'position-bottom'
-            : 'position-top';
-
         $opacity = $opts['opacity'] ?? '1.0';
 
-        ob_start(); ?>
-        <div id="progress-bar-container-wrapper" class="proreader-container <?php echo esc_attr( $posClass ); ?>" style="opacity:<?php echo esc_attr( $opacity ); ?>;">
-            <!-- Nowy element, który będzie przechowywał gradient -->
+        ob_start();
+        ?>
+        <div id="progress-bar-container-wrapper" class="proreader-container <?php echo esc_attr($posClass); ?>" style="opacity:<?php echo esc_attr($opacity); ?>;">
             <div id="progress-bar-gradient" class="proreader-gradient">
-                <!-- Element, którego szerokość będzie animowana przez JS -->
                 <div id="progress-bar" class="proreader-bar"></div>
+            </div>
+            <div class="proreader-labels">
+                <span class="label-start">Start</span>
+                <span class="label-end">Finish</span>
             </div>
         </div>
         <?php
         return ob_get_clean();
     }
-}
 
+    /**
+     * Wyświetla pasek postępu (zwykle w stopce).
+     */
+    public function render_bar(): void {
+        // UWAGA: Należy dodać warunek, aby pasek nie wyświetlał się,
+        // jeśli na stronie jest już użyty shortcode [progress_bar].
+        echo $this->generate_bar_html();
+    }
+
+    public function register_shortcodes(): void {
+        add_shortcode('progress_bar', [$this, 'render_bar_shortcode']);
+    }
+
+    /**
+     * Renderuje pasek postępu w miejscu użycia shortcode'u.
+     *
+     * @param array $atts Atrybuty shortcode'u (obecnie nieużywane).
+     * @return string HTML paska postępu.
+     */
+    public function render_bar_shortcode(array $atts = []): string {
+        // Shortcode po prostu zwraca ten sam, spójny HTML.
+        return $this->generate_bar_html();
+    }
+}

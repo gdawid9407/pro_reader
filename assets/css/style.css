@@ -13,10 +13,14 @@
 
 /* Nowy element, który będzie tłem z gradientem. Zajmuje 100% szerokości i wysokości kontenera. */
 #progress-bar-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    /* Domyślny gradient, który zostanie nadpisany przez JS */
     background: linear-gradient(to right, #ccc, #aaa);
+    /* ZMIANA: Najniższa warstwa */
+    z-index: 1;
 }
 
 /* Element paska, który jest teraz nakładką na gradient */
@@ -28,5 +32,32 @@
     width: 100%; /* Zaczyna od 100% szerokości, JS będzie ją zmniejszać do 0% */
     height: 100%;
     background-color: #fff; /* Kolor tła strony lub inny kolor maskujący */
-    transition: width 0.1s ease-out;
+    transition: width 0.2s ease-out;
+    z-index: 2;
+}
+
+.proreader-labels {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Użycie Flexbox do rozmieszczenia etykiet */
+    display: flex;
+    align-items: center; /* Wyśrodkowanie w pionie */
+    justify-content: space-between; /* Rozmieszczenie na krańcach */
+    padding: 0 15px; /* Wewnętrzny odstęp od krawędzi paska */
+    box-sizing: border-box;
+    /* Zapewnia, że etykiety nie będą przechwytywać kliknięć myszy */
+    pointer-events: none; 
+    z-index: 3; 
+}
+
+/* Styl dla pojedynczej etykiety */
+.proreader-labels span {
+    color: #333;
+    font-size: 14px;
+    font-weight: bold;
+    /* Subtelny cień dla lepszej czytelności na gradientowym tle */
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
 }
