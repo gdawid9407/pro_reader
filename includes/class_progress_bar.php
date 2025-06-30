@@ -52,8 +52,8 @@ class Class_Progress_Bar {
                 <div id="progress-bar" class="proreader-bar"></div>
             </div>
             <div class="proreader-labels">
-                <span class="label-start">Start</span>
-                <span class="label-end">Finish</span>
+                <span class="label-start">Start reading</span>
+                <span class="label-end">Your goal</span>
             </div>
         </div>
         <?php

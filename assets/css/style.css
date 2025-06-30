@@ -2,10 +2,11 @@
 #progress-bar-container-wrapper {
     position: fixed;
     left: 0;
+    right: 0;
     width: 100%;
     z-index: 9999;
     pointer-events: none;
-    height: 40px; /* Wysokość całego paska */
+    height: 20px; /* Wysokość całego paska */
 }
 
 .proreader-container.position-top { top: 0; }
@@ -32,7 +33,7 @@
     width: 100%; /* Zaczyna od 100% szerokości, JS będzie ją zmniejszać do 0% */
     height: 100%;
     background-color: #fff; /* Kolor tła strony lub inny kolor maskujący */
-    transition: width 0.2s ease-out;
+    transition: width 0.5s ease-out;
     z-index: 2;
 }
 
