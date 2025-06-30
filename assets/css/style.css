@@ -1,19 +1,32 @@
-/* assets/css/progress-bar.css */
-
-/* Kontener paska progresu */
-#progress-bar-container {
+/* Główny kontener, który jest pozycjonowany i ma stałe wymiary */
+#progress-bar-container-wrapper {
     position: fixed;
     left: 0;
     width: 100%;
     z-index: 9999;
     pointer-events: none;
+    height: 40px; /* Wysokość całego paska */
 }
+
 .proreader-container.position-top { top: 0; }
 .proreader-container.position-bottom { bottom: 0; }
 
-/* Wskaźnik paska progresu */
-#progress-bar{
-    width: 10%;
-    height: 40px;
+/* Nowy element, który będzie tłem z gradientem. Zajmuje 100% szerokości i wysokości kontenera. */
+#progress-bar-gradient {
+    width: 100%;
+    height: 100%;
+    /* Domyślny gradient, który zostanie nadpisany przez JS */
+    background: linear-gradient(to right, #ccc, #aaa);
+}
+
+/* Element paska, który jest teraz nakładką na gradient */
+/* Działa jak kurtyna, która się zwija, odsłaniając gradient pod spodem */
+#progress-bar {
+    position: absolute;
+    top: 0;
+    right: 0; /* Kluczowe: Jest przyklejony do prawej krawędzi */
+    width: 100%; /* Zaczyna od 100% szerokości, JS będzie ją zmniejszać do 0% */
+    height: 100%;
+    background-color: #fff; /* Kolor tła strony lub inny kolor maskujący */
     transition: width 0.1s ease-out;
 }
