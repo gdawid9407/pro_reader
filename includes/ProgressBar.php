@@ -1,7 +1,7 @@
 <?php
 namespace ReaderEngagementPro;
 
-class Class_Progress_Bar {
+class ProgressBar {
     public function __construct() {
         // Rejestracja akcji ładowania zasobów i renderowania paska
         add_action('wp_enqueue_scripts', [ $this, 'enqueue_assets' ]);
