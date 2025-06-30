@@ -104,6 +104,15 @@ class Settings {
             'reader-engagement-pro',
             'main_section'
         );
+        
+        add_settings_field(
+        'show_percentage',
+        'Pokaż procent treści',
+        [$this, 'show_percentage_callback'],
+        'reader-engagement-pro',
+        'main_section'
+    );
+
 
     }
 
@@ -118,7 +127,9 @@ class Settings {
         $sanitized['label_start']      = isset($input['label_start']) ? sanitize_text_field($input['label_start']) : 'Start';
         $sanitized['label_end']        = isset($input['label_end']) ? sanitize_text_field($input['label_end']) : 'Meta';
         $sanitized['content_selector'] = isset($input['content_selector']) ? sanitize_text_field($input['content_selector']) : '.entry-content';
+        $sanitized['show_percentage']  = isset($input['show_percentage']) && $input['show_percentage'] === '1' ? '1' : '0';
 
+        
         return $sanitized;
     }
 
@@ -178,6 +189,15 @@ class Settings {
             esc_attr($this->options['content_selector'] ?? '.entry-content')
         );
         echo '<p class="description">Podaj selektor CSS dla głównego kontenera treści artykułu (np. <code>.entry-content</code>, <code>#main-content</code>, <code>article</code>). Poprawia to dokładność paska.</p>';
+    }
+
+    public function show_percentage_callback(): void {
+        $opts = get_option('reader_engagement_pro_options', []);
+        $value = $opts['show_percentage'] ?? '0';
+    ?>
+    <input type="checkbox" id="show_percentage" name="reader_engagement_pro_options[show_percentage]" value="1" <?php checked('1', $value); ?> />
+    <label for="show_percentage"><?php esc_html_e('Display reading progress as a percentage on the bar.', 'reader-engagement-pro'); ?></label>
+    <?php
     }
 
     public function enqueue_admin_assets($hook) {

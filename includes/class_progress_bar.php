@@ -30,6 +30,7 @@ class Class_Progress_Bar {
                 'colorEnd'         => $opts['color_end'] ?? '',   // Dodano kolor końcowy
                 'opacity'          => $opts['opacity'] ?? '1.0',
                 'contentSelector'  => $opts['content_selector'] ?? '',
+                'showPercentage'   => $opts['show_percentage'] ?? '0',
             ]
         );
     }
@@ -46,6 +47,7 @@ class Class_Progress_Bar {
         $opacity = $opts['opacity'] ?? '1.0';
         $label_start = $opts['label_start'] ?? 'Start';
         $label_end   = $opts['label_end'] ?? 'Meta';
+        $show_percentage = $opts['show_percentage'] ?? '0';
 
         ob_start();
         ?>
@@ -57,6 +59,9 @@ class Class_Progress_Bar {
                  <span class="label-start"><?php echo esc_html($label_start); ?></span>
                 <span class="label-end"><?php echo esc_html($label_end); ?></span>
             </div>
+            <?php if ($show_percentage === '1') : ?>
+                <span id="rep-progress-percentage">0%</span>
+            <?php endif; ?>
         </div>
         <?php
         return ob_get_clean();

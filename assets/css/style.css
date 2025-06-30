@@ -62,3 +62,16 @@
     /* Subtelny cień dla lepszej czytelności na gradientowym tle */
     text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
 }
+
+#rep-progress-percentage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff; /* Kolor tekstu */
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); /* Cień dla lepszej czytelności */
+    line-height: 5px; /* Dopasowanie do wysokości paska */
+    z-index: 2; /* Upewniamy się, że jest nad paskiem wypełnienia */
+}
