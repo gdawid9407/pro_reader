@@ -25,7 +25,7 @@ class Settings {
     public function create_admin_page() {
         ?>
         <div class="wrap">
-            <h1>Reader Engagement Pro Settings</h1>
+            <h1>Ustawienia wtyczki Reader Engagement Pro</h1>
             <form method="post" action="options.php">
                 <?php
                 settings_fields('reader_engagement_pro_group');
@@ -81,21 +81,44 @@ class Settings {
             'main_section'
         );
         
+        add_settings_field(
+            'label_start',
+            'Tekst początkowy',
+            [$this, 'label_start_callback'],
+            'reader-engagement-pro',
+            'main_section'
+        );
+
+        add_settings_field(
+            'label_end',
+            'Tekst końcowy',
+            [$this, 'label_end_callback'],
+            'reader-engagement-pro',
+            'main_section'
+        );
+        
+        add_settings_field(
+            'content_selector',
+            'Selektor treści',
+            [$this, 'content_selector_callback'],
+            'reader-engagement-pro',
+            'main_section'
+        );
+
     }
 
     public function sanitize($input): array {
         $sanitized = [];
         $sanitized['position']     = sanitize_text_field($input['position'] ?? '');
-        $sanitized['color']        = sanitize_hex_color($input['color'] ?? '');
         $sanitized['color_start']  = sanitize_hex_color($input['color_start'] ?? '');
         $sanitized['color_end']    = sanitize_hex_color($input['color_end'] ?? '');
-        if (isset($input['opacity'])) {
-            $opacity = floatval($input['opacity']);
-            // Ograniczamy wartość do przedziału od 0.0 do 1.0
-            $sanitized['opacity'] = max(0.0, min(1.0, $opacity));
-        } else {
-            $sanitized['opacity'] = '1.0'; // Domyślna wartość
-        }
+        $sanitized['opacity']          = isset($input['opacity']) ? str_replace(',', '.', $input['opacity']) : '1.0';
+        $sanitized['opacity']          = max(0.0, min(1.0, floatval($sanitized['opacity'])));
+        // Sanityzacja nowych pól tekstowych
+        $sanitized['label_start']      = isset($input['label_start']) ? sanitize_text_field($input['label_start']) : 'Start';
+        $sanitized['label_end']        = isset($input['label_end']) ? sanitize_text_field($input['label_end']) : 'Meta';
+        $sanitized['content_selector'] = isset($input['content_selector']) ? sanitize_text_field($input['content_selector']) : '.entry-content';
+
         return $sanitized;
     }
 
@@ -133,6 +156,28 @@ class Settings {
             <p class="description">Wprowadź wartość od 0.0 (całkowicie przezroczysty) do 1.0 (całkowicie widoczny).</p>',
             esc_attr($opts['opacity'] ?? '1.0')
         );
+    }
+    
+     public function label_start_callback(): void {
+        printf(
+            '<input type="text" id="label_start" name="reader_engagement_pro_options[label_start]" value="%s" />',
+            esc_attr($this->options['label_start'] ?? 'Start')
+        );
+    }
+
+    public function label_end_callback(): void {
+        printf(
+            '<input type="text" id="label_end" name="reader_engagement_pro_options[label_end]" value="%s" />',
+            esc_attr($this->options['label_end'] ?? 'Meta')
+        );
+    }
+    
+    public function content_selector_callback(): void {
+        printf(
+            '<input type="text" id="content_selector" name="reader_engagement_pro_options[content_selector]" value="%s" class="regular-text" />',
+            esc_attr($this->options['content_selector'] ?? '.entry-content')
+        );
+        echo '<p class="description">Podaj selektor CSS dla głównego kontenera treści artykułu (np. <code>.entry-content</code>, <code>#main-content</code>, <code>article</code>). Poprawia to dokładność paska.</p>';
     }
 
     public function enqueue_admin_assets($hook) {

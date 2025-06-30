@@ -44,6 +44,8 @@ class Class_Progress_Bar {
         $opts = get_option('reader_engagement_pro_options', []);
         $posClass = ($opts['position'] ?? 'top') === 'bottom' ? 'position-bottom' : 'position-top';
         $opacity = $opts['opacity'] ?? '1.0';
+        $label_start = $opts['label_start'] ?? 'Start';
+        $label_end   = $opts['label_end'] ?? 'Meta';
 
         ob_start();
         ?>
@@ -52,8 +54,8 @@ class Class_Progress_Bar {
                 <div id="progress-bar" class="proreader-bar"></div>
             </div>
             <div class="proreader-labels">
-                <span class="label-start">Start reading</span>
-                <span class="label-end">Your goal</span>
+                 <span class="label-start"><?php echo esc_html($label_start); ?></span>
+                <span class="label-end"><?php echo esc_html($label_end); ?></span>
             </div>
         </div>
         <?php
