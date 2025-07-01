@@ -1,33 +1,39 @@
-PRO_READER
-├ .git/
-├ assets/
-│  ├ css/
-│  │  └ style.css
-│  └ js/
-│     ├ popup.js
-│     ├ progress-bar.js
-│     ├ recommendations.js
-│     └ script.js
-├ includes/
-│  ├ class-progress-bar.php
-│  ├ class-integration.php
-│  ├ class-popup.php
-│  ├ class-recommendations.php
-│  └ Settings.php
-├ languages/
-├ node_modules/
-├ templates/
-│  └ progress-bar-template.php
-├ vendor/
-│  ├ bin/
-│  ├ composer/
-│  └ autoload.php
-├ .gitignore
-├ composer.json
-├ composer.lock
-├ package-lock.json
-├ package.json
-├ reader-engagement.php
-├ readme.txt
-├ uninstall.php
-└ webpack.config.js
+
+PRO_READER/
+├── assets/
+│   ├── css/
+│   │   ├── popup.css
+│   │   └── style.css
+│   └── js/
+│       ├── popup.js
+│       ├── progress-bar.js
+│       ├── recommendations.js
+│       └── script.js
+├── includes/
+│   ├── Admin/
+│   │   ├── Settings_Page.php
+│   │   ├── Settings_Popup.php
+│   │   └── Settings_Progress_Bar.php
+│   ├── class-integration.php
+│   ├── class-recommendations.php
+│   ├── Popup.php
+│   └── ProgressBar.php
+├── languages/
+├── node_modules/
+├── templates/
+│   └── progress-bar-template.php
+├── vendor/
+│   ├── bin/
+│   ├── composer/
+│   └── autoload.php
+├── .gitignore
+├── composer.json
+├── composer.lock
+├── package-lock.json
+├── package.json
+├── reader-engagement.php
+├── readme.txt
+├── struktura.txt
+├── uninstall.php
+└── webpack.config.js
+

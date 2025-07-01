@@ -35,7 +35,7 @@ class ProgressBar {
         );
     }
 
-      /**
+    /**
      * Generuje spójny kod HTML dla paska postępu.
      * Używane przez render_bar() i render_bar_shortcode() w celu unikania duplikacji kodu.
      *

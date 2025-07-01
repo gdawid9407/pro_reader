@@ -3,7 +3,7 @@
  * Plugin Name: Pro Reader
  * Description: Uniwersalny pasek czytania, popup "Czytaj więcej" i rekomendacje artykułów.
  * Version:     1.0.0
- * Author:      Twoje Imię
+ * Author:      Dawid Gołis
  * Text Domain: pro_reader
  */
 
@@ -27,11 +27,12 @@ if ( file_exists( $autoload_file ) ) {
 }
 
 use ReaderEngagementPro\ProgressBar;
+use ReaderEngagementPro\Popup;
 use ReaderEngagementPro\Admin\Settings_Page;
 
 function rep_init_plugin() {
-    // Inicjalizacja modułu front-endowego (pasek postępu).
     new ProgressBar();
+    new Popup();
 
     // Inicjalizacja panelu administracyjnego tylko wtedy, gdy jesteśmy w panelu admina.
     if ( is_admin() ) {

@@ -1,0 +1,78 @@
+#rep-intelligent-popup__overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9998;
+}
+
+#rep-intelligent-popup__container {
+  position: fixed;
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 600px; max-width: 90%; padding: 24px;
+  background: #ffffff; border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  z-index: 9999;
+}
+@media(max-width: 480px) {
+  #rep-intelligent-popup__container { padding: 16px; }
+}
+
+#rep-intelligent-popup__header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+#rep-intelligent-popup__title { font-size: 1.5rem; margin: 0; }
+#rep-intelligent-popup__close {
+  background: transparent; border: none; font-size: 1.25rem; cursor: pointer;
+}
+
+#rep-intelligent-popup__list {
+  list-style: none; margin: 0; padding: 0;
+}
+.rep-rec-item {
+  display: flex; align-items: center; margin-bottom: 12px;
+}
+.rep-rec-thumb {
+  flex: 0 0 80px; height: 60px; margin-right: 12px;
+  object-fit: cover; border-radius: 4px;
+}
+.rep-rec-content {
+  flex: 1;
+}
+.rep-rec-title { font-size: 1rem; margin: 0 0 4px; }
+.rep-rec-link {
+  font-size: 0.875rem; text-decoration: none; color: #0073aa;
+}
+
+#rep-intelligent-popup__footer {
+  text-align: right; margin-top: 20px;
+}
+#rep-intelligent-popup__button {
+  padding: 10px 20px; font-size: 1rem;
+  background: #0073aa; color: #fff; border: none; border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Ukryj domyślnie overlay i container */
+#rep-intelligent-popup__overlay,
+#rep-intelligent-popup__container {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out;
+}
+
+#rep-intelligent-popup__container {
+    transform: translate(-50%, -50%) scale(0.95);
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* Style dla widocznego popupa (po dodaniu klasy .is-visible w JS) */
+#rep-intelligent-popup__overlay.is-visible,
+#rep-intelligent-popup__container.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+#rep-intelligent-popup__container.is-visible {
+    transform: translate(-50%, -50%) scale(1);
+}
