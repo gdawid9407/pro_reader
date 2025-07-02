@@ -77,7 +77,6 @@ class Settings_Page {
      * Renderuje stronę ustawień wraz z nawigacją zakładek.
      */
     public function create_admin_page() {
-        // Pobieramy aktywną zakładkę z URL, domyślnie jest to 'progress_bar'.
         $active_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'progress_bar';
 
         ?>
@@ -130,5 +129,32 @@ class Settings_Page {
             'wp-color-picker',
             'jQuery(function($){ $(".wp-color-picker-field").wpColorPicker(); });'
         );
+        
+        $custom_js = "
+            jQuery(document).ready(function($) {
+                // Selektory
+                var checkbox = $('#popup_trigger_scroll_percent_enable');
+                var targetRow = $('#popup_trigger_scroll_percent').closest('tr');
+
+                // Funkcja do przełączania widoczności
+                function toggleVisibility() {
+                    if (checkbox.is(':checked')) {
+                        targetRow.show();
+                    } else {
+                        targetRow.hide();
+                    }
+                }
+
+                // Sprawdź stan przy załadowaniu strony
+                toggleVisibility();
+
+                // Dodaj listener do zmiany stanu checkboxa
+                checkbox.on('change', function() {
+                    toggleVisibility();
+                });
+            });
+        ";
+        wp_add_inline_script('wp-color-picker', $custom_js);
+        
     }
 }

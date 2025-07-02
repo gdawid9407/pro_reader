@@ -35,6 +35,14 @@ class Settings_Popup {
             'reader-engagement-pro-popup',                // Slug strony/zakładki
             'popup_triggers_section'                      // Sekcja, do której należy pole
         );
+        
+        add_settings_field(
+            'popup_trigger_scroll_percent_enable',
+            __('Wyzwalacz: Procent przewinięcia', 'pro_reader'),
+            [$this, 'trigger_scroll_percent_enable_callback'],
+            'reader-engagement-pro-popup',
+            'popup_triggers_section'
+        );
 
           // Pole: Wyzwalacz procentowy
         add_settings_field(
@@ -96,8 +104,8 @@ class Settings_Popup {
     }
 
     $sanitized['popup_enable'] = (isset($input['popup_enable']) && $input['popup_enable'] === '1') ? '1' : '0';
-        $sanitized['popup_trigger_scroll_up'] = (isset($input['popup_trigger_scroll_up']) && $input['popup_trigger_scroll_up'] === '1') ? '1' : '0';
-        
+    $sanitized['popup_trigger_scroll_up'] = (isset($input['popup_trigger_scroll_up']) && $input['popup_trigger_scroll_up'] === '1') ? '1' : '0';
+    $sanitized['popup_trigger_scroll_percent_enable'] = (isset($input['popup_trigger_scroll_percent_enable']) && $input['popup_trigger_scroll_percent_enable'] === '1') ? '1' : '0';   
         if (isset($input['popup_trigger_scroll_percent'])) {
             $scroll_percent = absint($input['popup_trigger_scroll_percent']);
             $sanitized['popup_trigger_scroll_percent'] = max(1, min(100, $scroll_percent));
@@ -124,6 +132,17 @@ class Settings_Popup {
         );
         echo '<label for="popup_enable">' . esc_html__('Aktywuj popup na stronie.', 'pro_reader') . '</label>';
         echo '<p class="description">' . esc_html__('Główny włącznik modułu popup. Pozostałe opcje działają tylko, gdy jest zaznaczony.', 'pro_reader') . '</p>';
+    }
+
+    public function trigger_scroll_percent_enable_callback(): void {
+        $options = get_option(self::OPTION_NAME, []);
+        $value = $options['popup_trigger_scroll_percent_enable'] ?? '1'; // Domyślnie włączony
+        printf(
+            '<input type="checkbox" id="popup_trigger_scroll_percent_enable" name="%s[popup_trigger_scroll_percent_enable]" value="1" %s />',
+            esc_attr(self::OPTION_NAME),
+            checked('1', $value, false)
+        );
+        echo '<label for="popup_trigger_scroll_percent_enable">' . esc_html__('Aktywuj wyzwalacz', 'pro_reader') . '</label>';
     }
 
     /** Renderuje pole numeryczne dla procentu przewinięcia. */
