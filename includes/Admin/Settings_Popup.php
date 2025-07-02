@@ -23,7 +23,7 @@ class Settings_Popup {
         add_settings_section(
             'popup_triggers_section',               // Unikalne ID sekcji
             __('Ustawienia Wyzwalaczy', 'pro_reader'), // Tytuł sekcji
-            [$this, 'render_section_info'],         // Funkcja renderująca opis pod tytułem sekcji
+            [$this, 'render_triggers_section_info'],         // Funkcja renderująca opis pod tytułem sekcji
             'reader-engagement-pro-popup'           // Slug strony/zakładki, na której ma się pojawić
         );
 
@@ -70,23 +70,49 @@ class Settings_Popup {
             'reader-engagement-pro-popup',
             'popup_triggers_section'
         );
+        
+         // --- NOWA SEKCJA 2: TREŚĆ POPUPA ---
+        add_settings_section(
+            'popup_content_section',
+            __('Treść Popupa', 'pro_reader'),
+            [$this, 'render_content_section_info'],
+            'reader-engagement-pro-popup'
+        );
+
+        add_settings_field(
+            'popup_content_main',
+            __('Edytor treści', 'pro_reader'),
+            [$this, 'popup_content_main_callback'], // Nowy callback
+            'reader-engagement-pro-popup',
+            'popup_content_section'
+        );
 
 
+    }
+
+     /**
+     * Wyświetla informacyjny tekst pod tytułem sekcji wyzwalaczy.
+     */
+    public function render_triggers_section_info(): void {
+        echo '<p>';
+        esc_html_e('W tej sekcji skonfigurujesz, kiedy i w jakich okolicznościach ma pojawić się popup.', 'pro_reader');
+        echo '</p>';
     }
 
     /**
-     * Wyświetla informacyjny tekst pod tytułem sekcji.
+     * NOWOŚĆ: Wyświetla informacyjny tekst pod tytułem sekcji treści.
      */
-    public function render_section_info(): void {
+    public function render_content_section_info(): void {
         echo '<p>';
-        esc_html_e('W tej sekcji skonfigurujesz wygląd i zachowanie okna popup z rekomendowanymi artykułami.', 'pro_reader');
+        esc_html_e('Tutaj możesz zdefiniować treść, która pojawi się nad listą polecanych artykułów. Możesz używać formatowania tekstu, a nawet dodawać obrazy.', 'pro_reader');
         echo '</p>';
     }
+
+    /**
+     * @param array $input Dane z formularza.
+     * @return array Przetworzone i bezpieczne dane.
+     */
     
-/**
- * @param array $input Dane z formularza.
- * @return array Przetworzone i bezpieczne dane.
- */
     public function sanitize(array $input): array {
     // Zawsze zaczynamy od aktualnych, zapisanych opcji.
     $sanitized = get_option(self::OPTION_NAME, []);
@@ -105,6 +131,12 @@ class Settings_Popup {
         }
         if (isset($input['popup_trigger_time'])) {
             $sanitized['popup_trigger_time'] = absint($input['popup_trigger_time']);
+        }
+        
+         // NOWOŚĆ: Sanitacja pola edytora WYSIWYG
+        if (isset($input['popup_content_main'])) {
+            // Używamy wp_kses_post, aby pozwolić na bezpieczny HTML (jak w postach), ale usunąć groźne skrypty.
+            $sanitized['popup_content_main'] = wp_kses_post($input['popup_content_main']);
         }
         
         return $sanitized;
@@ -173,5 +205,28 @@ class Settings_Popup {
         );
         echo '<label for="popup_trigger_scroll_up">' . esc_html__('Aktywuj wyzwalacz', 'pro_reader') . '</label>';
         echo '<p class="description">' . esc_html__('Popup pojawi się, gdy użytkownik zacznie przewijać stronę w górę (sugerując zamiar wyjścia).', 'pro_reader') . '</p>';
+    }
+    
+    /**
+     * NOWOŚĆ: Renderuje edytor treści WordPress (WYSIWYG).
+     */
+    public function popup_content_main_callback(): void {
+        $options = get_option(self::OPTION_NAME, []);
+        // Pobieramy zapisaną treść lub ustawiamy domyślną.
+        $content = $options['popup_content_main'] ?? '<h2>Może Cię zainteresować?</h2><p>Sprawdź inne artykuły na naszym blogu.</p>';
+        
+        // Kluczowe ustawienia dla edytora.
+        $settings = [
+            // To jest najważniejsze: 'name' musi pasować do struktury tablicy opcji.
+            'textarea_name' => esc_attr(self::OPTION_NAME) . '[popup_content_main]',
+            'media_buttons' => true,  // Pozwól na dodawanie mediów.
+            'teeny'         => false, // Użyj pełnej wersji edytora.
+            'textarea_rows' => 10,    // Początkowa wysokość.
+        ];
+
+        // Wywołanie funkcji WordPressa, która generuje cały edytor.
+        wp_editor($content, 'popup_content_main_editor', $settings);
+
+        echo '<p class="description">' . esc_html__('Ta treść zostanie wyświetlona w oknie popup nad listą rekomendacji.', 'pro_reader') . '</p>';
     }
 }

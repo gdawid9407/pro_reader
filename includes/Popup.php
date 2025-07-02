@@ -99,16 +99,32 @@ class Popup {
      * @return string
      */
     private function generate_popup_html(): string {
-         // Rozpoczynamy buforowanie wyjścia, aby przechwycić HTML do zmiennej.
+        // NOWOŚĆ: Pobieramy treść z edytora. Używamy domyślnej wartości na wszelki wypadek.
+        $popup_content = $this->options['popup_content_main'] ?? '';
+
+        // Rozpoczynamy buforowanie wyjścia, aby przechwycić HTML do zmiennej.
         ob_start();
         ?>
         <div id="rep-intelligent-popup__overlay"></div>
         
-        <div id="rep-intelligent-popup__container" role="dialog" aria-modal="true" aria-labelledby="rep-intelligent-popup__title">
+        <div id="rep-intelligent-popup__container" role="dialog" aria-modal="true" aria-labelledby="rep-intelligent-popup__title-static">
             <header id="rep-intelligent-popup__header">
-                <h2 id="rep-intelligent-popup__title">Może Cię zainteresować</h2>
+                <!-- ZMIANA: Usunęliśmy statyczny tytuł. Teraz cała sekcja header będzie bardziej elastyczna. -->
+                <!-- Nadaliśmy ID statycznemu elementowi, aby aria-labelledby nadal działało poprawnie. -->
+                <h2 id="rep-intelligent-popup__title-static" class="screen-reader-text">Rekomendowane treści</h2>
                 <button id="rep-intelligent-popup__close" aria-label="Zamknij">×</button>
             </header>
+            
+            <!-- NOWOŚĆ: Dodajemy kontener na treść z edytora WYSIWYG. -->
+            <div id="rep-intelligent-popup__custom-content">
+                <?php
+                // Wyświetlamy treść. Ważne: używamy wp_kses_post, aby upewnić się,
+                // że wyświetlamy tylko dozwolony, bezpieczny HTML, który został
+                // zapisany w bazie. To podwójne zabezpieczenie.
+                echo wp_kses_post($popup_content);
+                ?>
+            </div>
+
             <ul id="rep-intelligent-popup__list">
                 <!-- Treść (rekomendacje) zostanie wstrzyknięta tutaj dynamicznie przez AJAX -->
                 <li class="rep-rec-item-loading">Ładowanie rekomendacji...</li>
