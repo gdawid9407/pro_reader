@@ -76,3 +76,7 @@
 #rep-intelligent-popup__container.is-visible {
     transform: translate(-50%, -50%) scale(1);
 }
+
+body.rep-popup-is-open {
+  overflow: hidden;
+}

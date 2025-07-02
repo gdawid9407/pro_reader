@@ -30,9 +30,6 @@ jQuery(function($) {
 
     // --- 2. GŁÓWNE FUNKCJE KONTROLUJĄCE POPUP ---
 
-    /**
-     * Pokazuje popup i blokuje scrollowanie strony.
-     */
     function showPopup() {
         if (popupHasBeenShown) {
             return;
@@ -44,17 +41,16 @@ jQuery(function($) {
         $overlay.add($popupContainer).addClass('is-visible');
         
         // Zablokuj scrollowanie tła
-        $('body').css('overflow', 'hidden');
+        $('body').addClass('rep-popup-is-open');
     }
+    
     /**
      * Ukrywa popup i przywraca scrollowanie strony.
      */
     function hidePopup() {
-        $overlay.fadeOut(300);
-        $popupContainer.animate({ opacity: 0 }, 300, function() {
-            $(this).css('display', 'none');
-        });
+        $overlay.add($popupContainer).removeClass('is-visible');
         
+        // ZMIANA: Zamiast .css(), usuwamy klasę z <body>
         $('body').removeClass('rep-popup-is-open');
     }
     /**
