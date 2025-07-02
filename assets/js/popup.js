@@ -41,10 +41,10 @@ jQuery(function($) {
         
         fetchRecommendations();
 
-        $overlay.fadeIn(300);
-        $popupContainer.css('display', 'block').animate({ opacity: 1 }, 300);
-
-        $('body').addClass('rep-popup-is-open');
+        $overlay.add($popupContainer).addClass('is-visible');
+        
+        // Zablokuj scrollowanie tła
+        $('body').css('overflow', 'hidden');
     }
     /**
      * Ukrywa popup i przywraca scrollowanie strony.

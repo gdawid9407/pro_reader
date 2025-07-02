@@ -7,30 +7,71 @@ use ReaderEngagementPro\Admin\Settings_Progress_Bar;
 use ReaderEngagementPro\Admin\Settings_Popup;
 
 class Settings_Page {
+
+
+    private const SETTINGS_GROUP = 'reader_engagement_pro_group';
+    private const OPTION_NAME = 'reader_engagement_pro_options';
+    
+    // KLUCZOWA ZMIANA: Przechowujemy instancje, aby móc wywołać ich metody.
+    private Settings_Progress_Bar $progress_bar_settings;
+    private Settings_Popup $popup_settings;
+
+
     public function __construct() {
-       
-        new Settings_Progress_Bar();
-        new Settings_Popup();
-       
+        
+        $this->progress_bar_settings = new Settings_Progress_Bar();
+        $this->popup_settings = new Settings_Popup();
+        
+        add_action('admin_init', [$this, 'page_init']);
         add_action('admin_menu', [$this, 'add_plugin_page']);
-        add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
     }
 
     /**
-     * Dodaje stronę ustawień do menu panelu administracyjnego.
+     * Centralnie rejestruje naszą wspólną tablicę opcji.
      */
-    public function add_plugin_page() {
-        add_menu_page(
-            'Pasek czytania',         // Tytuł strony (tag <title>)
-            'Pasek czytania',                    // Nazwa w menu
-            'manage_options',                // Wymagane uprawnienia
-            'reader-engagement-pro',         // Slug (URL) strony
-            [$this, 'create_admin_page'],    // Funkcja renderująca zawartość strony
-            'dashicons-performance',         // Ikona
-            81                               // Pozycja w menu
+    public function page_init() {
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_NAME,
+            ['type' => 'array', 'sanitize_callback' => [$this, 'route_sanitize_callback']]
         );
     }
+    public function add_plugin_page() {
+        add_menu_page(
+            'Pasek czytania',               // Tytuł strony (tag <title>)
+            'Pasek czytania',               // Nazwa w menu
+            'manage_options',               // Wymagane uprawnienia
+            'reader-engagement-pro',        // Slug (URL) strony
+            [$this, 'create_admin_page'],   // Funkcja renderująca zawartość strony
+            'dashicons-performance',        // Ikona
+            81                              // Pozycja w menu
+        );
+    }
+
+/**
+     * KLUCZOWA ZMIANA: Ta funkcja działa jak "router".
+     * Sprawdza, skąd pochodzą dane i przekazuje je do odpowiedniej klasy w celu sanitacji.
+     *
+     * @param array $input Dane z formularza.
+     * @return array Przetworzone dane.
+     */
+    public function route_sanitize_callback(array $input): array {
+        // Sprawdzamy, czy dane pochodzą z formularza "Pasek Postępu"
+        if (isset($input['position'])) {
+            return $this->progress_bar_settings->sanitize($input);
+        }
+
+        // Sprawdzamy, czy dane pochodzą z formularza "Popup"
+        if (isset($input['popup_trigger_time'])) {
+            return $this->popup_settings->sanitize($input);
+        }
+
+        // Jeśli dane nie pasują do żadnego formularza, zwróć puste lub istniejące opcje,
+        // aby uniknąć przypadkowego wyczyszczenia.
+        return get_option(self::OPTION_NAME, []);
+    }
+
 
     /**
      * Renderuje stronę ustawień wraz z nawigacją zakładek.
@@ -56,13 +97,11 @@ class Settings_Page {
 
             <form method="post" action="options.php">
                 <?php
-                // W zależności od aktywnej zakładki, ładujemy odpowiednią grupę ustawień.
-                // Każda zakładka musi mieć unikalną grupę zarejestrowaną przez register_setting().
+                // Używamy JEDNEJ, tej samej grupy ustawień dla wszystkich zakładek.
+                settings_fields(self::SETTINGS_GROUP);
                 if ($active_tab === 'progress_bar') {
-                    settings_fields('reader_engagement_pro_progress_bar_group'); // Grupa dla paska
                     do_settings_sections('reader-engagement-pro-progress-bar');   // Sekcje dla paska
                 } elseif ($active_tab === 'popup') {
-                    settings_fields('reader_engagement_pro_popup_group'); // Grupa dla popupa
                     do_settings_sections('reader-engagement-pro-popup');   // Sekcje dla popupa
                 }
 

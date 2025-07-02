@@ -98,11 +98,12 @@ class Popup {
      * @return string
      */
     private function generate_popup_html(): string {
-        // Rozpoczynamy buforowanie wyjścia, aby przechwycić HTML do zmiennej.
+         // Rozpoczynamy buforowanie wyjścia, aby przechwycić HTML do zmiennej.
         ob_start();
         ?>
         <div id="rep-intelligent-popup__overlay"></div>
-        <div id="rep-intelligent-popup__container" role="dialog" aria-modal="true" aria-labelledby="rep-intelligent-popup__title" style="display: none;">
+        
+        <div id="rep-intelligent-popup__container" role="dialog" aria-modal="true" aria-labelledby="rep-intelligent-popup__title">
             <header id="rep-intelligent-popup__header">
                 <h2 id="rep-intelligent-popup__title">Może Cię zainteresować</h2>
                 <button id="rep-intelligent-popup__close" aria-label="Zamknij">×</button>
@@ -113,7 +114,6 @@ class Popup {
             </ul>
         </div>
         <?php
-        // Zwracamy zawartość bufora jako string.
         return ob_get_clean();
     }
 

@@ -7,15 +7,9 @@ namespace ReaderEngagementPro\Admin;
  */
 class Settings_Progress_Bar {
 
-    /**
-     * @var string Klucz opcji w bazie danych WordPress. Jest wspólny dla wszystkich modułów wtyczki.
-     */
     private const OPTION_NAME = 'reader_engagement_pro_options';
-    
-    /**
-     * @var array Przechowuje wczytane opcje z bazy danych.
-     */
     private array $options = [];
+    
 
     public function __construct() {
         // Wczytanie opcji raz, aby uniknąć wielokrotnego odpytywania bazy danych.
@@ -23,17 +17,8 @@ class Settings_Progress_Bar {
         add_action('admin_init', [$this, 'page_init']);
     }
 
-    /**
-     * Rejestruje ustawienia, sekcje i pola w WordPress Settings API dla zakładki paska postępu.
-     */
+    
     public function page_init() {
-        // Rejestruj grupę ustawień dla zakładki "Pasek Postępu".
-        // Nazwa grupy musi pasować do tej użytej w Settings_Page.php.
-        register_setting(
-            'reader_engagement_pro_progress_bar_group', // Grupa dla tej zakładki
-            self::OPTION_NAME,                          // Zapisujemy do tej samej, wspólnej tablicy opcji
-            ['type' => 'array', 'sanitize_callback' => [$this, 'sanitize']]
-        );
 
         add_settings_section(
             'progress_bar_main_section',                   // Unikalne ID sekcji
@@ -48,14 +33,9 @@ class Settings_Progress_Bar {
             null,
             'reader-engagement-pro-progress-bar'
         );
-
-        // Rejestracja wszystkich pól dla tej zakładki
         $this->register_fields();
     }
-
-    /**
-     * Centralna metoda do rejestracji wszystkich pól ustawień dla paska.
-     */
+    
     private function register_fields() {
         // Pola w sekcji 'main'
         add_settings_field('position', __('Pozycja paska', 'pro_reader'), [$this, 'position_callback'], 'reader-engagement-pro-progress-bar', 'progress_bar_main_section');
@@ -70,28 +50,33 @@ class Settings_Progress_Bar {
         add_settings_field('content_selector', __('Selektor treści', 'pro_reader'), [$this, 'content_selector_callback'], 'reader-engagement-pro-progress-bar', 'progress_bar_advanced_section');
     }
 
-    /**
-     * Sanitizes i waliduje dane wejściowe dla tej zakładki.
+/**
+     * KLUCZOWA ZMIANA: Ta funkcja sanituje TYLKO swoje pola,
+     * ale łączy je z istniejącymi opcjami, aby nie skasować ustawień z innych zakładek.
+     *
      * @param array $input Dane z formularza.
-     * @return array Przetworzone dane.
+     * @return array Przetworzone i bezpieczne dane.
      */
-    public function sanitize($input): array {
-        // Pobieramy istniejące opcje, aby nie nadpisać ustawień z innych zakładek.
-        $current_options = get_option(self::OPTION_NAME, []);
-        $sanitized = $current_options;
-
-        $sanitized['position']         = isset($input['position']) ? sanitize_key($input['position']) : 'top';
-        $sanitized['color_start']      = isset($input['color_start']) ? sanitize_hex_color($input['color_start']) : '';
-        $sanitized['color_end']        = isset($input['color_end']) ? sanitize_hex_color($input['color_end']) : '';
-        $sanitized['opacity']          = isset($input['opacity']) ? str_replace(',', '.', $input['opacity']) : '1.0';
-        $sanitized['opacity']          = max(0.0, min(1.0, floatval($sanitized['opacity'])));
-        $sanitized['label_start']      = isset($input['label_start']) ? sanitize_text_field($input['label_start']) : 'Start';
-        $sanitized['label_end']        = isset($input['label_end']) ? sanitize_text_field($input['label_end']) : 'Meta';
-        $sanitized['content_selector'] = isset($input['content_selector']) ? sanitize_text_field($input['content_selector']) : '';
-        $sanitized['show_percentage']  = isset($input['show_percentage']) && $input['show_percentage'] === '1' ? '1' : '0';
-        
+    public function sanitize(array $input): array {
+    // Zawsze zaczynamy od aktualnych, zapisanych opcji, aby nie skasować ustawień z innych zakładek.
+    $sanitized = get_option(self::OPTION_NAME, []);
+    if (!isset($input['position'])) {
         return $sanitized;
     }
+
+    $sanitized['position'] = sanitize_key($input['position']);
+        $sanitized['color_start'] = isset($input['color_start']) ? sanitize_hex_color($input['color_start']) : '#4facfe';
+        $sanitized['color_end'] = isset($input['color_end']) ? sanitize_hex_color($input['color_end']) : '#43e97b';
+        if (isset($input['opacity'])) {
+            $opacity = str_replace(',', '.', $input['opacity']);
+            $sanitized['opacity'] = (string) max(0.0, min(1.0, floatval($opacity)));
+        }
+        $sanitized['label_start'] = isset($input['label_start']) ? sanitize_text_field($input['label_start']) : 'Start';
+        $sanitized['label_end'] = isset($input['label_end']) ? sanitize_text_field($input['label_end']) : 'Meta';
+        $sanitized['content_selector'] = isset($input['content_selector']) ? sanitize_text_field($input['content_selector']) : '';
+        $sanitized['show_percentage'] = (isset($input['show_percentage']) && $input['show_percentage'] === '1') ? '1' : '0';
+    return $sanitized;
+}
 
     // --- CALLBACKS --- //
     
