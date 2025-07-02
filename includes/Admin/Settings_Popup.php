@@ -72,13 +72,6 @@ class Settings_Popup {
         );
 
 
-        // Dodaj sekcję dla ustawień głównych popupa.
-        add_settings_section(
-            'popup_main_section',                   // Unikalne ID sekcji
-            __('Ustawienia Główne Popupa', 'pro_reader'), // Tytuł sekcji widoczny na stronie
-            [$this, 'render_section_info'],         // Funkcja renderująca opis pod tytułem sekcji
-            'reader-engagement-pro-popup'           // Slug strony/zakładki, na której ma się pojawić
-        );
     }
 
     /**

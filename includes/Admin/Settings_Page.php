@@ -115,7 +115,7 @@ class Settings_Page {
      * Kolejkuje skrypty i style potrzebne na stronie ustawień.
      */
     public function enqueue_admin_assets($hook) {
-        // Ładuj zasoby tylko na naszej stronie ustawień.
+        
         if ($hook !== 'toplevel_page_reader-engagement-pro') {
             return;
         }
@@ -132,29 +132,70 @@ class Settings_Page {
         
         $custom_js = "
             jQuery(document).ready(function($) {
-                // Selektory
-                var checkbox = $('#popup_trigger_scroll_percent_enable');
-                var targetRow = $('#popup_trigger_scroll_percent').closest('tr');
 
-                // Funkcja do przełączania widoczności
-                function toggleVisibility() {
-                    if (checkbox.is(':checked')) {
-                        targetRow.show();
-                    } else {
-                        targetRow.hide();
+                // --- START: Logika ukrywania/pokazywania opcji Popup ---
+
+                // 1. Selektory
+                var mainPopupEnableCheckbox = $('#popup_enable');
+                
+                // Sprawdzamy, czy ten checkbox w ogóle istnieje na stronie (czyli czy jesteśmy w dobrej zakładce)
+                if (mainPopupEnableCheckbox.length) {
+                    
+                    // Znajdujemy wszystkie pozostałe wiersze ustawień w tej samej sekcji.
+                    // To podejście jest elastyczne - nie musimy wymieniać ID każdego pola.
+                    var dependentPopupOptions = mainPopupEnableCheckbox.closest('tr').siblings();
+
+                    // 2. Funkcja do przełączania widoczności
+                    function togglePopupOptionsVisibility() {
+                        if (mainPopupEnableCheckbox.is(':checked')) {
+                            dependentPopupOptions.show();
+                            // UWAGA: Musimy ponownie wywołać logikę dla zagnieżdżonego checkboxa,
+                            // aby upewnić się, że jego pole jest w prawidłowym stanie.
+                            $('#popup_trigger_scroll_percent_enable').trigger('change');
+                        } else {
+                            dependentPopupOptions.hide();
+                        }
                     }
+
+                    // 3. Inicjalizacja i nasłuchiwanie
+                    // Sprawdź stan przy załadowaniu strony
+                    togglePopupOptionsVisibility();
+
+                    // Dodaj listener do zmiany stanu głównego checkboxa
+                    mainPopupEnableCheckbox.on('change', function() {
+                        togglePopupOptionsVisibility();
+                    });
                 }
+                
+                // --- KONIEC: Logika ukrywania/pokazywania opcji Popup ---
 
-                // Sprawdź stan przy załadowaniu strony
-                toggleVisibility();
 
-                // Dodaj listener do zmiany stanu checkboxa
-                checkbox.on('change', function() {
-                    toggleVisibility();
-                });
+                // --- Istniejąca logika dla pola 'Wyzwalacz: Procent przewinięcia' ---
+                var nestedCheckbox = $('#popup_trigger_scroll_percent_enable');
+                
+                if(nestedCheckbox.length) {
+                    var targetRow = $('#popup_trigger_scroll_percent').closest('tr');
+
+                    function toggleNestedVisibility() {
+                        // Dodatkowy warunek: pole procentowe jest widoczne tylko, gdy jego checkbox jest zaznaczony
+                        // ORAZ gdy cały moduł popup jest włączony.
+                        if (nestedCheckbox.is(':checked') && mainPopupEnableCheckbox.is(':checked')) {
+                            targetRow.show();
+                        } else {
+                            targetRow.hide();
+                        }
+                    }
+
+                    // Stan początkowy jest już obsługiwany przez `togglePopupOptionsVisibility`
+                    // i jego trigger('change').
+                    // Dodajemy listener do zmiany stanu zagnieżdżonego checkboxa
+                    nestedCheckbox.on('change', function() {
+                        toggleNestedVisibility();
+                    });
+                }
             });
         ";
         wp_add_inline_script('wp-color-picker', $custom_js);
-        
+
     }
 }
