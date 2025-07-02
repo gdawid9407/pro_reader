@@ -81,6 +81,7 @@ class Popup {
             'REP_Popup_Settings',
             [
                 'popupEnable'            => $this->options['popup_enable'] ?? '0',
+                'triggerByScrollPercentEnable'  => $this->options['popup_trigger_scroll_percent_enable'] ?? '1',
                 'triggerByScrollPercent' => $this->options['popup_trigger_scroll_percent'] ?? 85,
                 'triggerByTime'          => $this->options['popup_trigger_time'] ?? 60,
                 'triggerByScrollUp'      => $this->options['popup_trigger_scroll_up'] ?? '0',

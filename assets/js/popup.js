@@ -4,10 +4,7 @@ jQuery(function($) {
     // --- 1. INICJALIZACJA I POBRANIE ELEMENTÓW ---
 
     const settings = window.REP_Popup_Settings || {};
-
-    // KRYTYCZNA ZMIANA: Sprawdź, czy popup jest w ogóle włączony.
-    // Jeśli nie, zakończ działanie skryptu natychmiast.
-    // To respektuje główny włącznik z panelu admina.
+    
     if (!settings.popupEnable || settings.popupEnable !== '1') {
         return;
     }
@@ -40,22 +37,15 @@ jQuery(function($) {
 
         $overlay.add($popupContainer).addClass('is-visible');
         
-        // Zablokuj scrollowanie tła
         $('body').addClass('rep-popup-is-open');
     }
     
-    /**
-     * Ukrywa popup i przywraca scrollowanie strony.
-     */
     function hidePopup() {
         $overlay.add($popupContainer).removeClass('is-visible');
         
-        // ZMIANA: Zamiast .css(), usuwamy klasę z <body>
         $('body').removeClass('rep-popup-is-open');
     }
-    /**
-     * Wykonuje żądanie AJAX w celu pobrania rekomendacji artykułów.
-     */
+    
     function fetchRecommendations() {
         if (ajaxRequestSent || !settings.ajaxUrl) { // Dodatkowe zabezpieczenie
             return;
@@ -91,13 +81,11 @@ jQuery(function($) {
         if (timeInMs > 0) {
             setTimeout(showPopup, timeInMs);
         }
-        // ZMIANA: Logika scrollowania jest teraz w jednej funkcji dla optymalizacji.
-        // Listener jest dodawany tylko jeśli którykolwiek z wyzwalaczy scrollowania jest potrzebny.
-        const scrollPercent = parseFloat(settings.triggerByScrollPercent);
+        const scrollPercentEnabled = settings.triggerByScrollPercentEnable === '1';
         const scrollUpEnabled = settings.triggerByScrollUp === '1';
 
-        if (scrollPercent > 0 || scrollUpEnabled) {
-             $(window).on('scroll.repPopup', handleScroll);
+        if (scrollPercentEnabled || scrollUpEnabled) {
+            $(window).on('scroll.repPopup', handleScroll);
         }
     }
     // ZMIANA: Wydzielona funkcja obsługi scrollowania
@@ -109,16 +97,17 @@ jQuery(function($) {
         
         const scrollTop = $(this).scrollTop();
         
-        // Wyzwalacz: Procent przescrollowania
-        const docHeight = $(document).height();
-        const winHeight = $(window).height();
-        const scrollableHeight = docHeight - winHeight;
+         if (settings.triggerByScrollPercentEnable === '1') {
+            const docHeight = $(document).height();
+            const winHeight = $(window).height();
+            const scrollableHeight = docHeight - winHeight;
 
-        if (scrollableHeight > 0) {
-            const currentScrollPercent = (scrollTop / scrollableHeight) * 100;
-            if (currentScrollPercent >= parseFloat(settings.triggerByScrollPercent)) {
-                showPopup();
-                return; // Zatrzymaj dalsze sprawdzanie po aktywacji
+            if (scrollableHeight > 0) {
+                const currentScrollPercent = (scrollTop / scrollableHeight) * 100;
+                if (currentScrollPercent >= parseFloat(settings.triggerByScrollPercent)) {
+                    showPopup();
+                    return; // Zatrzymaj dalsze sprawdzanie po aktywacji
+                }
             }
         }
         // Wyzwalacz: Scroll w górę po scrollu w dół
