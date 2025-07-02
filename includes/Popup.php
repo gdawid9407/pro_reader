@@ -27,6 +27,9 @@ class Popup {
     public function __construct() {
         // Wczytanie opcji wtyczki.
         $this->options = get_option('reader_engagement_pro_options', []);
+        
+        if ( empty($this->options['popup_enable']) || $this->options['popup_enable'] !== '1' ) {
+            return; }
 
         add_action('init', [$this, 'register_shortcode']);
         add_action('wp_ajax_nopriv_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
@@ -77,8 +80,10 @@ class Popup {
             'rep-popup-script',
             'REP_Popup_Settings',
             [
-                'triggerByScrollPercent' => $this->options['popup_trigger_scroll_percent'] ?? 50,
+                'popupEnable'            => $this->options['popup_enable'] ?? '0',
+                'triggerByScrollPercent' => $this->options['popup_trigger_scroll_percent'] ?? 85,
                 'triggerByTime'          => $this->options['popup_trigger_time'] ?? 60,
+                'triggerByScrollUp'      => $this->options['popup_trigger_scroll_up'] ?? '0',
                 'ajaxUrl'                => admin_url('admin-ajax.php'),
                 'nonce'                  => wp_create_nonce('rep_recommendations_nonce'),
             ]

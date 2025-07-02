@@ -77,7 +77,8 @@ class Settings_Progress_Bar {
      */
     public function sanitize($input): array {
         // Pobieramy istniejące opcje, aby nie nadpisać ustawień z innych zakładek.
-        $sanitized = $this->options;
+        $current_options = get_option(self::OPTION_NAME, []);
+        $sanitized = $current_options;
 
         $sanitized['position']         = isset($input['position']) ? sanitize_key($input['position']) : 'top';
         $sanitized['color_start']      = isset($input['color_start']) ? sanitize_hex_color($input['color_start']) : '';

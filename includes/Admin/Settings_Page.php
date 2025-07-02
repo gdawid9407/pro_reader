@@ -13,6 +13,7 @@ class Settings_Page {
         new Settings_Popup();
        
         add_action('admin_menu', [$this, 'add_plugin_page']);
+        add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
     }
 

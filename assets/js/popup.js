@@ -3,53 +3,49 @@ jQuery(function($) {
 
     // --- 1. INICJALIZACJA I POBRANIE ELEMENTÓW ---
 
-    // Obiekt z ustawieniami przekazany z PHP przez wp_localize_script
     const settings = window.REP_Popup_Settings || {};
 
-    // Główne elementy DOM popupa
+    // KRYTYCZNA ZMIANA: Sprawdź, czy popup jest w ogóle włączony.
+    // Jeśli nie, zakończ działanie skryptu natychmiast.
+    // To respektuje główny włącznik z panelu admina.
+    if (!settings.popupEnable || settings.popupEnable !== '1') {
+        return;
+    }
+
     const $popupContainer = $('#rep-intelligent-popup__container');
     const $overlay = $('#rep-intelligent-popup__overlay');
     const $closeButton = $('#rep-intelligent-popup__close');
     const $recommendationList = $('#rep-intelligent-popup__list');
 
-    // Jeśli na stronie nie ma kontenera popupa, przerwij działanie skryptu.
     if (!$popupContainer.length) {
         return;
     }
-    
-    // Flagi stanu, aby zapewnić jednorazowe wykonanie akcji
+
     let popupHasBeenShown = false;
     let ajaxRequestSent = false;
-    
-    // Zmienne do śledzenia scrolla
     let lastScrollTop = 0;
     let hasScrolledDown = false;
-    const scrollDownThreshold = 500; // Ilość pikseli, którą trzeba przewinąć w dół, aby uznać to za "celowe" działanie
+    const scrollDownThreshold = 500;
 
 
     // --- 2. GŁÓWNE FUNKCJE KONTROLUJĄCE POPUP ---
 
     /**
      * Pokazuje popup i blokuje scrollowanie strony.
-     * Wywołuje funkcję pobierającą rekomendacje.
      */
     function showPopup() {
         if (popupHasBeenShown) {
-            return; // Nie pokazuj popupa ponownie
+            return;
         }
         popupHasBeenShown = true;
         
-        // Pobierz rekomendacje, jeśli jeszcze tego nie zrobiono
         fetchRecommendations();
 
-        // Płynne pojawienie się popupa i nakładki
         $overlay.fadeIn(300);
         $popupContainer.css('display', 'block').animate({ opacity: 1 }, 300);
 
-        // Zapobiegaj scrollowaniu tła, gdy popup jest otwarty
         $('body').addClass('rep-popup-is-open');
     }
-
     /**
      * Ukrywa popup i przywraca scrollowanie strony.
      */
@@ -61,12 +57,11 @@ jQuery(function($) {
         
         $('body').removeClass('rep-popup-is-open');
     }
-
     /**
      * Wykonuje żądanie AJAX w celu pobrania rekomendacji artykułów.
      */
     function fetchRecommendations() {
-        if (ajaxRequestSent) {
+        if (ajaxRequestSent || !settings.ajaxUrl) { // Dodatkowe zabezpieczenie
             return;
         }
         ajaxRequestSent = true;
@@ -75,14 +70,8 @@ jQuery(function($) {
             url: settings.ajaxUrl,
             type: 'POST',
             data: {
-                action: 'fetch_recommendations', // Nazwa akcji musi pasować do tej w PHP
+                action: 'fetch_recommendations',
                 nonce: settings.nonce,
-                // Można tu dodać ID bieżącego posta, aby go wykluczyć z rekomendacji
-                // current_post_id: settings.postId 
-            },
-            beforeSend: function() {
-                // Komunikat ładowania jest już w HTML, więc nie trzeba nic robić.
-                // Można tu dodać np. bardziej rozbudowany loader.
             },
             success: function(response) {
                 if (response.success && response.data.html) {
@@ -99,54 +88,69 @@ jQuery(function($) {
 
 
     // --- 3. WYZWALACZE (TRIGGERS) ---
+    // Funkcja do inicjalizacji wyzwalaczy.
+    function initializeTriggers() {
         // Wyzwalacz czasowy
-    const timeInMs = parseInt(settings.triggerByTime, 10) * 1000;
-    if (timeInMs > 0) {
-        setTimeout(showPopup, timeInMs);
+        const timeInMs = parseInt(settings.triggerByTime, 10) * 1000;
+        if (timeInMs > 0) {
+            setTimeout(showPopup, timeInMs);
+        }
+        // ZMIANA: Logika scrollowania jest teraz w jednej funkcji dla optymalizacji.
+        // Listener jest dodawany tylko jeśli którykolwiek z wyzwalaczy scrollowania jest potrzebny.
+        const scrollPercent = parseFloat(settings.triggerByScrollPercent);
+        const scrollUpEnabled = settings.triggerByScrollUp === '1';
+
+        if (scrollPercent > 0 || scrollUpEnabled) {
+             $(window).on('scroll.repPopup', handleScroll);
+        }
     }
-    
-    // Nasłuchiwanie na scrollowanie strony dla dwóch pozostałych wyzwalaczy
-    $(window).on('scroll', function() {
+    // ZMIANA: Wydzielona funkcja obsługi scrollowania
+    function handleScroll() {
         if (popupHasBeenShown) {
-            $(window).off('scroll'); // Jeśli popup został pokazany, usuń listener, aby oszczędzić zasoby
+            $(window).off('scroll.repPopup'); // Użycie namespace pozwala usunąć tylko ten konkretny event.
             return;
         }
         
         const scrollTop = $(this).scrollTop();
-    // Wyzwalacz: Procent przescrollowania
+        
+        // Wyzwalacz: Procent przescrollowania
         const docHeight = $(document).height();
         const winHeight = $(window).height();
         const scrollableHeight = docHeight - winHeight;
+
         if (scrollableHeight > 0) {
-            const scrollPercent = (scrollTop / scrollableHeight) * 100;
-            if (scrollPercent >= parseFloat(settings.triggerByScrollPercent)) {
+            const currentScrollPercent = (scrollTop / scrollableHeight) * 100;
+            if (currentScrollPercent >= parseFloat(settings.triggerByScrollPercent)) {
                 showPopup();
                 return; // Zatrzymaj dalsze sprawdzanie po aktywacji
             }
         }
-    // Wyzwalacz: Scroll w górę po scrollu w dół
-        if (scrollTop > lastScrollTop) {
-            // Użytkownik scrolluje w dół
-            if (scrollTop > scrollDownThreshold) {
-                 hasScrolledDown = true;
-            }
-        } else if (scrollTop < lastScrollTop) {
-            // Użytkownik scrolluje w górę
-            if (hasScrolledDown) {
-                showPopup();
-                return; // Zatrzymaj dalsze sprawdzanie po aktywacji
+        // Wyzwalacz: Scroll w górę po scrollu w dół
+        // KRYTYCZNA ZMIANA: Sprawdzamy, czy ten wyzwalacz jest włączony w ustawieniach.
+        if (settings.triggerByScrollUp === '1') {
+            if (scrollTop > lastScrollTop) {
+                // Użytkownik scrolluje w dół
+                if (scrollTop > scrollDownThreshold) {
+                     hasScrolledDown = true;
+                }
+            } else if (scrollTop < lastScrollTop) {
+                // Użytkownik scrolluje w górę
+                if (hasScrolledDown) {
+                    showPopup();
+                    return; // Zatrzymaj dalsze sprawdzanie po aktywacji
+                }
             }
         }
-        lastScrollTop = scrollTop;
-    });
+            lastScrollTop = scrollTop;
+    }
+    // --- 4. OBSŁUGA ZDARZEŃ ---
+    // Inicjalizacja wyzwalaczy
+    initializeTriggers();
 
-
-    // --- 4. OBSŁUGA ZAMYKANIA POPUPA ---
-    
+    // Obsługa zamykania popupa
     $closeButton.on('click', hidePopup);
-    $overlay.on('click', hidePopup); // Zamykanie po kliknięciu w tło
+    $overlay.on('click', hidePopup);
     
-    // Zamykanie po naciśnięciu klawisza "Escape"
     $(document).on('keyup', function(e) {
         if (e.key === "Escape" && $popupContainer.is(':visible')) {
             hidePopup();
