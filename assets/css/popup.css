@@ -18,12 +18,23 @@
 }
 
 #rep-intelligent-popup__header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 16px;
+  display: block; align-items: center;
+  margin-bottom: 16px; padding-right: 40px;
 }
 #rep-intelligent-popup__title { font-size: 1.5rem; margin: 0; }
 #rep-intelligent-popup__close {
-  background: transparent; border: none; font-size: 1.25rem; cursor: pointer;
+  position: absolute; /* <-- KLUCZOWA ZMIANA */
+  top: 12px;          /* Odległość od górnej krawędzi popupa */
+  right: 12px;        /* Odległość od prawej krawędzi popupa */
+
+  background: transparent;
+  border: none;
+  font-size: 2rem; /* Trochę większy dla lepszej widoczności */
+  line-height: 1;  /* Lepsze wyrównanie pionowe */
+  color: #555;
+  cursor: pointer;
+  padding: 0;      /* Usuwamy domyślny padding przycisku */
+  z-index: 10;     /* Pewność, że przycisk jest na wierzchu */
 }
 
 #rep-intelligent-popup__list {
