@@ -1,57 +1,57 @@
 /* Główny kontener, który jest pozycjonowany i ma stałe wymiary */
 #progress-bar-container-wrapper {
     position: fixed;
-    left: 0;
-    right: 0;
-    width: 100%;
     z-index: 9999;
     pointer-events: none;
-    height: 20px; /* Wysokość całego paska */
 }
 
 .proreader-container.position-top { top: 0; }
 .proreader-container.position-bottom { bottom: 0; }
 
-/* Nowy element, który będzie tłem z gradientem. Zajmuje 100% szerokości i wysokości kontenera. */
+/* 
+ * ZMIANA: Kontener gradientu staje się kontekstem pozycjonowania dla maski i licznika.
+ * Usuwamy z-index stąd.
+*/
 #progress-bar-gradient {
-    position: absolute;
+    position: relative; /* Kluczowe dla pozycjonowania dzieci */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to right, #ccc, #aaa);
-    /* ZMIANA: Najniższa warstwa */
-    z-index: 1;
+    background: linear-gradient(to right, #ccc, #aaa); /* Domyślny gradient, zostanie nadpisany */
 }
 
-/* Element paska, który jest teraz nakładką na gradient */
-/* Działa jak kurtyna, która się zwija, odsłaniając gradient pod spodem */
+/* 
+ * ZMIANA: Maska musi być na NAJWYŻSZEJ warstwie WEWNĄTRZ swojego kontenera, 
+ * aby zakrywać gradient i licznik.
+*/
 #progress-bar {
     position: absolute;
     top: 0;
-    right: 0; /* Kluczowe: Jest przyklejony do prawej krawędzi */
-    width: 100%; /* Zaczyna od 100% szerokości, JS będzie ją zmniejszać do 0% */
+    right: 0; 
+    width: 100%; 
     height: 100%;
-    background-color: #fff; /* Kolor tła strony lub inny kolor maskujący */
-    transition: width 0.5s ease-out;
-    z-index: 2;
+    background-color: #fff; 
+    transition: width 0.2s ease-out; /* Można dostosować płynność */
+    z-index: 2; /* Warstwa maski */
 }
 
+/* 
+ * ZMIANA: Etykiety są teraz na samej górze wszystkiego.
+*/
 .proreader-labels {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    /* Użycie Flexbox do rozmieszczenia etykiet */
     display: flex;
-    align-items: center; /* Wyśrodkowanie w pionie */
-    justify-content: space-between; /* Rozmieszczenie na krańcach */
-    padding: 0 15px; /* Wewnętrzny odstęp od krawędzi paska */
+    align-items: center; 
+    justify-content: space-between; 
+    padding: 0 15px; 
     box-sizing: border-box;
-    /* Zapewnia, że etykiety nie będą przechwytywać kliknięć myszy */
     pointer-events: none; 
-    z-index: 3; 
+    z-index: 3; /* Najwyższa warstwa - etykiety */
 }
 
 /* Styl dla pojedynczej etykiety */
@@ -59,20 +59,21 @@
     color: #333;
     font-size: 14px;
     font-weight: bold;
-    /* Subtelny cień dla lepszej czytelności na gradientowym tle */
-    text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
 }
 
+/* 
+ * ZMIANA: Licznik jest teraz pozycjonowany wewnątrz kontenera gradientu
+ * i ma niższy z-index niż maska.
+*/
 #rep-progress-percentage {
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    color: #fff; /* Kolor tekstu */
+    color: #000; /* ZMIANA: Ciemny kolor dla lepszej widoczności na jasnym gradiencie */
     font-size: 12px;
     font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); /* Cień dla lepszej czytelności */
-    line-height: 5px; /* Dopasowanie do wysokości paska */
-    z-index: 2; /* Upewniamy się, że jest nad paskiem wypełnienia */
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7); /* Cień dla lepszej czytelności */
+    z-index: 1; /* Warstwa licznika - pod maską! */
 }
-

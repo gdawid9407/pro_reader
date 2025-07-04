@@ -48,20 +48,48 @@ class ProgressBar {
         $label_start = $opts['label_start'] ?? 'Start';
         $label_end   = $opts['label_end'] ?? 'Meta';
         $show_percentage = $opts['show_percentage'] ?? '0';
+        $bar_height = $opts['bar_height'] ?? 20;
+        $bar_width = $opts['bar_width'] ?? 100;
 
-        ob_start();
+             // Budowanie atrybutu 'style'
+        $styles = [
+            'opacity' => esc_attr($opacity),
+            'height'  => esc_attr($bar_height) . 'px',
+            'width'   => esc_attr($bar_width) . '%',
+        ];
+
+        // Jeśli szerokość jest mniejsza niż 100%, centrujemy pasek
+        if ($bar_width < 100) {
+            $styles['left'] = '50%';
+            $styles['transform'] = 'translateX(-50%)';
+        } else {
+            $styles['left'] = '0';
+        }
+
+        // Konwertowanie tablicy stylów na string
+        $style_attr = '';
+        foreach ($styles as $key => $value) {
+            $style_attr .= $key . ':' . $value . ';';
+        }
+
+ ob_start();
         ?>
-        <div id="progress-bar-container-wrapper" class="proreader-container <?php echo esc_attr($posClass); ?>" style="opacity:<?php echo esc_attr($opacity); ?>;">
+        <div id="progress-bar-container-wrapper" class="proreader-container <?php echo esc_attr($posClass); ?>" style="<?php echo $style_attr; ?>">
             <div id="progress-bar-gradient" class="proreader-gradient">
+                
+                <!-- ZMIANA: Licznik procentowy jest teraz WEWNĄTRZ kontenera z gradientem -->
+                <?php if ($show_percentage === '1') : ?>
+                    <span id="rep-progress-percentage" style="line-height: <?php echo esc_attr($bar_height); ?>px;">0%</span>
+                <?php endif; ?>
+
                 <div id="progress-bar" class="proreader-bar"></div>
             </div>
+            
+            <!-- Etykiety Start/Meta pozostają na zewnątrz, aby były zawsze na wierzchu -->
             <div class="proreader-labels">
                  <span class="label-start"><?php echo esc_html($label_start); ?></span>
                 <span class="label-end"><?php echo esc_html($label_end); ?></span>
             </div>
-            <?php if ($show_percentage === '1') : ?>
-                <span id="rep-progress-percentage">0%</span>
-            <?php endif; ?>
         </div>
         <?php
         return ob_get_clean();
