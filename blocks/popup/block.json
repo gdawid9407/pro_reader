@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 2,
+    "name": "pro-reader/popup",
+    "title": "PRO Reader Popup",
+    "category": "widgets",
+    "icon": "megaphone",
+    "render": "pro_reader_render_popup_block",
+    "attributes": {
+        "content": {
+            "type": "string",
+            "source": "html",
+            "selector": ".pro-reader-block-content"
+        },
+        "triggerScrollPercentEnable": {
+            "type": "boolean",
+            "default": true
+        },
+        "triggerScrollPercent": {
+            "type": "number",
+            "default": 85
+        },
+        "triggerTime": {
+            "type": "number",
+            "default": 60
+        },
+        "triggerScrollUp": {
+            "type": "boolean",
+            "default": false
+        }
+    }
+}

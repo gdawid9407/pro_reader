@@ -42,3 +42,40 @@ function rep_init_plugin() {
 add_action('plugins_loaded', 'rep_init_plugin');
 
 
+/**
+ * =================================================================
+ *  REJESTRACJA I OBSŁUGA BLOKU GUTENBERGA DLA POPUP
+ * =================================================================
+ */
+
+/**
+ * Rejestruje metadane bloku z pliku block.json.
+ */
+function pro_reader_register_blocks() {
+    register_block_type( REP_PLUGIN_PATH . 'blocks/popup' );
+}
+add_action( 'init', 'pro_reader_register_blocks' );
+
+/**
+ * Ręcznie ładuje skrypty edytora bloku z poprawnymi zależnościami.
+ * To jest nasz bypass na problem z automatycznym ładowaniem.
+ */
+function pro_reader_enqueue_block_editor_assets() {
+    wp_enqueue_script(
+        'pro-reader-popup-block', // Unikalna nazwa uchwytu
+        REP_PLUGIN_URL . 'assets/js/popup-block.js', // Ścieżka do skryptu
+        array( 'wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n' ), // ZALEŻNOŚCI!
+        '1.0.0', // Wersja pliku
+        true // Załaduj w stopce
+    );
+}
+add_action( 'enqueue_block_editor_assets', 'pro_reader_enqueue_block_editor_assets' );
+
+
+/**
+ * Funkcja renderująca blok na stronie publicznej (pozostaje bez zmian).
+ */
+function pro_reader_render_popup_block( $attributes ) {
+    // ... cała treść tej funkcji, którą miałeś wcześniej ...
+    // ... od wp_enqueue_style do return ob_get_clean(); ...
+}
