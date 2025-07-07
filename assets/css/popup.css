@@ -1,95 +1,155 @@
 #rep-intelligent-popup__overlay {
   position: fixed;
-  /* ZMIANA: Użycie wszystkich 4 współrzędnych jest bardziej niezawodne niż width/height */
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6); /* Przyciemnienie tła dla lepszego kontrastu */
   z-index: 9998;
 }
 
 #rep-intelligent-popup__container {
   position: fixed;
-  top: 50%; left: 50%; transform: translate(-50%,-50%);
-  width: 600px; max-width: 90%; padding: 24px;
-  background: #ffffff; border-radius: 16px;
+  top: 50%; 
+  left: 50%;
+  width: 600px; 
+  max-width: 90%; 
+  padding: 24px;
+  background: #ffffff; 
+  border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   z-index: 9999;
+  display: flex; /* Zmiana na flexbox dla lepszej kontroli nad układem */
+  flex-direction: column; /* Ułożenie elementów w kolumnie */
+  max-height: 90vh; /* Ograniczenie wysokości, aby popup nie wychodził poza ekran */
 }
 @media(max-width: 480px) {
   #rep-intelligent-popup__container { padding: 16px; }
 }
 
 #rep-intelligent-popup__header {
-  display: block; align-items: center;
-  margin-bottom: 16px; padding-right: 40px;
+  padding-right: 40px; /* Miejsce na przycisk zamknięcia */
+  flex-shrink: 0; /* Header nie będzie się kurczył */
 }
-#rep-intelligent-popup__title { font-size: 1.5rem; margin: 0; }
-#rep-intelligent-popup__close {
-  position: absolute; /* <-- KLUCZOWA ZMIANA */
-  top: 12px;          /* Odległość od górnej krawędzi popupa */
-  right: 12px;        /* Odległość od prawej krawędzi popupa */
 
+#rep-intelligent-popup__custom-content {
+  margin-bottom: 20px; /* Odstęp między treścią customową a listą */
+  flex-shrink: 0; /* Treść nie będzie się kurczyć */
+}
+
+#rep-intelligent-popup__title { 
+  font-size: 1.5rem; 
+  margin: 0; 
+}
+
+#rep-intelligent-popup__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
   background: transparent;
   border: none;
-  font-size: 2rem; /* Trochę większy dla lepszej widoczności */
-  line-height: 1;  /* Lepsze wyrównanie pionowe */
+  font-size: 2rem;
+  line-height: 1;
   color: #555;
   cursor: pointer;
-  padding: 0;      /* Usuwamy domyślny padding przycisku */
-  z-index: 10;     /* Pewność, że przycisk jest na wierzchu */
+  padding: 0;
+  z-index: 10;
 }
 
 #rep-intelligent-popup__list {
-  list-style: none; margin: 0; padding: 0;
+  list-style: none; 
+  margin: 0; 
+  padding: 0;
+  overflow-y: auto; /* Kluczowe: Dodaje scroll, jeśli lista jest za długa */
+  border-top: 1px solid #eee; /* Wizualny separator */
+  padding-top: 20px; /* Odstęp od separatora */
 }
+
 .rep-rec-item {
-  display: flex; align-items: center; margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start; /* Wyrównanie do góry dla elastyczności */
+  margin-bottom: 16px; /* Zwiększony odstęp między elementami */
 }
+
+.rep-rec-item:last-child {
+  margin-bottom: 0;
+}
+
 .rep-rec-thumb {
-  flex: 0 0 80px; height: 60px; margin-right: 12px;
-  object-fit: cover; border-radius: 4px;
+  flex: 0 0 100px; /* Stała szerokość obrazka */
+  height: 75px; /* Stała wysokość */
+  margin-right: 16px;
+  object-fit: cover; /* Kadrowanie obrazka zamiast rozciągania */
+  border-radius: 8px; /* Zaokrąglenie rogów */
+  background-color: #f0f0f0; /* Tło dla placeholderów */
 }
+
+.rep-rec-thumb-placeholder {
+  /* Można dodać specyficzne style dla placeholdera, np. filtr szarości */
+  opacity: 0.5;
+}
+
 .rep-rec-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
-.rep-rec-title { font-size: 1rem; margin: 0 0 4px; }
+
+.rep-rec-date {
+  font-size: 0.8rem;
+  color: #777;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rep-rec-title { 
+  font-size: 1.1rem; 
+  line-height: 1.3;
+  margin: 0 0 8px; 
+}
+
 .rep-rec-link {
-  font-size: 0.875rem; text-decoration: none; color: #0073aa;
+  font-size: 0.9rem; 
+  font-weight: bold;
+  text-decoration: none; 
+  color: #0073aa;
+  margin-top: auto; /* Wypycha link na dół kontenera .rep-rec-content */
+}
+.rep-rec-link:hover {
+  text-decoration: underline;
 }
 
-#rep-intelligent-popup__footer {
-  text-align: right; margin-top: 20px;
-}
-#rep-intelligent-popup__button {
-  padding: 10px 20px; font-size: 1rem;
-  background: #0073aa; color: #fff; border: none; border-radius: 4px;
-  cursor: pointer;
+/* Style dla komunikatów */
+.rep-rec-item-loading,
+.rep-rec-item-error {
+  color: #555;
+  text-align: center;
+  padding: 20px;
 }
 
-/* Ukryj domyślnie overlay i container */
+/* Ukrywanie i pokazywanie popupa (animacje) */
 #rep-intelligent-popup__overlay,
 #rep-intelligent-popup__container {
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.3s ease, visibility 0s 0.3s;
 }
 
 #rep-intelligent-popup__container {
-    transform: translate(-50%, -50%) scale(0.95);
-    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  transform: translate(-50%, -50%) scale(0.95);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* Style dla widocznego popupa (po dodaniu klasy .is-visible w JS) */
 #rep-intelligent-popup__overlay.is-visible,
 #rep-intelligent-popup__container.is-visible {
   opacity: 1;
   visibility: visible;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s;
 }
 
 #rep-intelligent-popup__container.is-visible {
-    transform: translate(-50%, -50%) scale(1);
+  transform: translate(-50%, -50%) scale(1);
 }
 
 body.rep-popup-is-open {
