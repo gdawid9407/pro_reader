@@ -83,19 +83,27 @@ class Settings_Popup {
             'popup_content_section'
         );
 
-        // NOWA SEKCJA 3: REKOMENDACJE
+        // SEKCJA 3: REKOMENDACJE
         add_settings_section(
             'popup_recommendations_section',
             __('Rekomendacje', 'pro_reader'),
-            [$this, 'render_recommendations_section_info'], // Nowa funkcja
+            [$this, 'render_recommendations_section_info'],
             'reader-engagement-pro-popup'
         );
         
-        // NOWE POLE: Liczba rekomendacji
         add_settings_field(
             'popup_recommendations_count',
             __('Liczba rekomendowanych wpisów', 'pro_reader'),
-            [$this, 'recommendations_count_callback'], // Nowy callback
+            [$this, 'recommendations_count_callback'],
+            'reader-engagement-pro-popup',
+            'popup_recommendations_section'
+        );
+        
+        // NOWE POLE: Układ rekomendacji
+        add_settings_field(
+            'popup_recommendations_layout',
+            __('Układ rekomendacji', 'pro_reader'),
+            [$this, 'recommendations_layout_callback'], // Nowy callback
             'reader-engagement-pro-popup',
             'popup_recommendations_section'
         );
@@ -109,9 +117,6 @@ class Settings_Popup {
         echo '<p>' . esc_html__('Tutaj możesz zdefiniować treść, która pojawi się nad listą polecanych artykułów. Możesz używać formatowania tekstu, a nawet dodawać obrazy.', 'pro_reader') . '</p>';
     }
 
-    /**
-     * NOWOŚĆ: Wyświetla informacyjny tekst pod tytułem sekcji rekomendacji.
-     */
     public function render_recommendations_section_info(): void {
         echo '<p>' . esc_html__('Zarządzaj ustawieniami dotyczącymi rekomendowanych artykułów i stron.', 'pro_reader') . '</p>';
     }
@@ -140,12 +145,16 @@ class Settings_Popup {
             $sanitized['popup_content_main'] = wp_kses_post($input['popup_content_main']);
         }
 
-        // NOWOŚĆ: Sanitacja pola liczby rekomendacji.
         if (isset($input['popup_recommendations_count'])) {
-            // absint() zamienia wartość na dodatnią liczbę całkowitą.
             $count = absint($input['popup_recommendations_count']);
-            // Ograniczamy wartość do rozsądnego przedziału, np. od 1 do 10.
             $sanitized['popup_recommendations_count'] = max(1, min(10, $count));
+        }
+
+        // NOWOŚĆ: Sanitacja pola układu rekomendacji.
+        if (isset($input['popup_recommendations_layout'])) {
+            // Upewniamy się, że zapisana wartość to albo 'grid', albo 'list'.
+            $layout = sanitize_key($input['popup_recommendations_layout']);
+            $sanitized['popup_recommendations_layout'] = in_array($layout, ['list', 'grid']) ? $layout : 'list';
         }
         
         return $sanitized;
@@ -227,12 +236,8 @@ class Settings_Popup {
         echo '<p class="description">' . esc_html__('Ta treść zostanie wyświetlona w oknie popup nad listą rekomendacji.', 'pro_reader') . '</p>';
     }
 
-    /**
-     * NOWOŚĆ: Renderuje pole numeryczne dla liczby rekomendacji.
-     */
     public function recommendations_count_callback(): void {
         $options = get_option(self::OPTION_NAME, []);
-        // Ustawienie domyślnej wartości na 3, jeśli opcja nie istnieje.
         $value = $options['popup_recommendations_count'] ?? 3; 
         printf(
             '<input type="number" id="popup_recommendations_count" name="%s[popup_recommendations_count]" value="%d" min="1" max="10" />',
@@ -240,5 +245,25 @@ class Settings_Popup {
             esc_attr($value)
         );
         echo '<p class="description">' . esc_html__('Wybierz, ile najnowszych wpisów i stron ma się pojawić w rekomendacjach. (Wartość od 1 do 10)', 'pro_reader') . '</p>';
+    }
+    
+    /**
+     * NOWOŚĆ: Renderuje pole wyboru dla układu rekomendacji.
+     */
+    public function recommendations_layout_callback(): void {
+        $options = get_option(self::OPTION_NAME, []);
+        // Ustawienie domyślnej wartości na 'list', jeśli opcja nie istnieje.
+        $value = $options['popup_recommendations_layout'] ?? 'list';
+        ?>
+        <select id="popup_recommendations_layout" name="<?php echo esc_attr(self::OPTION_NAME); ?>[popup_recommendations_layout]">
+            <option value="list" <?php selected($value, 'list'); ?>>
+                <?php esc_html_e('Lista (jeden pod drugim)', 'pro_reader'); ?>
+            </option>
+            <option value="grid" <?php selected($value, 'grid'); ?>>
+                <?php esc_html_e('Siatka (jeden obok drugiego)', 'pro_reader'); ?>
+            </option>
+        </select>
+        <p class="description"><?php esc_html_e('Wybierz, jak mają być wyświetlane rekomendowane artykuły w popupie.', 'pro_reader'); ?></p>
+        <?php
     }
 }

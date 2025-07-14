@@ -50,10 +50,9 @@ class Popup {
             return;
         }
 
-        wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.0.1');
+        wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.0.2'); // Zwiększona wersja
         wp_enqueue_script('rep-popup-script', REP_PLUGIN_URL . 'assets/js/popup.js', ['jquery'], '1.0.1', true);
 
-        // Ustalenie ID bieżącego posta, jeśli jesteśmy na stronie pojedynczego wpisu/strony.
         $current_post_id = 0;
         if (is_singular()) {
             $current_post_id = get_the_ID();
@@ -70,7 +69,7 @@ class Popup {
                 'triggerByScrollUp'      => $this->options['popup_trigger_scroll_up'] ?? '0',
                 'ajaxUrl'                => admin_url('admin-ajax.php'),
                 'nonce'                  => wp_create_nonce('rep_recommendations_nonce'),
-                'currentPostId'          => $current_post_id, // WAŻNE: Przekazanie ID do JS
+                'currentPostId'          => $current_post_id,
             ]
         );
 
@@ -79,6 +78,10 @@ class Popup {
 
     private function generate_popup_html(): string {
         $popup_content = $this->options['popup_content_main'] ?? '';
+        
+        // NOWOŚĆ: Pobranie ustawienia layoutu i przygotowanie klasy CSS.
+        $layout_setting = $this->options['popup_recommendations_layout'] ?? 'list';
+        $layout_class = 'layout-' . sanitize_html_class($layout_setting); // np. 'layout-list' lub 'layout-grid'
 
         ob_start();
         ?>
@@ -93,7 +96,7 @@ class Popup {
                 <?php echo wp_kses_post($popup_content); ?>
             </div>
 
-            <ul id="rep-intelligent-popup__list">
+            <ul id="rep-intelligent-popup__list" class="<?php echo esc_attr($layout_class); ?>">
                 <!-- Informacja o ładowaniu, która zostanie zastąpiona przez AJAX -->
                 <li class="rep-rec-item-loading">Ładowanie rekomendacji...</li>
             </ul>
@@ -102,27 +105,20 @@ class Popup {
         return ob_get_clean();
     }
 
-    /**
-     * Obsługuje żądanie AJAX w celu pobrania i zwrócenia rekomendacji.
-     */
     public function fetch_recommendations_ajax(): void {
         check_ajax_referer('rep_recommendations_nonce', 'nonce');
         
-        // Pobierz liczbę postów do wyświetlenia z opcji, z domyślną wartością 3.
         $posts_count = $this->options['popup_recommendations_count'] ?? 3;
-        
-        // Pobierz ID bieżącego posta, aby go wykluczyć.
         $current_post_id = isset($_POST['current_post_id']) ? absint($_POST['current_post_id']) : 0;
         
         $args = [
-            'post_type'      => ['post', 'page'], // Rekomenduj zarówno wpisy jak i strony
+            'post_type'      => ['post', 'page'],
             'post_status'    => 'publish',
             'posts_per_page' => (int) $posts_count,
             'orderby'        => 'date',
-            'order'          => 'DESC', // Najnowsze najpierw
+            'order'          => 'DESC',
         ];
         
-        // Jeśli mamy ID bieżącego posta, dodaj je do tablicy wykluczeń.
         if ($current_post_id > 0) {
             $args['post__not_in'] = [$current_post_id];
         }
@@ -143,34 +139,40 @@ class Popup {
         }
     }
 
-    /**
-     * Generuje HTML dla pojedynczego elementu listy rekomendacji.
-     * @param int $post_id ID posta do wyrenderowania.
-     * @return string Wygenerowany HTML.
-     */
     private function generate_recommendation_item_html(int $post_id): string {
         $post_title = get_the_title($post_id);
         $post_link = get_permalink($post_id);
-        $post_date = get_the_date('j F Y', $post_id);
+        // ZMIANA FORMATU DATY, ABY PASOWAŁ DO OBRAZKA
+        $post_date = get_the_date('j F, Y', $post_id);
 
-        $thumbnail_html = get_the_post_thumbnail($post_id, 'thumbnail', ['class' => 'rep-rec-thumb']);
-        // Zapewnienie obrazka zastępczego, jeśli wpis nie ma miniaturki.
+        $thumbnail_html = get_the_post_thumbnail($post_id, 'medium', ['class' => 'rep-rec-thumb']); // Zmiana na 'medium' dla lepszej jakości w siatce
         if (empty($thumbnail_html)) {
-            $placeholder_url = REP_PLUGIN_URL . 'assets/images/placeholder.png'; // UWAGA: Należy dodać obrazek placeholder.png
+            $placeholder_url = REP_PLUGIN_URL . 'assets/images/placeholder.png';
             $thumbnail_html = sprintf(
-                '<img src="%s" alt="" class="rep-rec-thumb rep-rec-thumb-placeholder" width="150" height="150">',
+                '<img src="%s" alt="" class="rep-rec-thumb rep-rec-thumb-placeholder">',
                 esc_url($placeholder_url)
             );
+        }
+        
+        // NOWOŚĆ: Pobranie kategorii lub terminu taksonomii
+        $category_html = '';
+        $categories = get_the_category($post_id);
+        if (!empty($categories)) {
+            $category_html = ' • ' . esc_html($categories[0]->name);
         }
 
         ob_start();
         ?>
         <li class="rep-rec-item">
-            <?php echo $thumbnail_html; ?>
+            <a href="<?php echo esc_url($post_link); ?>" class="rep-rec-thumb-link">
+                <?php echo $thumbnail_html; ?>
+            </a>
             <div class="rep-rec-content">
-                <p class="rep-rec-date"><?php echo esc_html($post_date); ?></p>
-                <h3 class="rep-rec-title"><?php echo esc_html($post_title); ?></h3>
-                <a href="<?php echo esc_url($post_link); ?>" class="rep-rec-link">Zobacz więcej</a>
+                <p class="rep-rec-date"><?php echo esc_html($post_date) . $category_html; ?></p>
+                <h3 class="rep-rec-title">
+                     <a href="<?php echo esc_url($post_link); ?>"><?php echo esc_html($post_title); ?></a>
+                </h3>
+                <a href="<?php echo esc_url($post_link); ?>" class="rep-rec-link">Zobacz więcej →</a>
             </div>
         </li>
         <?php
