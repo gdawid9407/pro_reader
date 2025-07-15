@@ -142,10 +142,9 @@ class Popup {
     private function generate_recommendation_item_html(int $post_id): string {
         $post_title = get_the_title($post_id);
         $post_link = get_permalink($post_id);
-        // ZMIANA FORMATU DATY, ABY PASOWAŁ DO OBRAZKA
         $post_date = get_the_date('j F, Y', $post_id);
 
-        $thumbnail_html = get_the_post_thumbnail($post_id, 'medium', ['class' => 'rep-rec-thumb']); // Zmiana na 'medium' dla lepszej jakości w siatce
+        $thumbnail_html = get_the_post_thumbnail($post_id, 'medium', ['class' => 'rep-rec-thumb']);
         if (empty($thumbnail_html)) {
             $placeholder_url = REP_PLUGIN_URL . 'assets/images/placeholder.png';
             $thumbnail_html = sprintf(
@@ -154,25 +153,26 @@ class Popup {
             );
         }
         
-        // NOWOŚĆ: Pobranie kategorii lub terminu taksonomii
         $category_html = '';
         $categories = get_the_category($post_id);
         if (!empty($categories)) {
             $category_html = ' • ' . esc_html($categories[0]->name);
         }
-
+        
+        $link_text = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
+        
         ob_start();
         ?>
         <li class="rep-rec-item">
             <a href="<?php echo esc_url($post_link); ?>" class="rep-rec-thumb-link">
-                <?php echo $thumbnail_html; ?>
+                <?php echo $thumbnail_html; // Ta zmienna już zawiera bezpieczny HTML z get_the_post_thumbnail ?>
             </a>
             <div class="rep-rec-content">
                 <p class="rep-rec-date"><?php echo esc_html($post_date) . $category_html; ?></p>
                 <h3 class="rep-rec-title">
-                     <a href="<?php echo esc_url($post_link); ?>"><?php echo esc_html($post_title); ?></a>
+                    <a href="<?php echo esc_url($post_link); ?>"><?php echo esc_html($post_title); ?></a>
                 </h3>
-                <a href="<?php echo esc_url($post_link); ?>" class="rep-rec-link">Zobacz więcej →</a>
+                <a href="<?php echo esc_url($post_link); ?>" class="rep-rec-link"><?php echo wp_kses_post($link_text); ?></a>
             </div>
         </li>
         <?php

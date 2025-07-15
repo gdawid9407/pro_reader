@@ -107,6 +107,14 @@ class Settings_Popup {
             'reader-engagement-pro-popup',
             'popup_recommendations_section'
         );
+        
+        add_settings_field(
+            'popup_recommendations_link_text',
+            __('Treść linku do artykułu', 'pro_reader'), // Zmiana etykiety dla jasności
+            [$this, 'recommendations_link_text_callback'], // Ta funkcja zostanie zmieniona
+            'reader-engagement-pro-popup',
+            'popup_recommendations_section'
+        );
     }
 
     public function render_triggers_section_info(): void {
@@ -150,11 +158,14 @@ class Settings_Popup {
             $sanitized['popup_recommendations_count'] = max(1, min(10, $count));
         }
 
-        // NOWOŚĆ: Sanitacja pola układu rekomendacji.
         if (isset($input['popup_recommendations_layout'])) {
-            // Upewniamy się, że zapisana wartość to albo 'grid', albo 'list'.
             $layout = sanitize_key($input['popup_recommendations_layout']);
             $sanitized['popup_recommendations_layout'] = in_array($layout, ['list', 'grid']) ? $layout : 'list';
+        }
+
+        
+        if (isset($input['popup_recommendations_link_text'])) {
+            $sanitized['popup_recommendations_link_text'] = wp_kses_post($input['popup_recommendations_link_text']);
         }
         
         return $sanitized;
@@ -247,9 +258,6 @@ class Settings_Popup {
         echo '<p class="description">' . esc_html__('Wybierz, ile najnowszych wpisów i stron ma się pojawić w rekomendacjach. (Wartość od 1 do 10)', 'pro_reader') . '</p>';
     }
     
-    /**
-     * NOWOŚĆ: Renderuje pole wyboru dla układu rekomendacji.
-     */
     public function recommendations_layout_callback(): void {
         $options = get_option(self::OPTION_NAME, []);
         // Ustawienie domyślnej wartości na 'list', jeśli opcja nie istnieje.
@@ -265,5 +273,22 @@ class Settings_Popup {
         </select>
         <p class="description"><?php esc_html_e('Wybierz, jak mają być wyświetlane rekomendowane artykuły w popupie.', 'pro_reader'); ?></p>
         <?php
+    }
+    
+    public function recommendations_link_text_callback(): void {
+        $options = get_option(self::OPTION_NAME, []);
+        // Ustawiamy domyślną wartość, która może zawierać HTML
+        $content = $options['popup_recommendations_link_text'] ?? 'Zobacz więcej →'; 
+        
+        // Ustawienia dla edytora - 'teeny' to uproszczona wersja, idealna tutaj.
+        $settings = [
+            'textarea_name' => esc_attr(self::OPTION_NAME) . '[popup_recommendations_link_text]',
+            'media_buttons' => false, // Wyłączamy przyciski mediów
+            'teeny'         => true,  // Włączamy tryb "mały" (tylko podstawowe opcje)
+            'textarea_rows' => 5,     // Mniejsza wysokość edytora
+        ];
+        wp_editor($content, 'popup_recommendations_link_text_editor', $settings);
+        
+        echo '<p class="description">' . esc_html__('Wprowadź treść, która będzie wyświetlana jako link. Możesz użyć podstawowego formatowania, np. pogrubienia.', 'pro_reader') . '</p>';
     }
 }
