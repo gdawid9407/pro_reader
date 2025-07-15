@@ -50,13 +50,8 @@ class Popup {
             return;
         }
 
-        wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.0.2'); // Zwiększona wersja
+        wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.0.3');
         wp_enqueue_script('rep-popup-script', REP_PLUGIN_URL . 'assets/js/popup.js', ['jquery'], '1.0.1', true);
-
-        $current_post_id = 0;
-        if (is_singular()) {
-            $current_post_id = get_the_ID();
-        }
 
         wp_localize_script(
             'rep-popup-script',
@@ -69,7 +64,7 @@ class Popup {
                 'triggerByScrollUp'      => $this->options['popup_trigger_scroll_up'] ?? '0',
                 'ajaxUrl'                => admin_url('admin-ajax.php'),
                 'nonce'                  => wp_create_nonce('rep_recommendations_nonce'),
-                'currentPostId'          => $current_post_id,
+                'currentPostId'          => is_singular() ? get_the_ID() : 0,
             ]
         );
 
@@ -78,10 +73,8 @@ class Popup {
 
     private function generate_popup_html(): string {
         $popup_content = $this->options['popup_content_main'] ?? '';
-        
-        // NOWOŚĆ: Pobranie ustawienia layoutu i przygotowanie klasy CSS.
         $layout_setting = $this->options['popup_recommendations_layout'] ?? 'list';
-        $layout_class = 'layout-' . sanitize_html_class($layout_setting); // np. 'layout-list' lub 'layout-grid'
+        $layout_class = 'layout-' . sanitize_html_class($layout_setting);
 
         ob_start();
         ?>
@@ -97,7 +90,6 @@ class Popup {
             </div>
 
             <ul id="rep-intelligent-popup__list" class="<?php echo esc_attr($layout_class); ?>">
-                <!-- Informacja o ładowaniu, która zostanie zastąpiona przez AJAX -->
                 <li class="rep-rec-item-loading">Ładowanie rekomendacji...</li>
             </ul>
         </div>
@@ -117,11 +109,8 @@ class Popup {
             'posts_per_page' => (int) $posts_count,
             'orderby'        => 'date',
             'order'          => 'DESC',
+            'post__not_in'   => $current_post_id > 0 ? [$current_post_id] : [],
         ];
-        
-        if ($current_post_id > 0) {
-            $args['post__not_in'] = [$current_post_id];
-        }
 
         $query = new \WP_Query($args);
         
@@ -139,57 +128,120 @@ class Popup {
         }
     }
 
+    /**
+     * Generuje HTML dla pojedynczej rekomendacji na podstawie ustawień z konstruktora układu.
+     */
     private function generate_recommendation_item_html(int $post_id): string {
-        $post_title = get_the_title($post_id);
-        $post_link = get_permalink($post_id);
-        $post_date = get_the_date('j F, Y', $post_id);
+        $options = $this->options;
+        $item_layout = $options['popup_rec_item_layout'] ?? 'vertical';
         
-        // NOWOŚĆ: Pobieramy zajawkę wpisu. WordPress automatycznie stworzy ją z treści, jeśli nie została ustawiona ręcznie.
-        $post_excerpt = get_the_excerpt($post_id);
+        // Domyślna kolejność i widoczność, jeśli nie ustawiono inaczej
+        $default_order = ['thumbnail', 'meta', 'title', 'excerpt', 'link'];
+        $components_order = $options['popup_rec_components_order'] ?? $default_order;
+        $components_visibility = $options['popup_rec_components_visibility'] ?? array_fill_keys($default_order, '1');
 
-        $thumbnail_html = get_the_post_thumbnail($post_id, 'medium', ['class' => 'rep-rec-thumb']);
-        if (empty($thumbnail_html)) {
-            $placeholder_url = REP_PLUGIN_URL . 'assets/images/placeholder.png';
-            $thumbnail_html = sprintf(
-                '<img src="%s" alt="" class="rep-rec-thumb rep-rec-thumb-placeholder">',
-                esc_url($placeholder_url)
-            );
+        $components_html = [];
+        foreach ($components_order as $component_key) {
+            // Renderuj komponent tylko jeśli jest włączony w opcjach
+            if (!empty($components_visibility[$component_key])) {
+                $components_html[$component_key] = $this->get_component_html($component_key, $post_id);
+            }
         }
         
-        $category_html = '';
-        $categories = get_the_category($post_id);
-        if (!empty($categories)) {
-            $category_html = ' • ' . esc_html($categories[0]->name);
-        }
-        
-        $link_text = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
-        
+        $item_class = 'rep-rec-item item-layout-' . sanitize_html_class($item_layout);
         ob_start();
         ?>
-        <li class="rep-rec-item">
-            <a href="<?php echo esc_url($post_link); ?>" class="rep-rec-thumb-link">
-                <?php echo $thumbnail_html; // Ta zmienna już zawiera bezpieczny HTML z get_the_post_thumbnail ?>
-            </a>
-            <div class="rep-rec-content">
-                
-                <!-- ZMIANA KOLEJNOŚCI #1: Tytuł jest teraz pierwszy -->
-                <h3 class="rep-rec-title">
-                    <a href="<?php echo esc_url($post_link); ?>"><?php echo esc_html($post_title); ?></a>
-                </h3>
-
-                <!-- ZMIANA KOLEJNOŚCI #2: Dodajemy zajawkę -->
-                <?php if (!empty($post_excerpt)) : ?>
-                    <p class="rep-rec-excerpt"><?php echo esc_html($post_excerpt); ?></p>
-                <?php endif; ?>
-
-                <!-- ZMIANA KOLEJNOŚCI #3: Data jest teraz niżej -->
-                <p class="rep-rec-date"><?php echo esc_html($post_date) . $category_html; ?></p>
-                
-                <!-- ZMIANA KOLEJNOŚCI #4: Link/przycisk na samym końcu -->
-                <a href="<?php echo esc_url($post_link); ?>" class="rep-rec-link"><?php echo wp_kses_post($link_text); ?></a>
-            </div>
+        <li class="<?php echo esc_attr($item_class); ?>">
+            <?php
+            // Dla układu horyzontalnego grupujemy miniaturkę i resztę treści
+            if ($item_layout === 'horizontal' && !empty($components_html['thumbnail'])) {
+                echo $components_html['thumbnail'];
+                echo '<div class="rep-rec-content">';
+                // Renderuj komponenty w ustalonej kolejności, pomijając miniaturkę
+                foreach ($components_order as $key) {
+                    if ($key !== 'thumbnail' && !empty($components_html[$key])) {
+                        echo $components_html[$key];
+                    }
+                }
+                echo '</div>';
+            } else {
+                // Dla układu wertykalnego renderuj wszystko po kolei
+                foreach ($components_order as $key) {
+                    if (!empty($components_html[$key])) {
+                        echo $components_html[$key];
+                    }
+                }
+            }
+            ?>
         </li>
         <?php
         return ob_get_clean();
+    }
+    
+    /**
+     * Pobiera HTML dla konkretnego "klocka" (komponentu).
+     */
+    private function get_component_html(string $key, int $post_id): string {
+        $post_link = get_permalink($post_id);
+        
+        switch ($key) {
+            case 'thumbnail':
+                $thumbnail_html = get_the_post_thumbnail($post_id, 'medium', ['class' => 'rep-rec-thumb']);
+                if (empty($thumbnail_html)) {
+                    $placeholder_url = REP_PLUGIN_URL . 'assets/images/placeholder.png';
+                    $thumbnail_html = sprintf('<img src="%s" alt="" class="rep-rec-thumb rep-rec-thumb-placeholder">', esc_url($placeholder_url));
+                }
+                return sprintf('<a href="%s" class="rep-rec-thumb-link">%s</a>', esc_url($post_link), $thumbnail_html);
+
+            case 'title':
+                return sprintf(
+                    '<h3 class="rep-rec-title"><a href="%s">%s</a></h3>',
+                    esc_url($post_link),
+                    esc_html(get_the_title($post_id))
+                );
+
+            case 'excerpt':
+                $excerpt = $this->get_processed_excerpt($post_id);
+                if (empty($excerpt)) return '';
+                return sprintf('<p class="rep-rec-excerpt">%s</p>', esc_html($excerpt));
+                
+            case 'meta':
+                $date = get_the_date('j F, Y', $post_id);
+                $category_html = '';
+                $categories = get_the_category($post_id);
+                if (!empty($categories)) {
+                    $category_html = ' <span class="rep-rec-meta-separator">•</span> <span class="rep-rec-category">' . esc_html($categories[0]->name) . '</span>';
+                }
+                return sprintf('<p class="rep-rec-meta"><span class="rep-rec-date">%s</span>%s</p>', esc_html($date), $category_html);
+
+            case 'link':
+                $link_text = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
+                return sprintf(
+                    '<a href="%s" class="rep-rec-link">%s</a>',
+                    esc_url($post_link),
+                    wp_kses_post($link_text)
+                );
+                
+            default:
+                return '';
+        }
+    }
+
+    /**
+     * Zwraca przetworzoną zajawkę z uwzględnieniem limitu słów.
+     */
+    private function get_processed_excerpt(int $post_id): string {
+        $length = $this->options['popup_rec_excerpt_length'] ?? 15;
+        $raw_excerpt = get_the_excerpt($post_id);
+
+        if (empty($raw_excerpt)) {
+            return '';
+        }
+        
+        if ($length > 0) {
+            return wp_trim_words($raw_excerpt, $length, '...');
+        }
+        
+        return $raw_excerpt;
     }
 }

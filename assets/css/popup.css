@@ -24,9 +24,7 @@
   max-height: 90vh;
 }
 @media(max-width: 782px) {
-  #rep-intelligent-popup__container { 
-      width: 600px; 
-  }
+  #rep-intelligent-popup__container { width: 600px; }
 }
 @media(max-width: 480px) {
   #rep-intelligent-popup__container { padding: 16px; }
@@ -65,22 +63,51 @@
   padding-top: 20px;
 }
 
-/* --- POPRAWKA: Domyślne style dla widoku listy --- */
+/* --- NOWOŚĆ: Style dla dynamicznych układów elementu --- */
+
+/* Baza dla każdego elementu */
 .rep-rec-item {
-  display: flex;
-  align-items: flex-start;
   margin-bottom: 16px;
 }
 .rep-rec-item:last-child {
   margin-bottom: 0;
 }
-.rep-rec-thumb-link {
+
+/* Układ Horyzontalny (obrazek + treść) */
+.rep-rec-item.item-layout-horizontal {
+  display: flex;
+  align-items: flex-start;
+}
+.item-layout-horizontal .rep-rec-thumb-link {
   flex: 0 0 100px;
   height: 75px;
   margin-right: 16px;
   display: block;
+}
+.item-layout-horizontal .rep-rec-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Układ Wertykalny (elementy pod sobą) */
+.rep-rec-item.item-layout-vertical {
+  display: flex;
+  flex-direction: column;
+}
+.item-layout-vertical .rep-rec-thumb-link {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 12px;
+  display: block;
+}
+
+/* --- ZAKTUALIZOWANE: Style dla zawartości (działają w obu układach) --- */
+
+.rep-rec-thumb-link {
   border-radius: 8px;
-  overflow: hidden; /* Dodane dla pewności */
+  overflow: hidden;
   background-color: #f0f0f0;
 }
 .rep-rec-thumb {
@@ -92,53 +119,16 @@
   opacity: 0.5;
 }
 
-/* --- Style dla widoku SIATKI (GRID) - nadpisują domyślne --- */
-#rep-intelligent-popup__list.layout-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-}
-#rep-intelligent-popup__list.layout-grid .rep-rec-item {
-    flex-direction: column;
-    flex-basis: calc(33.333% - 16px);
-    flex-grow: 1;
-    margin-bottom: 0;
-    align-items: flex-start;
-}
-#rep-intelligent-popup__list.layout-grid .rep-rec-thumb-link {
-    flex-basis: auto;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 3;
-    margin-right: 0;
-    margin-bottom: 12px;
-}
-@media(max-width: 782px) {
-    #rep-intelligent-popup__list.layout-grid .rep-rec-item {
-        flex-basis: calc(50% - 12px);
-    }
-}
-@media(max-width: 480px) {
-    #rep-intelligent-popup__list.layout-grid {
-        gap: 16px;
-    }
-    #rep-intelligent-popup__list.layout-grid .rep-rec-item {
-        flex-basis: 100%;
-    }
-}
-
-/* --- Wspólne style dla zawartości --- */
-.rep-rec-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-.rep-rec-date {
+.rep-rec-meta {
   font-size: 0.8rem;
   color: #777;
   margin: 0 0 8px;
   letter-spacing: 0.5px;
 }
+.rep-rec-meta-separator {
+  margin: 0 0.5em;
+}
+
 .rep-rec-title { 
   font-size: 1.1rem; 
   line-height: 1.3;
@@ -152,24 +142,47 @@
   color: #0073aa;
 }
 
-/* -->> DODAJ TEN FRAGMENT <<-- */
 .rep-rec-excerpt {
   font-size: 0.9rem;
   color: #555;
   margin: 0 0 12px;
   line-height: 1.5;
 }
-/* -->> KONIEC FRAGMENTU DO DODANIA <<-- */
 
 .rep-rec-link {
   font-size: 0.9rem; 
   font-weight: bold;
   text-decoration: none; 
   color: #555;
-  margin-top: auto;
+  margin-top: auto; /* To pcha link na dół kontenera flex */
 }
 .rep-rec-link:hover {
   color: #0073aa;
+}
+
+/* --- Style dla SIATKI (GRID) - nadpisują domyślne --- */
+#rep-intelligent-popup__list.layout-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+}
+#rep-intelligent-popup__list.layout-grid .rep-rec-item {
+    flex-basis: calc(33.333% - 16px);
+    flex-grow: 1;
+    margin-bottom: 0;
+}
+@media(max-width: 782px) {
+    #rep-intelligent-popup__list.layout-grid .rep-rec-item {
+        flex-basis: calc(50% - 12px);
+    }
+}
+@media(max-width: 480px) {
+    #rep-intelligent-popup__list.layout-grid {
+        gap: 16px;
+    }
+    #rep-intelligent-popup__list.layout-grid .rep-rec-item {
+        flex-basis: 100%;
+    }
 }
 
 /* Style dla komunikatów */
