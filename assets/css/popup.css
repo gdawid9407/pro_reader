@@ -151,6 +151,16 @@
 .rep-rec-title a:hover {
   color: #0073aa;
 }
+
+/* -->> DODAJ TEN FRAGMENT <<-- */
+.rep-rec-excerpt {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+/* -->> KONIEC FRAGMENTU DO DODANIA <<-- */
+
 .rep-rec-link {
   font-size: 0.9rem; 
   font-weight: bold;

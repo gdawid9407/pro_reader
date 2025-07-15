@@ -143,6 +143,9 @@ class Popup {
         $post_title = get_the_title($post_id);
         $post_link = get_permalink($post_id);
         $post_date = get_the_date('j F, Y', $post_id);
+        
+        // NOWOŚĆ: Pobieramy zajawkę wpisu. WordPress automatycznie stworzy ją z treści, jeśli nie została ustawiona ręcznie.
+        $post_excerpt = get_the_excerpt($post_id);
 
         $thumbnail_html = get_the_post_thumbnail($post_id, 'medium', ['class' => 'rep-rec-thumb']);
         if (empty($thumbnail_html)) {
@@ -168,10 +171,21 @@ class Popup {
                 <?php echo $thumbnail_html; // Ta zmienna już zawiera bezpieczny HTML z get_the_post_thumbnail ?>
             </a>
             <div class="rep-rec-content">
-                <p class="rep-rec-date"><?php echo esc_html($post_date) . $category_html; ?></p>
+                
+                <!-- ZMIANA KOLEJNOŚCI #1: Tytuł jest teraz pierwszy -->
                 <h3 class="rep-rec-title">
                     <a href="<?php echo esc_url($post_link); ?>"><?php echo esc_html($post_title); ?></a>
                 </h3>
+
+                <!-- ZMIANA KOLEJNOŚCI #2: Dodajemy zajawkę -->
+                <?php if (!empty($post_excerpt)) : ?>
+                    <p class="rep-rec-excerpt"><?php echo esc_html($post_excerpt); ?></p>
+                <?php endif; ?>
+
+                <!-- ZMIANA KOLEJNOŚCI #3: Data jest teraz niżej -->
+                <p class="rep-rec-date"><?php echo esc_html($post_date) . $category_html; ?></p>
+                
+                <!-- ZMIANA KOLEJNOŚCI #4: Link/przycisk na samym końcu -->
                 <a href="<?php echo esc_url($post_link); ?>" class="rep-rec-link"><?php echo wp_kses_post($link_text); ?></a>
             </div>
         </li>
