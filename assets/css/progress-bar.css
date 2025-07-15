@@ -1,4 +1,3 @@
-/* assets/css/style.css */
 
 /* Główny kontener, który jest pozycjonowany i ma stałe wymiary */
 #progress-bar-container-wrapper {
@@ -10,21 +9,16 @@
 .proreader-container.position-top { top: 0; }
 .proreader-container.position-bottom { bottom: 0; }
 
-/* 
- * Kontener gradientu staje się kontekstem pozycjonowania dla maski i licznika.
-*/
+
 #progress-bar-gradient {
-    position: relative; /* Kluczowe dla pozycjonowania dzieci */
+    position: relative; 
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to right, #ccc, #aaa); /* Domyślny gradient, zostanie nadpisany */
+    background: linear-gradient(to right, #ccc, #aaa); 
 }
 
-/* 
- * Maska musi być pod licznikiem, ale nad gradientem.
-*/
 #progress-bar {
     position: absolute;
     top: 0;
@@ -33,12 +27,9 @@
     height: 100%;
     background-color: #fff; 
     transition: width 0.2s ease-out;
-    z-index: 2; /* Warstwa maski */
+    z-index: 2; 
 }
 
-/* 
- * POPRAWKA: Kontener etykiet musi być na wyższej warstwie (z-index: 3)
-*/
 .proreader-labels {
     position: absolute;
     top: 0;
@@ -51,19 +42,16 @@
     padding: 0 15px; 
     box-sizing: border-box;
     pointer-events: none; 
-    
-    /* Ustawiamy tę samą warstwę co dla licznika procentowego */
+
 }
 
 .proreader-labels span {
-    color: #ffffff; /* ZMIANA: Kolor musi być BIAŁY */
-    mix-blend-mode: difference; /* Ta właściwość tworzy efekt */
-    font-size: 14px;
+    color: #ffffff; 
+    mix-blend-mode: difference; 
     font-weight: bold;
     z-index: 3;
 }
 
-/* Styl licznika procentowego (pozostaje jako wzór) */
 #rep-progress-percentage {
     position: absolute;
     
@@ -79,16 +67,14 @@
 
 #rep-progress-percentage.position-center {
     left: 50%;
-    transform: translate(-50%, -50%); /* Musimy połączyć oba transform */
+    transform: translate(-50%, -50%); 
 }
 
-/* Pozycja do lewej */
 #rep-progress-percentage.position-left {
-    left: 15px; /* Odstęp od lewej krawędzi */
+    left: 15px; 
 }
 
-/* Pozycja do prawej */
 #rep-progress-percentage.position-right {
-    right: 15px; /* Odstęp od prawej krawędzi */
-    left: auto; /* Kluczowe, aby usunąć domyślną właściwość 'left' */
+    right: 15px; 
+    left: auto; 
 }

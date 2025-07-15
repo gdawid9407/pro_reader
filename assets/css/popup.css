@@ -63,9 +63,7 @@
   padding-top: 20px;
 }
 
-/* --- NOWOŚĆ: Style dla dynamicznych układów elementu --- */
-
-/* Baza dla każdego elementu */
+/* --- Style dla dynamicznych układów elementu --- */
 .rep-rec-item {
   margin-bottom: 16px;
 }
@@ -73,24 +71,22 @@
   margin-bottom: 0;
 }
 
-/* Układ Horyzontalny (obrazek + treść) */
 .rep-rec-item.item-layout-horizontal {
   display: flex;
   align-items: flex-start;
 }
 .item-layout-horizontal .rep-rec-thumb-link {
-  flex: 0 0 100px;
-  height: 75px;
+  flex: 0 0 120px; 
+  height: 90px;
   margin-right: 16px;
-  display: block;
 }
 .item-layout-horizontal .rep-rec-content {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0; 
 }
 
-/* Układ Wertykalny (elementy pod sobą) */
 .rep-rec-item.item-layout-vertical {
   display: flex;
   flex-direction: column;
@@ -98,23 +94,30 @@
 .item-layout-vertical .rep-rec-thumb-link {
   width: 100%;
   height: auto;
-  aspect-ratio: 16 / 9;
   margin-bottom: 12px;
-  display: block;
 }
 
-/* --- ZAKTUALIZOWANE: Style dla zawartości (działają w obu układach) --- */
-
 .rep-rec-thumb-link {
+  display: block;
   border-radius: 8px;
   overflow: hidden;
   background-color: #f0f0f0;
+  height: 100%; 
 }
+
 .rep-rec-thumb {
   width: 100%;
   height: 100%;
+  display: block;
+}
+
+.rep-rec-thumb.thumb-fit-cover {
   object-fit: cover;
 }
+.rep-rec-thumb.thumb-fit-contain {
+  object-fit: contain;
+}
+
 .rep-rec-thumb-placeholder {
   opacity: 0.5;
 }
@@ -125,9 +128,7 @@
   margin: 0 0 8px;
   letter-spacing: 0.5px;
 }
-.rep-rec-meta-separator {
-  margin: 0 0.5em;
-}
+.rep-rec-meta-separator { margin: 0 0.5em; }
 
 .rep-rec-title { 
   font-size: 1.1rem; 
@@ -138,9 +139,7 @@
   text-decoration: none;
   color: inherit;
 }
-.rep-rec-title a:hover {
-  color: #0073aa;
-}
+.rep-rec-title a:hover { color: #0073aa; }
 
 .rep-rec-excerpt {
   font-size: 0.9rem;
@@ -154,13 +153,11 @@
   font-weight: bold;
   text-decoration: none; 
   color: #555;
-  margin-top: auto; /* To pcha link na dół kontenera flex */
+  margin-top: auto;
 }
-.rep-rec-link:hover {
-  color: #0073aa;
-}
+.rep-rec-link:hover { color: #0073aa; }
 
-/* --- Style dla SIATKI (GRID) - nadpisują domyślne --- */
+
 #rep-intelligent-popup__list.layout-grid {
     display: flex;
     flex-wrap: wrap;
@@ -177,15 +174,10 @@
     }
 }
 @media(max-width: 480px) {
-    #rep-intelligent-popup__list.layout-grid {
-        gap: 16px;
-    }
-    #rep-intelligent-popup__list.layout-grid .rep-rec-item {
-        flex-basis: 100%;
-    }
+    #rep-intelligent-popup__list.layout-grid { gap: 16px; }
+    #rep-intelligent-popup__list.layout-grid .rep-rec-item { flex-basis: 100%; }
 }
 
-/* Style dla komunikatów */
 .rep-rec-item-loading,
 .rep-rec-item-error {
   color: #555;
@@ -194,7 +186,6 @@
   width: 100%;
 }
 
-/* Animacje (bez zmian) */
 #rep-intelligent-popup__overlay,
 #rep-intelligent-popup__container {
   opacity: 0;
@@ -216,4 +207,12 @@
 }
 body.rep-popup-is-open {
   overflow: hidden;
+}
+
+.rep-rec-excerpt {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
 }

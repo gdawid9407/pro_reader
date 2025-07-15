@@ -2,12 +2,10 @@
 
 namespace ReaderEngagementPro\Admin;
 
-
 use ReaderEngagementPro\Admin\Settings_Progress_Bar;
 use ReaderEngagementPro\Admin\Settings_Popup;
 
 class Settings_Page {
-
 
     private const SETTINGS_GROUP = 'reader_engagement_pro_group';
     private const OPTION_NAME = 'reader_engagement_pro_options';
@@ -15,9 +13,7 @@ class Settings_Page {
     private Settings_Progress_Bar $progress_bar_settings;
     private Settings_Popup $popup_settings;
 
-
     public function __construct() {
-        
         $this->progress_bar_settings = new Settings_Progress_Bar();
         $this->popup_settings = new Settings_Popup();
         
@@ -33,6 +29,7 @@ class Settings_Page {
             ['type' => 'array', 'sanitize_callback' => [$this, 'route_sanitize_callback']]
         );
     }
+
     public function add_plugin_page() {
         add_menu_page(
             'Pasek czytania',
@@ -46,19 +43,18 @@ class Settings_Page {
     }
 
     public function route_sanitize_callback(array $input): array {
-        // Sprawdza, czy dane pochodzą z formularza "Pasek Postępu"
         if (isset($input['position'])) {
             return $this->progress_bar_settings->sanitize($input);
         }
 
-        // Sprawdza, czy dane pochodzą z formularza "Popup"
-        // Używamy klucza, który jest unikalny dla tej zakładki, aby poprawnie skierować sanitację.
         if (isset($input['popup_trigger_time']) || isset($input['popup_rec_item_layout'])) {
             return $this->popup_settings->sanitize($input);
         }
-
-        // Jeśli dane nie pasują, zwróć istniejące opcje, aby uniknąć ich wyczyszczenia.
-        return get_option(self::OPTION_NAME, []);
+        
+        // Zwrócenie istniejących opcji jest krytyczne, aby uniknąć ich nadpisania
+        // podczas zapisu formularza z innej zakładki.
+        $existing_options = get_option(self::OPTION_NAME, []);
+        return array_merge($existing_options, $input);
     }
 
     public function create_admin_page() {
@@ -94,84 +90,86 @@ class Settings_Page {
     }
 
     /**
-     * Kolejkuje skrypty i style potrzebne na stronie ustawień.
+     * Kolejkuje skrypty i style dla panelu admina.
+     * Dodano logikę do dynamicznego przełączania widoczności pól limitu zajawki.
      */
     public function enqueue_admin_assets($hook) {
-        
         if ($hook !== 'toplevel_page_reader-engagement-pro') {
             return;
         }
         
-        // Zależności
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
-        wp_enqueue_script('jquery-ui-sortable'); // Kluczowa zależność dla drag-and-drop
+        wp_enqueue_script('jquery-ui-sortable');
 
-        // NOWOŚĆ: Style dla placeholdera w konstruktorze układu
         $inline_css = "
             #rep-layout-builder .ui-sortable-placeholder { 
-                border: 2px dashed #ccd0d4; 
-                background: #f6f7f7;
-                height: 40px;
-                margin-bottom: 5px;
-                visibility: visible !important;
+                border: 2px dashed #ccd0d4; background: #f6f7f7; height: 40px;
+                margin-bottom: 5px; visibility: visible !important;
             }
             #rep-layout-builder .ui-sortable-helper {
-                box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-                opacity: 0.95;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.15); opacity: 0.95;
             }
         ";
-        wp_add_inline_style('wp-admin', $inline_css); // Dołączenie stylów
+        wp_add_inline_style('wp-admin', $inline_css);
 
-        // Skrypt inicjalizujący
+        // Użycie `self::OPTION_NAME` zapewnia spójność z resztą kodu.
+        $option_name_attr = esc_js(self::OPTION_NAME);
         $custom_js = "
             jQuery(document).ready(function($) {
 
-                // --- START: Logika konstruktora układu ---
-                var layoutBuilder = $('#rep-layout-builder');
-                if (layoutBuilder.length) {
-                    layoutBuilder.sortable({
-                        axis: 'y',
-                        cursor: 'move',
-                        placeholder: 'ui-sortable-placeholder',
-                        helper: 'clone',
-                        opacity: 0.8
-                    });
-                }
-                // --- KONIEC: Logika konstruktora układu ---
+                // Logika konstruktora układu
+                $('#rep-layout-builder').sortable({
+                    axis: 'y', cursor: 'move', placeholder: 'ui-sortable-placeholder',
+                    helper: 'clone', opacity: 0.8
+                });
 
-
-                // --- START: Logika ukrywania/pokazywania opcji Popup ---
+                // Logika ukrywania/pokazywania głównych opcji Popup
                 var mainPopupEnableCheckbox = $('#popup_enable');
                 if (mainPopupEnableCheckbox.length) {
                     var dependentPopupOptions = mainPopupEnableCheckbox.closest('tr').siblings();
-
                     function togglePopupOptionsVisibility() {
-                        if (mainPopupEnableCheckbox.is(':checked')) {
-                            dependentPopupOptions.show();
-                            $('#popup_trigger_scroll_percent_enable').trigger('change');
-                        } else {
-                            dependentPopupOptions.hide();
-                        }
+                        var isChecked = mainPopupEnableCheckbox.is(':checked');
+                        dependentPopupOptions.toggle(isChecked);
+                        if(isChecked) $('#popup_trigger_scroll_percent_enable').trigger('change');
                     }
-                    togglePopupOptionsVisibility();
                     mainPopupEnableCheckbox.on('change', togglePopupOptionsVisibility);
+                    togglePopupOptionsVisibility();
                 }
-                // --- KONIEC: Logika ukrywania/pokazywania opcji Popup ---
 
-
-                // --- Istniejąca logika dla pola 'Wyzwalacz: Procent przewinięcia' ---
+                // Logika dla zagnieżdżonego checkboxa 'Procent przewinięcia'
                 var nestedCheckbox = $('#popup_trigger_scroll_percent_enable');
                 if(nestedCheckbox.length) {
                     var targetRow = $('#popup_trigger_scroll_percent').closest('tr');
                     function toggleNestedVisibility() {
-                        if (nestedCheckbox.is(':checked') && mainPopupEnableCheckbox.is(':checked')) {
-                            targetRow.show();
-                        } else {
-                            targetRow.hide();
-                        }
+                        var isEnabled = nestedCheckbox.is(':checked') && mainPopupEnableCheckbox.is(':checked');
+                        targetRow.toggle(isEnabled);
                     }
                     nestedCheckbox.on('change', toggleNestedVisibility);
+                    // Stan początkowy jest już obsłużony przez trigger w logice powyżej.
+                }
+                
+                // =================================================================
+                // NOWA LOGIKA: Dynamiczne przełączanie pól dla limitu zajawki.
+                // =================================================================
+                const limitTypeRadios = $('input[name=\"{$option_name_attr}[popup_rec_excerpt_limit_type]\"]');
+                if (limitTypeRadios.length) {
+                    // UWAGA: Selektory bazują na ID pól. To kluczowe dla ich poprawnego działania.
+                    const wordsRow = $('#popup_rec_excerpt_length').closest('tr');
+                    const linesRow = $('#popup_rec_excerpt_lines').closest('tr');
+
+                    function toggleExcerptLimitFields() {
+                        const selectedType = limitTypeRadios.filter(':checked').val();
+                        
+                        wordsRow.toggle(selectedType === 'words');
+                        linesRow.toggle(selectedType === 'lines');
+                    }
+
+                    // Wywołaj funkcję przy załadowaniu strony, aby ustawić poprawny stan.
+                    toggleExcerptLimitFields(); 
+                    
+                    // Nasłuchuj na zmianę wyboru.
+                    limitTypeRadios.on('change', toggleExcerptLimitFields);
                 }
 
                 // Inicjalizacja color pickera

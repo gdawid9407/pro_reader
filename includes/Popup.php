@@ -50,7 +50,7 @@ class Popup {
             return;
         }
 
-        wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.0.3');
+        wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.0.4');
         wp_enqueue_script('rep-popup-script', REP_PLUGIN_URL . 'assets/js/popup.js', ['jquery'], '1.0.1', true);
 
         wp_localize_script(
@@ -128,21 +128,16 @@ class Popup {
         }
     }
 
-    /**
-     * Generuje HTML dla pojedynczej rekomendacji na podstawie ustawień z konstruktora układu.
-     */
     private function generate_recommendation_item_html(int $post_id): string {
         $options = $this->options;
         $item_layout = $options['popup_rec_item_layout'] ?? 'vertical';
         
-        // Domyślna kolejność i widoczność, jeśli nie ustawiono inaczej
         $default_order = ['thumbnail', 'meta', 'title', 'excerpt', 'link'];
         $components_order = $options['popup_rec_components_order'] ?? $default_order;
         $components_visibility = $options['popup_rec_components_visibility'] ?? array_fill_keys($default_order, '1');
 
         $components_html = [];
         foreach ($components_order as $component_key) {
-            // Renderuj komponent tylko jeśli jest włączony w opcjach
             if (!empty($components_visibility[$component_key])) {
                 $components_html[$component_key] = $this->get_component_html($component_key, $post_id);
             }
@@ -153,11 +148,9 @@ class Popup {
         ?>
         <li class="<?php echo esc_attr($item_class); ?>">
             <?php
-            // Dla układu horyzontalnego grupujemy miniaturkę i resztę treści
             if ($item_layout === 'horizontal' && !empty($components_html['thumbnail'])) {
                 echo $components_html['thumbnail'];
                 echo '<div class="rep-rec-content">';
-                // Renderuj komponenty w ustalonej kolejności, pomijając miniaturkę
                 foreach ($components_order as $key) {
                     if ($key !== 'thumbnail' && !empty($components_html[$key])) {
                         echo $components_html[$key];
@@ -165,7 +158,6 @@ class Popup {
                 }
                 echo '</div>';
             } else {
-                // Dla układu wertykalnego renderuj wszystko po kolei
                 foreach ($components_order as $key) {
                     if (!empty($components_html[$key])) {
                         echo $components_html[$key];
@@ -179,19 +171,41 @@ class Popup {
     }
     
     /**
-     * Pobiera HTML dla konkretnego "klocka" (komponentu).
+     * Zwraca HTML dla pojedynczego komponentu (klocka) na podstawie jego klucza.
      */
     private function get_component_html(string $key, int $post_id): string {
         $post_link = get_permalink($post_id);
         
         switch ($key) {
             case 'thumbnail':
-                $thumbnail_html = get_the_post_thumbnail($post_id, 'medium', ['class' => 'rep-rec-thumb']);
+                $thumb_size = $this->options['popup_rec_thumb_size'] ?? 'medium';
+                $thumb_fit = $this->options['popup_rec_thumb_fit'] ?? 'cover';
+                $aspect_ratio = $this->options['popup_rec_thumb_aspect_ratio'] ?? '16:9';
+                
+                // Atrybuty dla obrazka <img>
+                $image_attrs = [
+                    'class' => 'rep-rec-thumb thumb-fit-' . sanitize_html_class($thumb_fit),
+                ];
+                $thumbnail_html = get_the_post_thumbnail($post_id, $thumb_size, $image_attrs);
+
                 if (empty($thumbnail_html)) {
                     $placeholder_url = REP_PLUGIN_URL . 'assets/images/placeholder.png';
                     $thumbnail_html = sprintf('<img src="%s" alt="" class="rep-rec-thumb rep-rec-thumb-placeholder">', esc_url($placeholder_url));
                 }
-                return sprintf('<a href="%s" class="rep-rec-thumb-link">%s</a>', esc_url($post_link), $thumbnail_html);
+                
+                // Style inline dla kontenera <a>
+                $link_style = '';
+                if ($aspect_ratio !== 'auto') {
+                    // Zamiana formatu '16:9' na '16 / 9' dla CSS
+                    $link_style = 'aspect-ratio: ' . str_replace(':', ' / ', $aspect_ratio) . ';';
+                }
+
+                return sprintf(
+                    '<a href="%s" class="rep-rec-thumb-link" style="%s">%s</a>',
+                    esc_url($post_link),
+                    esc_attr($link_style),
+                    $thumbnail_html
+                );
 
             case 'title':
                 return sprintf(
@@ -199,12 +213,27 @@ class Popup {
                     esc_url($post_link),
                     esc_html(get_the_title($post_id))
                 );
+                case 'excerpt':
+    $excerpt = $this->get_processed_excerpt($post_id);
+    if (empty($excerpt)) return '';
 
-            case 'excerpt':
-                $excerpt = $this->get_processed_excerpt($post_id);
-                if (empty($excerpt)) return '';
-                return sprintf('<p class="rep-rec-excerpt">%s</p>', esc_html($excerpt));
+    $limit_type = $this->options['popup_rec_excerpt_limit_type'] ?? 'words';
+    $style_attr = '';
+
+    // Dodaj styl limitu linii tylko, jeśli ta opcja jest aktywna
+    if ($limit_type === 'lines') {
+        $line_clamp = $this->options['popup_rec_excerpt_lines'] ?? 3;
+        if ($line_clamp > 0) {
+            $style_attr = sprintf(
+                'style="display: -webkit-box; -webkit-line-clamp: %d; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;"',
+                esc_attr($line_clamp)
+            );
+        }
+    }
+            
                 
+// POPRAWKA: Dodano %s dla atrybutu stylu ($style_attr)
+return sprintf('<p class="rep-rec-excerpt" %s>%s</p>', $style_attr, esc_html($excerpt));
             case 'meta':
                 $date = get_the_date('j F, Y', $post_id);
                 $category_html = '';
@@ -227,21 +256,23 @@ class Popup {
         }
     }
 
-    /**
-     * Zwraca przetworzoną zajawkę z uwzględnieniem limitu słów.
-     */
     private function get_processed_excerpt(int $post_id): string {
-        $length = $this->options['popup_rec_excerpt_length'] ?? 15;
-        $raw_excerpt = get_the_excerpt($post_id);
+    $limit_type = $this->options['popup_rec_excerpt_limit_type'] ?? 'words';
+    $raw_excerpt = get_the_excerpt($post_id);
 
-        if (empty($raw_excerpt)) {
-            return '';
-        }
-        
+    if (empty($raw_excerpt)) {
+        return '';
+    }
+
+    // Stosuj limit słów tylko, jeśli jest wybrany
+    if ($limit_type === 'words') {
+        $length = $this->options['popup_rec_excerpt_length'] ?? 15;
         if ($length > 0) {
             return wp_trim_words($raw_excerpt, $length, '...');
         }
-        
-        return $raw_excerpt;
     }
+    
+    // W przeciwnym razie zwróć pełną zajawkę (limit linii zadziała w CSS)
+    return $raw_excerpt;
+}
 }
