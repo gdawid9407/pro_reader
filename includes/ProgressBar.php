@@ -86,16 +86,21 @@ class ProgressBar {
                 <?php if ($show_percentage === '1') : ?>
                     <span id="rep-progress-percentage" style="line-height: <?php echo esc_attr($bar_height); ?>px;">0%</span>
                 <?php endif; ?>
+
+                <!-- ZMIANA: Przenosimy etykiety tutaj, do środka kontenera z gradientem -->
+                <div class="proreader-labels">
+                    <span class="label-start"><?php echo esc_html($label_start); ?></span>
+                    <span class="label-end"><?php echo esc_html($label_end); ?></span>
+                </div>
+                
                 <div id="progress-bar" class="proreader-bar"></div>
             </div>
-            <div class="proreader-labels">
-                 <span class="label-start"><?php echo esc_html($label_start); ?></span>
-                <span class="label-end"><?php echo esc_html($label_end); ?></span>
-            </div>
+            <!-- Usunięto etykiety z tego miejsca -->
         </div>
         <?php
         return ob_get_clean();
     }
+    
     
     public function register_shortcodes(): void {
         add_shortcode('progress_bar', [$this, 'render_bar_shortcode']);
