@@ -1,3 +1,5 @@
+/* assets/css/style.css */
+
 /* Główny kontener, który jest pozycjonowany i ma stałe wymiary */
 #progress-bar-container-wrapper {
     position: fixed;
@@ -9,8 +11,7 @@
 .proreader-container.position-bottom { bottom: 0; }
 
 /* 
- * ZMIANA: Kontener gradientu staje się kontekstem pozycjonowania dla maski i licznika.
- * Usuwamy z-index stąd.
+ * Kontener gradientu staje się kontekstem pozycjonowania dla maski i licznika.
 */
 #progress-bar-gradient {
     position: relative; /* Kluczowe dla pozycjonowania dzieci */
@@ -22,8 +23,7 @@
 }
 
 /* 
- * ZMIANA: Maska musi być na NAJWYŻSZEJ warstwie WEWNĄTRZ swojego kontenera, 
- * aby zakrywać gradient i licznik.
+ * Maska musi być pod licznikiem, ale nad gradientem.
 */
 #progress-bar {
     position: absolute;
@@ -37,7 +37,7 @@
 }
 
 /* 
- * ZMIANA: Etykiety są teraz na samej górze wszystkiego.
+ * Etykiety są teraz na samej górze wszystkiego.
 */
 .proreader-labels {
     position: absolute;
@@ -51,29 +51,26 @@
     padding: 0 15px; 
     box-sizing: border-box;
     pointer-events: none; 
-    z-index: 3; /* Najwyższa warstwa - etykiety */
+    z-index: 4; 
 }
 
 /* Styl dla pojedynczej etykiety */
 .proreader-labels span {
-    color: #333;
+    color: #fff;
+    mix-blend-mode: difference;
     font-size: 14px;
     font-weight: bold;
-    text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
 }
 
-/* 
- * ZMIANA: Licznik jest teraz pozycjonowany wewnątrz kontenera gradientu
- * i ma niższy z-index niż maska.
-*/
 #rep-progress-percentage {
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    color: #000; /* ZMIANA: Ciemny kolor dla lepszej widoczności na jasnym gradiencie */
+    color: #fff;
+    mix-blend-mode: difference;
+
     font-size: 12px;
     font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7); /* Cień dla lepszej czytelności */
-    z-index: 1; /* Warstwa licznika - pod maską! */
+    z-index: 3;
 }
