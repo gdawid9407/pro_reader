@@ -1,5 +1,3 @@
-// assets/js/progress-bar.js
-
 (function() {
     document.addEventListener('DOMContentLoaded', function() {
         const progressBarMask = document.getElementById('progress-bar');
@@ -27,6 +25,19 @@
             // Znajdź element do wyświetlania procentów, jeśli opcja jest włączona
             if (settings.showPercentage === '1') {
                 percentageDisplay = document.getElementById('rep-progress-percentage');
+                
+                // === POCZĄTEK ZMIANY ===
+                if (percentageDisplay) {
+                    // Odczytaj pozycję z ustawień (przekazaną z PHP jako `percentagePosition`)
+                    const position = settings.percentagePosition || 'center'; // Użyj 'center' jako domyślnej
+                    
+                    // Usuń istniejące klasy pozycji, aby uniknąć konfliktów
+                    percentageDisplay.classList.remove('position-left', 'position-center', 'position-right');
+                    
+                    // Dodaj nową klasę na podstawie odczytanego ustawienia
+                    percentageDisplay.classList.add(`position-${position}`);
+                }
+                // === KONIEC ZMIANY ===
             }
 
             // Sprawdź, czy selektor treści jest zdefiniowany i znajdź ten element na stronie

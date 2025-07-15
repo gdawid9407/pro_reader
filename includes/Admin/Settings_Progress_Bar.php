@@ -48,6 +48,7 @@ class Settings_Progress_Bar {
         add_settings_field('label_end', __('Tekst końcowy', 'pro_reader'), [$this, 'label_end_callback'], 'reader-engagement-pro-progress-bar', 'progress_bar_main_section');
         
         add_settings_field('show_percentage', __('Pokaż procent postępu', 'pro_reader'), [$this, 'show_percentage_callback'], 'reader-engagement-pro-progress-bar', 'progress_bar_advanced_section');
+        add_settings_field('percentage_position', __('Pozycja licznika procentowego', 'pro_reader'), [$this, 'percentage_position_callback'], 'reader-engagement-pro-progress-bar', 'progress_bar_advanced_section');
         add_settings_field('content_selector', __('Selektor treści', 'pro_reader'), [$this, 'content_selector_callback'], 'reader-engagement-pro-progress-bar', 'progress_bar_advanced_section');
     }
 
@@ -81,6 +82,12 @@ class Settings_Progress_Bar {
         $sanitized['label_end'] = isset($input['label_end']) ? sanitize_text_field($input['label_end']) : 'Meta';
         $sanitized['content_selector'] = isset($input['content_selector']) ? sanitize_text_field($input['content_selector']) : '';
         $sanitized['show_percentage'] = (isset($input['show_percentage']) && $input['show_percentage'] === '1') ? '1' : '0';
+        
+        if (isset($input['percentage_position']) && in_array($input['percentage_position'], ['left', 'center', 'right'])) {
+        $sanitized['percentage_position'] = sanitize_key($input['percentage_position']);
+        } else {
+        $sanitized['percentage_position'] = 'center'; // Wartość domyślna
+        }
     return $sanitized;
 }
 
@@ -137,6 +144,17 @@ class Settings_Progress_Bar {
             esc_attr($this->options['opacity'] ?? '1.0')
         );
     }
+    
+    public function percentage_position_callback(): void {
+    $value = $this->options['percentage_position'] ?? 'center'; // Domyślnie 'center'
+    $name = self::OPTION_NAME . '[percentage_position]';
+     echo '<select id="percentage_position" name="' . esc_attr($name) . '">';
+    echo '<option value="left"' . selected($value, 'left', false) . '>' . esc_html__('Do lewej', 'pro_reader') . '</option>';
+    echo '<option value="center"' . selected($value, 'center', false) . '>' . esc_html__('Na środku', 'pro_reader') . '</option>';
+    echo '<option value="right"' . selected($value, 'right', false) . '>' . esc_html__('Do prawej', 'pro_reader') . '</option>';
+    echo '</select>';
+    echo '<p class="description">' . esc_html__('Wybierz, gdzie na pasku ma być wyświetlany licznik procentowy. Działa tylko, gdy opcja "Pokaż procent postępu" jest włączona.', 'pro_reader') . '</p>';
+}
     
     public function label_start_callback(): void {
         printf(

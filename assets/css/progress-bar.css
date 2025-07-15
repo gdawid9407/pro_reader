@@ -66,12 +66,29 @@
 /* Styl licznika procentowego (pozostaje jako wzór) */
 #rep-progress-percentage {
     position: absolute;
-    left: 50%;
+    
     top: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateY(-50%);
     color: #ffffff;
     mix-blend-mode: difference;
     font-size: 12px;
     font-weight: bold;
     z-index: 3; 
+    white-space: nowrap;
+}
+
+#rep-progress-percentage.position-center {
+    left: 50%;
+    transform: translate(-50%, -50%); /* Musimy połączyć oba transform */
+}
+
+/* Pozycja do lewej */
+#rep-progress-percentage.position-left {
+    left: 15px; /* Odstęp od lewej krawędzi */
+}
+
+/* Pozycja do prawej */
+#rep-progress-percentage.position-right {
+    right: 15px; /* Odstęp od prawej krawędzi */
+    left: auto; /* Kluczowe, aby usunąć domyślną właściwość 'left' */
 }

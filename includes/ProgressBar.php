@@ -21,7 +21,7 @@ class ProgressBar {
             
             wp_enqueue_style(
                 'rep-progress-style',
-                REP_PLUGIN_URL . 'assets/css/style.css');
+                REP_PLUGIN_URL . 'assets/css/progress-bar.css');
             wp_enqueue_script(
                 'rep-progress-script',
                 REP_PLUGIN_URL . 'assets/js/progress-bar.js',
@@ -39,6 +39,7 @@ class ProgressBar {
                     'opacity'          => $opts['opacity'] ?? '1.0',
                     'contentSelector'  => $opts['content_selector'] ?? '',
                     'showPercentage'   => $opts['show_percentage'] ?? '0',
+                    'percentagePosition' => $opts['percentage_position'] ?? 'center',
                 ]
             );
         }
