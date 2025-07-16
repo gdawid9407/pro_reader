@@ -101,6 +101,10 @@ class Popup
         return ob_get_clean();
     }
 
+    /**
+     * Pobiera rekomendacje artykułów na podstawie popularności linków lub,
+     * w przypadku braku danych, na podstawie daty publikacji.
+     */
     public function fetch_recommendations_ajax(): void
     {
         check_ajax_referer('rep_recommendations_nonce', 'nonce');
@@ -108,14 +112,44 @@ class Popup
         $posts_count     = $this->options['popup_recommendations_count'] ?? 3;
         $current_post_id = isset($_POST['current_post_id']) ? absint($_POST['current_post_id']) : 0;
         
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'rep_link_index';
+        $recommended_ids = [];
+
+        // Krok 1: Spróbuj pobrać rekomendacje na podstawie zindeksowanych linków.
+        // Znajdujemy posty, które są najczęściej linkowane na całej stronie.
+        $query_str = $wpdb->prepare(
+            "SELECT linked_post_id FROM {$table_name}
+             WHERE linked_post_id != %d
+             GROUP BY linked_post_id
+             ORDER BY COUNT(linked_post_id) DESC
+             LIMIT %d",
+            $current_post_id,
+            (int) $posts_count
+        );
+        $popular_ids = $wpdb->get_col($query_str);
+        
+        if (!empty($popular_ids)) {
+            $recommended_ids = array_map('absint', $popular_ids);
+        }
+
+        // Krok 2: Przygotuj argumenty dla WP_Query.
         $args = [
             'post_type'      => ['post', 'page'],
             'post_status'    => 'publish',
             'posts_per_page' => (int) $posts_count,
-            'orderby'        => 'date',
-            'order'          => 'DESC',
             'post__not_in'   => $current_post_id > 0 ? [$current_post_id] : [],
         ];
+        
+        if (!empty($recommended_ids)) {
+            // Jeśli znaleziono rekomendacje, użyj ich i zachowaj kolejność popularności.
+            $args['post__in'] = $recommended_ids;
+            $args['orderby'] = 'post__in';
+        } else {
+            // Fallback: Jeśli brak rekomendacji, użyj domyślnego sortowania po dacie.
+            $args['orderby'] = 'date';
+            $args['order']   = 'DESC';
+        }
 
         $query = new \WP_Query($args);
         

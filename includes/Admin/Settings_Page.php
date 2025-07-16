@@ -25,6 +25,9 @@ class Settings_Page
         add_action('admin_init', [$this, 'page_init']);
         add_action('admin_menu', [$this, 'add_plugin_page']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
+
+        // Rejestracja punktu końcowego dla AJAX do obsługi reindeksowania.
+        add_action('wp_ajax_rep_reindex_posts', [$this, 'handle_reindex_ajax']);
     }
 
     public function page_init(): void
@@ -36,6 +39,21 @@ class Settings_Page
                 'type'              => 'array',
                 'sanitize_callback' => [$this, 'route_sanitize_callback']
             ]
+        );
+
+        // Dodanie nowej sekcji dla narzędzia do indeksowania w zakładce "Popup".
+        add_settings_section(
+            'popup_reindex_section', 
+            __('Narzędzia Indeksowania', 'pro_reader'), 
+            null, 
+            'reader-engagement-pro-popup'
+        );
+        add_settings_field(
+            'popup_reindex_button', 
+            __('Ręczne Indeksowanie', 'pro_reader'), 
+            [$this, 'reindex_button_callback'], 
+            'reader-engagement-pro-popup', 
+            'popup_reindex_section'
         );
     }
 
@@ -52,24 +70,16 @@ class Settings_Page
         );
     }
 
-    /**
-     * Kieruje dane z formularza do odpowiedniej metody sanitacji na podstawie
-     * unikalnych kluczy pól z danej zakładki.
-     */
     public function route_sanitize_callback(array $input): array
     {
-        // Sprawdza, czy dane pochodzą z formularza "Pasek Postępu".
         if (isset($input['position'])) {
             return $this->progress_bar_settings->sanitize($input);
         }
 
-        // Sprawdza, czy dane pochodzą z formularza "Popup".
         if (isset($input['popup_trigger_time']) || isset($input['popup_rec_item_layout'])) {
             return $this->popup_settings->sanitize($input);
         }
 
-        // Zwraca istniejące opcje, aby uniknąć ich wyczyszczenia,
-        // jeśli żaden z powyższych warunków nie został spełniony.
         return get_option(self::OPTION_NAME, []);
     }
 
@@ -92,18 +102,66 @@ class Settings_Page
 
             <form method="post" action="options.php">
                 <?php
-                settings_fields(self::SETTINGS_GROUP);
                 if ($active_tab === 'progress_bar') {
+                    settings_fields(self::SETTINGS_GROUP);
                     do_settings_sections('reader-engagement-pro-progress-bar');
+                    submit_button();
                 } elseif ($active_tab === 'popup') {
+                    settings_fields(self::SETTINGS_GROUP);
                     do_settings_sections('reader-engagement-pro-popup');
+                    // Przycisk submit jest warunkowy, bo sekcja z reindeksowaniem go nie potrzebuje.
+                    // Można go przenieść do wewnątrz warunku, jeśli chcemy go tylko dla jednej zakładki.
+                    submit_button();
                 }
-                submit_button();
                 ?>
             </form>
         </div>
         <?php
     }
+
+    /**
+     * Wyświetla przycisk i status dla narzędzia do reindeksowania.
+     */
+    public function reindex_button_callback(): void
+    {
+        echo '<button type="button" id="rep-reindex-button" class="button button-secondary">' . esc_html__('Uruchom pełne indeksowanie', 'pro_reader') . '</button>';
+        echo '<p class="description">' . esc_html__('Kliknij, aby przeskanować wszystkie opublikowane wpisy i zbudować bazę linków dla rekomendacji. Może to zająć chwilę.', 'pro_reader') . '</p>';
+        echo '<div id="rep-reindex-status" style="margin-top: 10px;"></div>';
+    }
+
+    /**
+     * Obsługuje żądanie AJAX do ponownego zindeksowania wszystkich postów.
+     */
+    public function handle_reindex_ajax(): void
+    {
+        check_ajax_referer('rep_reindex_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Brak uprawnień.'], 403);
+        }
+
+        // Klasa REP_Link_Indexer jest w głównym pliku, więc jest dostępna globalnie.
+        if (!class_exists('REP_Link_Indexer')) {
+            wp_send_json_error(['message' => 'Krytyczny błąd: Klasa REP_Link_Indexer nie została znaleziona.'], 500);
+        }
+        
+        $indexer = new \REP_Link_Indexer();
+        $args = [
+            'post_type'      => 'post',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1, // Pobierz wszystkie posty
+            'fields'         => 'ids', // Potrzebujemy tylko ID
+        ];
+        
+        $post_ids = get_posts($args);
+        
+        foreach ($post_ids as $post_id) {
+            $indexer->index_post($post_id);
+        }
+        
+        $count = count($post_ids);
+        wp_send_json_success(['message' => "Pomyślnie zindeksowano {$count} wpisów."]);
+    }
+
 
     public function enqueue_admin_assets($hook): void
     {
@@ -173,6 +231,39 @@ class Settings_Page
                 toggleExcerptLimitFields(); 
                 limitTypeRadios.on('change', toggleExcerptLimitFields);
             }
+
+            // Logika przycisku do reindeksowania
+            $('#rep-reindex-button').on('click', function(e) {
+                e.preventDefault();
+                const \$button = $(this);
+                const \$status = $('#rep-reindex-status');
+
+                if (\$button.is('.disabled')) {
+                    return;
+                }
+
+                \$button.addClass('disabled').text('" . esc_js(__('Indeksowanie...', 'pro_reader')) . "');
+                \$status.html('<span class=\"spinner is-active\" style=\"float:left; margin-right:5px;\"></span>" . esc_js(__('Proszę czekać, to może potrwać kilka minut.', 'pro_reader')) . "').css('color', '');
+
+                $.post(ajaxurl, {
+                    action: 'rep_reindex_posts',
+                    nonce: '" . wp_create_nonce('rep_reindex_nonce') . "'
+                })
+                .done(function(response) {
+                    if (response.success) {
+                        \$status.text(response.data.message).css('color', 'green');
+                    } else {
+                        \$status.text('Błąd: ' + response.data.message).css('color', 'red');
+                    }
+                })
+                .fail(function() {
+                    \$status.text('" . esc_js(__('Wystąpił nieoczekiwany błąd serwera.', 'pro_reader')) . "').css('color', 'red');
+                })
+                .always(function() {
+                    \$button.removeClass('disabled').text('" . esc_js(__('Uruchom pełne indeksowanie', 'pro_reader')) . "');
+                    \$status.find('.spinner').remove();
+                });
+            });
 
             // Inicjalizacja color pickera
             $('.wp-color-picker-field').wpColorPicker();
