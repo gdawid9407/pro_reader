@@ -158,8 +158,9 @@ class Settings_Popup
 
     public function trigger_time_callback(): void
     {
-        $value = $this->options['popup_trigger_time'] ?? 60;
-        printf('<input type="number" id="popup_trigger_time" name="%s[popup_trigger_time]" value="%d" min="0" />', self::OPTION_NAME, esc_attr($value));
+    $value = $this->options['popup_trigger_time'] ?? 60;
+    printf('<input type="number" id="popup_trigger_time" name="%s[popup_trigger_time]" value="%d" min="0" />', self::OPTION_NAME, esc_attr($value));
+    echo '<p class="description">' . esc_html__('Ustawienie wartości 0 wyłącza ten wyzwalacz.', 'pro_reader') . '</p>';
     }
 
     public function trigger_scroll_up_callback(): void
