@@ -16,27 +16,30 @@ class Popup
     {
         $this->options = get_option('reader_engagement_pro_options', []);
         
-        if (empty($this->options['popup_enable']) || $this->options['popup_enable'] !== '1') {
-            return;
+        // === POCZĄTEK ZMIANY: Kluczowa zmiana w architekturze ===
+        // Rejestrujemy obsługę AJAX bezwarunkowo. Logika decydująca o wyświetleniu
+        // będzie sprawdzana wewnątrz funkcji AJAX, a nie podczas jej rejestracji.
+        // To zapewnia, że WordPress zawsze "wie", co zrobić z żądaniem.
+        add_action('wp_ajax_nopriv_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
+        add_action('wp_ajax_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
+        
+        // Logikę decydującą o wyświetleniu popupa na stronie zostawiamy tak jak była.
+        if (!empty($this->options['popup_enable']) && $this->options['popup_enable'] === '1') {
+            add_action('wp', [$this, 'decide_to_render']);
         }
-
-        add_action('wp', [$this, 'decide_to_render']);
+        // === KONIEC ZMIANY ===
     }
 
     public function decide_to_render(): void
     {
         $display_on = $this->options['popup_display_on'] ?? [];
-        
         if (empty($display_on)) {
             return;
         }
 
         if (is_singular($display_on)) {
             $this->should_render = true;
-            
             add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
-            add_action('wp_ajax_nopriv_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
-            add_action('wp_ajax_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
             add_action('wp_footer', [$this, 'render_popup_in_footer']);
         }
     }
@@ -101,53 +104,46 @@ class Popup
         <?php
         return ob_get_clean();
     }
-
-    // === POCZĄTEK ZMIANY: Poprawiono logikę budowania zapytania SQL ===
+    
     private function get_popular_post_ids(int $count, array $exclude_ids = []): array
     {
         global $wpdb;
         $table_name = $wpdb->prefix . 'rep_link_index';
-    
-        // Rozpocznij budowanie zapytania
+
+        if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name)) != $table_name) {
+            return [];
+        }
+
         $query = "SELECT linked_post_id FROM {$table_name}";
         $params = [];
-    
-        // Warunkowo dodaj klauzulę WHERE
+
         if (!empty($exclude_ids)) {
             $placeholders = implode(', ', array_fill(0, count($exclude_ids), '%d'));
             $query .= " WHERE linked_post_id NOT IN ({$placeholders})";
             $params = array_merge($params, $exclude_ids);
         }
-    
-        // Dodaj resztę zapytania
+
         $query .= " GROUP BY linked_post_id ORDER BY COUNT(linked_post_id) DESC LIMIT %d";
         $params[] = $count;
     
-        // Przygotuj i wykonaj zapytanie za jednym razem
         $prepared_query = $wpdb->prepare($query, $params);
         $ids = $wpdb->get_col($prepared_query);
     
+        if (!is_array($ids)) {
+            return [];
+        }
+    
         return array_map('absint', $ids);
     }
-    // === KONIEC ZMIANY ===
-
 
     private function get_latest_post_ids(int $count, array $exclude_ids = []): array
     {
-        if ($count <= 0) {
-            return [];
-        }
-
+        if ($count <= 0) { return []; }
         $args = [
-            'post_type'      => ['post', 'page'],
-            'post_status'    => 'publish',
-            'posts_per_page' => $count,
-            'orderby'        => 'date',
-            'order'          => 'DESC',
-            'post__not_in'   => array_unique(array_filter($exclude_ids)),
-            'fields'         => 'ids',
+            'post_type' => ['post', 'page'], 'post_status' => 'publish',
+            'posts_per_page' => $count, 'orderby' => 'date', 'order' => 'DESC',
+            'post__not_in' => array_unique(array_filter($exclude_ids)), 'fields' => 'ids',
         ];
-
         $query = new \WP_Query($args);
         return $query->posts;
     }
@@ -156,42 +152,35 @@ class Popup
     {
         check_ajax_referer('rep_recommendations_nonce', 'nonce');
         
-        $logic           = $this->options['popup_recommendation_logic'] ?? 'hybrid_fill';
-        $posts_count     = (int) ($this->options['popup_recommendations_count'] ?? 3);
+        $logic = $this->options['popup_recommendation_logic'] ?? 'hybrid_fill';
+        $posts_count = (int) ($this->options['popup_recommendations_count'] ?? 3);
         $current_post_id = isset($_POST['current_post_id']) ? absint($_POST['current_post_id']) : 0;
         
         $recommended_ids = [];
-        $exclude_ids     = $current_post_id > 0 ? [$current_post_id] : [];
+        $exclude_ids = $current_post_id > 0 ? [$current_post_id] : [];
 
         switch ($logic) {
             case 'popularity':
                 $recommended_ids = $this->get_popular_post_ids($posts_count, $exclude_ids);
                 break;
-
             case 'hybrid_fill':
-                $popular_ids     = $this->get_popular_post_ids($posts_count, $exclude_ids);
+                $popular_ids = $this->get_popular_post_ids($posts_count, $exclude_ids);
                 $recommended_ids = $popular_ids;
-                
                 $found_count = count($recommended_ids);
                 if ($found_count < $posts_count) {
-                    $needed_count     = $posts_count - $found_count;
+                    $needed_count = $posts_count - $found_count;
                     $fill_exclude_ids = array_merge($exclude_ids, $recommended_ids);
-                    $latest_ids       = $this->get_latest_post_ids($needed_count, $fill_exclude_ids);
-                    $recommended_ids  = array_merge($recommended_ids, $latest_ids);
+                    $latest_ids = $this->get_latest_post_ids($needed_count, $fill_exclude_ids);
+                    $recommended_ids = array_merge($recommended_ids, $latest_ids);
                 }
                 break;
-
             case 'hybrid_mix':
                 $popular_count = (int) ceil($posts_count / 2);
-                $latest_count  = (int) floor($posts_count / 2);
-
+                $latest_count = (int) floor($posts_count / 2);
                 $popular_ids = $this->get_popular_post_ids($popular_count, $exclude_ids);
-                
                 $latest_exclude_ids = array_merge($exclude_ids, $popular_ids);
-                $latest_ids         = $this->get_latest_post_ids($latest_count, $latest_exclude_ids);
-                
+                $latest_ids = $this->get_latest_post_ids($latest_count, $latest_exclude_ids);
                 $recommended_ids = array_merge($popular_ids, $latest_ids);
-
                 $found_count = count($recommended_ids);
                 if ($found_count < $posts_count) {
                     $needed_count = $posts_count - $found_count;
@@ -200,7 +189,6 @@ class Popup
                     $recommended_ids = array_merge($recommended_ids, $fill_ids);
                 }
                 break;
-
             case 'date':
             default:
                 $recommended_ids = $this->get_latest_post_ids($posts_count, $exclude_ids);
@@ -213,13 +201,10 @@ class Popup
         }
         
         $args = [
-            'post_type'      => ['post', 'page'],
-            'post_status'    => 'publish',
-            'posts_per_page' => count($recommended_ids),
-            'post__in'       => $recommended_ids,
-            'orderby'        => 'post__in',
+            'post_type' => ['post', 'page'], 'post_status' => 'publish',
+            'posts_per_page' => count($recommended_ids), 'post__in' => $recommended_ids,
+            'orderby' => 'post__in',
         ];
-
         $query = new \WP_Query($args);
         
         if ($query->have_posts()) {
@@ -229,20 +214,19 @@ class Popup
                 $html .= $this->generate_recommendation_item_html(get_the_ID());
             }
             wp_reset_postdata();
-            
             wp_send_json_success(['html' => $html]);
         } else {
-            wp_send_json_error(['message' => 'Nie znaleziono rekomendacji.']);
+            wp_send_json_error(['message' => 'Nie znaleziono postów dla podanych ID.']);
         }
     }
 
     private function generate_recommendation_item_html(int $post_id): string
     {
-        $item_layout           = $this->options['popup_rec_item_layout'] ?? 'vertical';
-        $default_order         = ['thumbnail', 'meta', 'title', 'excerpt', 'link'];
-        $components_order      = $this->options['popup_rec_components_order'] ?? $default_order;
+        $item_layout = $this->options['popup_rec_item_layout'] ?? 'vertical';
+        $default_order = ['thumbnail', 'meta', 'title', 'excerpt', 'link'];
+        $components_order = $this->options['popup_rec_components_order'] ?? $default_order;
         $components_visibility = $this->options['popup_rec_components_visibility'] ?? array_fill_keys($default_order, '1');
-        $components_html       = [];
+        $components_html = [];
 
         foreach ($components_order as $component_key) {
             if (!empty($components_visibility[$component_key])) {
@@ -251,7 +235,6 @@ class Popup
         }
         
         $item_class = 'rep-rec-item item-layout-' . sanitize_html_class($item_layout);
-
         ob_start();
         ?>
         <li class="<?php echo esc_attr($item_class); ?>">
@@ -284,74 +267,45 @@ class Popup
         
         switch ($key) {
             case 'thumbnail':
-                $thumb_size     = $this->options['popup_rec_thumb_size'] ?? 'medium';
-                $thumb_fit      = $this->options['popup_rec_thumb_fit'] ?? 'cover';
-                $aspect_ratio   = $this->options['popup_rec_thumb_aspect_ratio'] ?? '16:9';
-                $image_attrs    = ['class' => 'rep-rec-thumb thumb-fit-' . sanitize_html_class($thumb_fit)];
+                $thumb_size = $this->options['popup_rec_thumb_size'] ?? 'medium';
+                $thumb_fit = $this->options['popup_rec_thumb_fit'] ?? 'cover';
+                $aspect_ratio = $this->options['popup_rec_thumb_aspect_ratio'] ?? '16:9';
+                $image_attrs = ['class' => 'rep-rec-thumb thumb-fit-' . sanitize_html_class($thumb_fit)];
                 $thumbnail_html = get_the_post_thumbnail($post_id, $thumb_size, $image_attrs);
-
                 if (empty($thumbnail_html)) {
                     $placeholder_url = REP_PLUGIN_URL . 'assets/images/placeholder.png';
-                    $thumbnail_html  = sprintf('<img src="%s" alt="" class="rep-rec-thumb rep-rec-thumb-placeholder">', esc_url($placeholder_url));
+                    $thumbnail_html = sprintf('<img src="%s" alt="" class="rep-rec-thumb rep-rec-thumb-placeholder">', esc_url($placeholder_url));
                 }
-                
                 $link_style = '';
                 if ($aspect_ratio !== 'auto') {
                     $link_style = 'aspect-ratio: ' . str_replace(':', ' / ', $aspect_ratio) . ';';
                 }
-
-                return sprintf(
-                    '<a href="%s" class="rep-rec-thumb-link" style="%s">%s</a>',
-                    esc_url($post_link),
-                    esc_attr($link_style),
-                    $thumbnail_html
-                );
-
+                return sprintf('<a href="%s" class="rep-rec-thumb-link" style="%s">%s</a>', esc_url($post_link), esc_attr($link_style), $thumbnail_html);
             case 'title':
-                return sprintf(
-                    '<h3 class="rep-rec-title"><a href="%s">%s</a></h3>',
-                    esc_url($post_link),
-                    esc_html(get_the_title($post_id))
-                );
-
+                return sprintf('<h3 class="rep-rec-title"><a href="%s">%s</a></h3>', esc_url($post_link), esc_html(get_the_title($post_id)));
             case 'excerpt':
                 $excerpt = $this->get_processed_excerpt($post_id);
-                if (empty($excerpt)) {
-                    return '';
-                }
-
+                if (empty($excerpt)) { return ''; }
                 $limit_type = $this->options['popup_rec_excerpt_limit_type'] ?? 'words';
                 $style_attr = '';
-
                 if ($limit_type === 'lines') {
                     $line_clamp = $this->options['popup_rec_excerpt_lines'] ?? 3;
                     if ($line_clamp > 0) {
-                        $style_attr = sprintf(
-                            'style="display: -webkit-box; -webkit-line-clamp: %d; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;"',
-                            esc_attr($line_clamp)
-                        );
+                        $style_attr = sprintf('style="display: -webkit-box; -webkit-line-clamp: %d; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;"', esc_attr($line_clamp));
                     }
                 }
-            
                 return sprintf('<p class="rep-rec-excerpt" %s>%s</p>', $style_attr, esc_html($excerpt));
-
             case 'meta':
-                $date          = get_the_date('j F, Y', $post_id);
+                $date = get_the_date('j F, Y', $post_id);
                 $category_html = '';
-                $categories    = get_the_category($post_id);
+                $categories = get_the_category($post_id);
                 if (!empty($categories)) {
                     $category_html = ' <span class="rep-rec-meta-separator">•</span> <span class="rep-rec-category">' . esc_html($categories[0]->name) . '</span>';
                 }
                 return sprintf('<p class="rep-rec-meta"><span class="rep-rec-date">%s</span>%s</p>', esc_html($date), $category_html);
-
             case 'link':
                 $link_text = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
-                return sprintf(
-                    '<a href="%s" class="rep-rec-link">%s</a>',
-                    esc_url($post_link),
-                    wp_kses_post($link_text)
-                );
-                
+                return sprintf('<a href="%s" class="rep-rec-link">%s</a>', esc_url($post_link), wp_kses_post($link_text));
             default:
                 return '';
         }
@@ -359,20 +313,15 @@ class Popup
 
     private function get_processed_excerpt(int $post_id): string
     {
-        $limit_type  = $this->options['popup_rec_excerpt_limit_type'] ?? 'words';
+        $limit_type = $this->options['popup_rec_excerpt_limit_type'] ?? 'words';
         $raw_excerpt = get_the_excerpt($post_id);
-
-        if (empty($raw_excerpt)) {
-            return '';
-        }
-
+        if (empty($raw_excerpt)) { return ''; }
         if ($limit_type === 'words') {
             $length = $this->options['popup_rec_excerpt_length'] ?? 15;
             if ($length > 0) {
                 return wp_trim_words($raw_excerpt, $length, '...');
             }
         }
-    
         return $raw_excerpt;
     }
 }

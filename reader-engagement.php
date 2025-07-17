@@ -163,4 +163,4 @@ function rep_handle_post_save(int $post_id, \WP_Post $post) {
     $indexer->index_post($post_id);
 }
 
-
+// === CAŁY BŁĘDNIE WKLEJONY KOD JAVASCRIPT ZOSTAŁ USUNIĘTY Z TEGO MIEJSCA ===
