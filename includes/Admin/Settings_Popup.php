@@ -33,6 +33,9 @@ class Settings_Popup
         add_settings_section('popup_recommendations_section', __('Ustawienia Ogólne Rekomendacji', 'pro_reader'), null, $page);
         $this->register_recommendation_fields($page, 'popup_recommendations_section');
 
+        add_settings_section('popup_button_settings_section', __('Ustawienia Przycisku "Czytaj dalej"', 'pro_reader'), null, $page);
+        $this->register_button_fields($page, 'popup_button_settings_section');
+
         // Sekcja 4: Konstruktor Układu
         add_settings_section('popup_layout_builder_section', __('Konstruktor Układu Rekomendacji', 'pro_reader'), null, $page);
         $this->register_layout_builder_fields($page, 'popup_layout_builder_section');
@@ -62,6 +65,8 @@ class Settings_Popup
         add_settings_field('popup_recommendations_link_text', __('Treść linku "Czytaj dalej"', 'pro_reader'), [$this, 'recommendations_link_text_callback'], $page, $section);
     }
 
+    
+
     private function register_layout_builder_fields(string $page, string $section): void
     {
         add_settings_field('popup_rec_item_layout', __('Struktura elementu', 'pro_reader'), [$this, 'item_layout_callback'], $page, $section);
@@ -77,6 +82,47 @@ class Settings_Popup
         add_settings_field('popup_rec_thumb_aspect_ratio', __('Proporcje obrazka', 'pro_reader'), [$this, 'thumb_aspect_ratio_callback'], $page, $section);
         add_settings_field('popup_rec_thumb_fit', __('Dopasowanie obrazka', 'pro_reader'), [$this, 'thumb_fit_callback'], $page, $section);
     }
+    
+    private function register_button_fields(string $page, string $section): void
+{
+    add_settings_field('popup_rec_button_bg_color', __('Kolor tła', 'pro_reader'), [$this, 'button_bg_color_callback'], $page, $section);
+    add_settings_field('popup_rec_button_text_color', __('Kolor tekstu', 'pro_reader'), [$this, 'button_text_color_callback'], $page, $section);
+    add_settings_field('popup_rec_button_bg_hover_color', __('Kolor tła (hover)', 'pro_reader'), [$this, 'button_bg_hover_color_callback'], $page, $section);
+    add_settings_field('popup_rec_button_text_hover_color', __('Kolor tekstu (hover)', 'pro_reader'), [$this, 'button_text_hover_color_callback'], $page, $section);
+    add_settings_field('popup_rec_button_border_radius', __('Zaokrąglenie rogów (px)', 'pro_reader'), [$this, 'button_border_radius_callback'], $page, $section);
+}
+
+// Dodaj poniższe callbacki do klasy Settings_Popup
+
+public function button_bg_color_callback(): void
+{
+    $value = $this->options['popup_rec_button_bg_color'] ?? '#0073aa';
+    printf('<input type="text" name="%s[popup_rec_button_bg_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+}
+
+public function button_text_color_callback(): void
+{
+    $value = $this->options['popup_rec_button_text_color'] ?? '#ffffff';
+    printf('<input type="text" name="%s[popup_rec_button_text_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+}
+
+public function button_bg_hover_color_callback(): void
+{
+    $value = $this->options['popup_rec_button_bg_hover_color'] ?? '#005177';
+    printf('<input type="text" name="%s[popup_rec_button_bg_hover_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+}
+
+public function button_text_hover_color_callback(): void
+{
+    $value = $this->options['popup_rec_button_text_hover_color'] ?? '#ffffff';
+    printf('<input type="text" name="%s[popup_rec_button_text_hover_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+}
+
+public function button_border_radius_callback(): void
+{
+    $value = $this->options['popup_rec_button_border_radius'] ?? 4;
+    printf('<input type="number" name="%s[popup_rec_button_border_radius]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
+}
 
     public function sanitize(array $input): array
     {
@@ -130,6 +176,12 @@ class Settings_Popup
 
             $allowed_fits = ['cover', 'contain'];
             $sanitized['popup_rec_thumb_fit'] = in_array($input['popup_rec_thumb_fit'] ?? 'cover', $allowed_fits) ? $input['popup_rec_thumb_fit'] : 'cover';
+            $sanitized['popup_rec_button_bg_color']          = sanitize_hex_color($input['popup_rec_button_bg_color'] ?? '#0073aa');
+    $sanitized['popup_rec_button_text_color']        = sanitize_hex_color($input['popup_rec_button_text_color'] ?? '#ffffff');
+    $sanitized['popup_rec_button_bg_hover_color']    = sanitize_hex_color($input['popup_rec_button_bg_hover_color'] ?? '#005177');
+    $sanitized['popup_rec_button_text_hover_color']  = sanitize_hex_color($input['popup_rec_button_text_hover_color'] ?? '#ffffff');
+    $sanitized['popup_rec_button_border_radius']     = absint($input['popup_rec_button_border_radius'] ?? 4);
+        
         }
         
         return $sanitized;

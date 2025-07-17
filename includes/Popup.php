@@ -304,8 +304,32 @@ class Popup
                 }
                 return sprintf('<p class="rep-rec-meta"><span class="rep-rec-date">%s</span>%s</p>', esc_html($date), $category_html);
             case 'link':
-                $link_text = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
-                return sprintf('<a href="%s" class="rep-rec-link">%s</a>', esc_url($post_link), wp_kses_post($link_text));
+    $link_text = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
+
+    // Pobierz opcje stylu przycisku
+    $bg_color        = $this->options['popup_rec_button_bg_color'] ?? '#0073aa';
+    $text_color      = $this->options['popup_rec_button_text_color'] ?? '#ffffff';
+    $bg_hover_color  = $this->options['popup_rec_button_bg_hover_color'] ?? '#005177';
+    $text_hover_color= $this->options['popup_rec_button_text_hover_color'] ?? '#ffffff';
+    $border_radius   = $this->options['popup_rec_button_border_radius'] ?? 4;
+
+    // Przygotuj zmienne CSS dla stylów inline
+    $style_vars = sprintf(
+        '--rep-btn-bg: %s; --rep-btn-text: %s; --rep-btn-bg-hover: %s; --rep-btn-text-hover: %s; border-radius: %dpx;',
+        esc_attr($bg_color),
+        esc_attr($text_color),
+        esc_attr($bg_hover_color),
+        esc_attr($text_hover_color),
+        esc_attr($border_radius)
+    );
+    
+    // Zamiast klasy 'rep-rec-link', użyj 'rep-rec-button' i dodaj style
+    return sprintf(
+        '<a href="%s" class="rep-rec-button" style="%s">%s</a>',
+        esc_url($post_link),
+        $style_vars,
+        wp_kses_post($link_text)
+    );
             default:
                 return '';
         }

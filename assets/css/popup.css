@@ -148,14 +148,32 @@
   line-height: 1.5;
 }
 
-.rep-rec-link {
-  font-size: 0.9rem; 
+.rep-rec-button {
+  /* Użycie zmiennych CSS zdefiniowanych w atrybucie style */
+  background-color: var(--rep-btn-bg, #0073aa); /* Wartość domyślna, gdyby zmienna nie istniała */
+  color: var(--rep-btn-text, #ffffff);
+
+  /* Podstawowe style przycisku */
+  display: inline-block;
+  padding: 10px 18px;
+  margin-top: auto; /* To pcha przycisk na dół w układzie flex */
+  font-size: 0.9rem;
   font-weight: bold;
-  text-decoration: none; 
-  color: #555;
-  margin-top: auto;
+  text-decoration: none;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  
+  /* Płynne przejście dla efektu hover */
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
-.rep-rec-link:hover { color: #0073aa; }
+
+.rep-rec-button:hover,
+.rep-rec-button:focus {
+  /* Użycie zmiennych CSS dla stanu hover */
+  background-color: var(--rep-btn-bg-hover, #005177);
+  color: var(--rep-btn-text-hover, #ffffff);
+}
 
 
 #rep-intelligent-popup__list.layout-grid {
