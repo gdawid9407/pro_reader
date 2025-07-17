@@ -54,6 +54,7 @@ class Settings_Popup
     private function register_recommendation_fields(string $page, string $section): void
     {
         add_settings_field('popup_recommendations_count', __('Liczba wpisów', 'pro_reader'), [$this, 'recommendations_count_callback'], $page, $section);
+        add_settings_field('popup_recommendation_logic', __('Logika rekomendacji', 'pro_reader'), [$this, 'recommendation_logic_callback'], $page, $section);
         add_settings_field('popup_recommendations_layout', __('Układ ogólny (Lista/Siatka)', 'pro_reader'), [$this, 'recommendations_layout_callback'], $page, $section);
         add_settings_field('popup_recommendations_link_text', __('Treść linku "Czytaj dalej"', 'pro_reader'), [$this, 'recommendations_link_text_callback'], $page, $section);
     }
@@ -91,6 +92,15 @@ class Settings_Popup
         // Sanitacja pól z sekcji Rekomendacje, Układ i Miniaturka
         if (isset($input['popup_rec_item_layout'])) {
             $sanitized['popup_recommendations_count']     = max(1, min(10, absint($input['popup_recommendations_count'] ?? 3)));
+            
+            // Sanitacja nowej opcji logiki rekomendacji.
+            $allowed_logics = ['date', 'popularity', 'hybrid_fill', 'hybrid_mix'];
+            if (isset($input['popup_recommendation_logic']) && in_array($input['popup_recommendation_logic'], $allowed_logics)) {
+                $sanitized['popup_recommendation_logic'] = $input['popup_recommendation_logic'];
+            } else {
+                $sanitized['popup_recommendation_logic'] = 'hybrid_fill';
+            }
+
             $sanitized['popup_recommendations_layout']    = in_array($input['popup_recommendations_layout'] ?? 'list', ['list', 'grid']) ? $input['popup_recommendations_layout'] : 'list';
             $sanitized['popup_recommendations_link_text'] = wp_kses_post($input['popup_recommendations_link_text'] ?? 'Zobacz więcej →');
             
@@ -185,6 +195,30 @@ class Settings_Popup
     {
         $value = $this->options['popup_recommendations_count'] ?? 3;
         printf('<input type="number" id="popup_recommendations_count" name="%s[popup_recommendations_count]" value="%d" min="1" max="10" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Dla logiki "Mieszane" użyj parzystej liczby (2, 4 lub 6) dla najlepszych rezultatów.', 'pro_reader') . '</p>';
+    }
+
+    /**
+     * Wyświetla pole wyboru dla logiki rekomendacji.
+     */
+    public function recommendation_logic_callback(): void
+    {
+        $value = $this->options['popup_recommendation_logic'] ?? 'hybrid_fill';
+        $name = self::OPTION_NAME . '[popup_recommendation_logic]';
+        
+        $logics = [
+            'date'        => __('Tylko najnowsze', 'pro_reader'),
+            'popularity'  => __('Tylko popularne (wg linków)', 'pro_reader'),
+            'hybrid_fill' => __('Popularne, uzupełnione najnowszymi (Rekomendowane)', 'pro_reader'),
+            'hybrid_mix'  => __('Mieszane (połowa popularnych, połowa najnowszych)', 'pro_reader')
+        ];
+
+        echo '<select id="popup_recommendation_logic" name="' . esc_attr($name) . '">';
+        foreach ($logics as $key => $label) {
+            echo '<option value="' . esc_attr($key) . '"' . selected($value, $key, false) . '>' . esc_html($label) . '</option>';
+        }
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Wybierz, w jaki sposób wtyczka ma dobierać artykuły do rekomendacji.', 'pro_reader') . '</p>';
     }
 
     public function recommendations_layout_callback(): void
@@ -226,7 +260,6 @@ class Settings_Popup
         $order      = $this->options['popup_rec_components_order'] ?? array_keys($defaults);
         $visibility = $this->options['popup_rec_components_visibility'] ?? array_fill_keys(array_keys($defaults), '1');
 
-        // Upewnienie się, że wszystkie komponenty są na liście, nawet jeśli dodano nowe w aktualizacji
         foreach (array_keys($defaults) as $key) {
             if (!in_array($key, $order, true)) {
                 $order[] = $key;

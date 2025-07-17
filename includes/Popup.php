@@ -102,54 +102,127 @@ class Popup
     }
 
     /**
-     * Pobiera rekomendacje artykułów na podstawie popularności linków lub,
-     * w przypadku braku danych, na podstawie daty publikacji.
+     * Metoda pomocnicza do pobierania ID najpopularniejszych postów.
+     */
+    private function get_popular_post_ids(int $count, array $exclude_ids = []): array
+    {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'rep_link_index';
+
+        $where_clause = '';
+        if (!empty($exclude_ids)) {
+            $placeholders = implode(', ', array_fill(0, count($exclude_ids), '%d'));
+            // Ważne: prepare jest używane dla całej klauzuli WHERE, aby uniknąć problemów z formatowaniem.
+            $where_clause = $wpdb->prepare("WHERE linked_post_id NOT IN ({$placeholders})", $exclude_ids);
+        }
+
+        // prepare jest używane dla całego zapytania, przekazując tylko końcowy limit jako parametr.
+        $query_str = $wpdb->prepare(
+            "SELECT linked_post_id FROM {$table_name}
+             {$where_clause}
+             GROUP BY linked_post_id
+             ORDER BY COUNT(linked_post_id) DESC
+             LIMIT %d",
+            $count
+        );
+        
+        $ids = $wpdb->get_col($query_str);
+        return array_map('absint', $ids);
+    }
+
+    /**
+     * Metoda pomocnicza do pobierania ID najnowszych postów.
+     */
+    private function get_latest_post_ids(int $count, array $exclude_ids = []): array
+    {
+        if ($count <= 0) {
+            return [];
+        }
+
+        $args = [
+            'post_type'      => ['post', 'page'],
+            'post_status'    => 'publish',
+            'posts_per_page' => $count,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'post__not_in'   => array_unique(array_filter($exclude_ids)),
+            'fields'         => 'ids',
+        ];
+
+        $query = new \WP_Query($args);
+        return $query->posts;
+    }
+
+    /**
+     * Pobiera rekomendacje artykułów na podstawie wybranej logiki.
      */
     public function fetch_recommendations_ajax(): void
     {
         check_ajax_referer('rep_recommendations_nonce', 'nonce');
         
-        $posts_count     = $this->options['popup_recommendations_count'] ?? 3;
+        $logic           = $this->options['popup_recommendation_logic'] ?? 'hybrid_fill';
+        $posts_count     = (int) ($this->options['popup_recommendations_count'] ?? 3);
         $current_post_id = isset($_POST['current_post_id']) ? absint($_POST['current_post_id']) : 0;
         
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'rep_link_index';
         $recommended_ids = [];
+        $exclude_ids     = $current_post_id > 0 ? [$current_post_id] : [];
 
-        // Krok 1: Spróbuj pobrać rekomendacje na podstawie zindeksowanych linków.
-        // Znajdujemy posty, które są najczęściej linkowane na całej stronie.
-        $query_str = $wpdb->prepare(
-            "SELECT linked_post_id FROM {$table_name}
-             WHERE linked_post_id != %d
-             GROUP BY linked_post_id
-             ORDER BY COUNT(linked_post_id) DESC
-             LIMIT %d",
-            $current_post_id,
-            (int) $posts_count
-        );
-        $popular_ids = $wpdb->get_col($query_str);
-        
-        if (!empty($popular_ids)) {
-            $recommended_ids = array_map('absint', $popular_ids);
+        switch ($logic) {
+            case 'popularity':
+                $recommended_ids = $this->get_popular_post_ids($posts_count, $exclude_ids);
+                break;
+
+            case 'hybrid_fill':
+                $popular_ids     = $this->get_popular_post_ids($posts_count, $exclude_ids);
+                $recommended_ids = $popular_ids;
+                
+                $found_count = count($recommended_ids);
+                if ($found_count < $posts_count) {
+                    $needed_count     = $posts_count - $found_count;
+                    $fill_exclude_ids = array_merge($exclude_ids, $recommended_ids);
+                    $latest_ids       = $this->get_latest_post_ids($needed_count, $fill_exclude_ids);
+                    $recommended_ids  = array_merge($recommended_ids, $latest_ids);
+                }
+                break;
+
+            case 'hybrid_mix':
+                $popular_count = (int) ceil($posts_count / 2);
+                $latest_count  = (int) floor($posts_count / 2);
+
+                $popular_ids = $this->get_popular_post_ids($popular_count, $exclude_ids);
+                
+                $latest_exclude_ids = array_merge($exclude_ids, $popular_ids);
+                $latest_ids         = $this->get_latest_post_ids($latest_count, $latest_exclude_ids);
+                
+                $recommended_ids = array_merge($popular_ids, $latest_ids);
+
+                $found_count = count($recommended_ids);
+                if ($found_count < $posts_count) {
+                    $needed_count = $posts_count - $found_count;
+                    $final_fill_exclude_ids = array_merge($exclude_ids, $recommended_ids);
+                    $fill_ids = $this->get_latest_post_ids($needed_count, $final_fill_exclude_ids);
+                    $recommended_ids = array_merge($recommended_ids, $fill_ids);
+                }
+                break;
+
+            case 'date':
+            default:
+                $recommended_ids = $this->get_latest_post_ids($posts_count, $exclude_ids);
+                break;
         }
 
-        // Krok 2: Przygotuj argumenty dla WP_Query.
+        if (empty($recommended_ids)) {
+            wp_send_json_error(['message' => 'Nie znaleziono rekomendacji.']);
+            return;
+        }
+        
         $args = [
             'post_type'      => ['post', 'page'],
             'post_status'    => 'publish',
-            'posts_per_page' => (int) $posts_count,
-            'post__not_in'   => $current_post_id > 0 ? [$current_post_id] : [],
+            'posts_per_page' => count($recommended_ids),
+            'post__in'       => $recommended_ids,
+            'orderby'        => 'post__in',
         ];
-        
-        if (!empty($recommended_ids)) {
-            // Jeśli znaleziono rekomendacje, użyj ich i zachowaj kolejność popularności.
-            $args['post__in'] = $recommended_ids;
-            $args['orderby'] = 'post__in';
-        } else {
-            // Fallback: Jeśli brak rekomendacji, użyj domyślnego sortowania po dacie.
-            $args['orderby'] = 'date';
-            $args['order']   = 'DESC';
-        }
 
         $query = new \WP_Query($args);
         
