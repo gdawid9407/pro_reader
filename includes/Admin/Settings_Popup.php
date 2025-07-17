@@ -22,7 +22,7 @@ class Settings_Popup
         $page = 'reader-engagement-pro-popup';
 
         // Sekcja 1: Wyzwalacze
-        add_settings_section('popup_triggers_section', __('Ustawienia Wyzwalaczy', 'pro_reader'), null, $page);
+        add_settings_section('popup_triggers_section', __('Ustawienia Wyzwalaczy i Widoczności', 'pro_reader'), null, $page);
         $this->register_trigger_fields($page, 'popup_triggers_section');
 
         // Sekcja 2: Treść
@@ -45,6 +45,9 @@ class Settings_Popup
     private function register_trigger_fields(string $page, string $section): void
     {
         add_settings_field('popup_enable', __('Włącz Moduł Popup', 'pro_reader'), [$this, 'enable_callback'], $page, $section);
+        // === NOWE POLE ===
+        add_settings_field('popup_display_on', __('Wyświetlaj na', 'pro_reader'), [$this, 'display_on_callback'], $page, $section);
+        // === KONIEC NOWEGO POLA ===
         add_settings_field('popup_trigger_scroll_percent_enable', __('Wyzwalacz: Procent przewinięcia', 'pro_reader'), [$this, 'trigger_scroll_percent_enable_callback'], $page, $section);
         add_settings_field('popup_trigger_scroll_percent', __('Wartość procentowa', 'pro_reader'), [$this, 'trigger_scroll_percent_callback'], $page, $section);
         add_settings_field('popup_trigger_time', __('Wyzwalacz: Czas na stronie (sekundy)', 'pro_reader'), [$this, 'trigger_time_callback'], $page, $section);
@@ -82,6 +85,13 @@ class Settings_Popup
         // Sanitacja pól z sekcji Wyzwalacze i Treść
         if (isset($input['popup_trigger_time'])) {
             $sanitized['popup_enable']                      = !empty($input['popup_enable']) ? '1' : '0';
+            // === SANITACJA NOWEGO POLA ===
+            if (!empty($input['popup_display_on']) && is_array($input['popup_display_on'])) {
+                $sanitized['popup_display_on'] = array_map('sanitize_key', $input['popup_display_on']);
+            } else {
+                $sanitized['popup_display_on'] = [];
+            }
+            // === KONIEC SANITACJI ===
             $sanitized['popup_trigger_scroll_up']           = !empty($input['popup_trigger_scroll_up']) ? '1' : '0';
             $sanitized['popup_trigger_scroll_percent_enable'] = !empty($input['popup_trigger_scroll_percent_enable']) ? '1' : '0';
             $sanitized['popup_trigger_scroll_percent']      = max(1, min(100, absint($input['popup_trigger_scroll_percent'] ?? 85)));
@@ -93,7 +103,6 @@ class Settings_Popup
         if (isset($input['popup_rec_item_layout'])) {
             $sanitized['popup_recommendations_count']     = max(1, min(10, absint($input['popup_recommendations_count'] ?? 3)));
             
-            // Sanitacja nowej opcji logiki rekomendacji.
             $allowed_logics = ['date', 'popularity', 'hybrid_fill', 'hybrid_mix'];
             if (isset($input['popup_recommendation_logic']) && in_array($input['popup_recommendation_logic'], $allowed_logics)) {
                 $sanitized['popup_recommendation_logic'] = $input['popup_recommendation_logic'];
@@ -152,6 +161,36 @@ class Settings_Popup
         printf('<input type="checkbox" id="popup_enable" name="%s[popup_enable]" value="1" %s />', self::OPTION_NAME, checked('1', $value, false));
         echo ' <label for="popup_enable">' . esc_html__('Aktywuj popup na stronie.', 'pro_reader') . '</label>';
     }
+    
+    // === NOWA FUNKCJA WYŚWIETLAJĄCA POLE ===
+    
+    /**
+     * Wyświetla checkboxy dla publicznych typów postów.
+     */
+    public function display_on_callback(): void
+    {
+        $post_types = get_post_types(['public' => true], 'objects');
+        $selected_types = $this->options['popup_display_on'] ?? [];
+        
+        echo '<fieldset>';
+        foreach ($post_types as $post_type) {
+            if ($post_type->name === 'attachment') {
+                continue;
+            }
+            $is_checked = in_array($post_type->name, $selected_types);
+            printf(
+                '<label style="margin-right: 15px; display: inline-block;"><input type="checkbox" name="%s[popup_display_on][]" value="%s" %s> %s</label>',
+                self::OPTION_NAME,
+                esc_attr($post_type->name),
+                checked($is_checked, true, false),
+                esc_html($post_type->label)
+            );
+        }
+        echo '</fieldset>';
+        echo '<p class="description">' . esc_html__('Wybierz typy treści, na których ma być automatycznie wyświetlany popup.', 'pro_reader') . '</p>';
+    }
+
+    // === ISTNIEJĄCE FUNKCJE (bez zmian) ===
 
     public function trigger_scroll_percent_enable_callback(): void
     {
@@ -168,9 +207,9 @@ class Settings_Popup
 
     public function trigger_time_callback(): void
     {
-    $value = $this->options['popup_trigger_time'] ?? 60;
-    printf('<input type="number" id="popup_trigger_time" name="%s[popup_trigger_time]" value="%d" min="0" />', self::OPTION_NAME, esc_attr($value));
-    echo '<p class="description">' . esc_html__('Ustawienie wartości 0 wyłącza ten wyzwalacz.', 'pro_reader') . '</p>';
+        $value = $this->options['popup_trigger_time'] ?? 60;
+        printf('<input type="number" id="popup_trigger_time" name="%s[popup_trigger_time]" value="%d" min="0" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Ustawienie wartości 0 wyłącza ten wyzwalacz.', 'pro_reader') . '</p>';
     }
 
     public function trigger_scroll_up_callback(): void
@@ -198,9 +237,6 @@ class Settings_Popup
         echo '<p class="description">' . esc_html__('Dla logiki "Mieszane" użyj parzystej liczby (2, 4 lub 6) dla najlepszych rezultatów.', 'pro_reader') . '</p>';
     }
 
-    /**
-     * Wyświetla pole wyboru dla logiki rekomendacji.
-     */
     public function recommendation_logic_callback(): void
     {
         $value = $this->options['popup_recommendation_logic'] ?? 'hybrid_fill';

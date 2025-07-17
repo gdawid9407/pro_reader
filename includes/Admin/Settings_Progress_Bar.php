@@ -21,7 +21,7 @@ class Settings_Progress_Bar
     {
         add_settings_section(
             'progress_bar_main_section',
-            __('Ustawienia Wyglądu i Pozycji', 'pro_reader'),
+            __('Ustawienia Główne i Wygląd', 'pro_reader'),
             null,
             'reader-engagement-pro-progress-bar'
         );
@@ -42,6 +42,11 @@ class Settings_Progress_Bar
         $adv_section  = 'progress_bar_advanced_section';
         $page         = 'reader-engagement-pro-progress-bar';
 
+        // === NOWE POLA ===
+        add_settings_field('progress_bar_enable', __('Włącz Pasek Postępu', 'pro_reader'), [$this, 'enable_callback'], $page, $main_section);
+        add_settings_field('progress_bar_display_on', __('Wyświetlaj na', 'pro_reader'), [$this, 'display_on_callback'], $page, $main_section);
+        // === KONIEC NOWYCH PÓL ===
+        
         add_settings_field('position', __('Pozycja paska', 'pro_reader'), [$this, 'position_callback'], $page, $main_section);
         add_settings_field('bar_height', __('Wysokość paska', 'pro_reader'), [$this, 'bar_height_callback'], $page, $main_section);
         add_settings_field('bar_width', __('Szerokość paska', 'pro_reader'), [$this, 'bar_width_callback'], $page, $main_section);
@@ -57,12 +62,21 @@ class Settings_Progress_Bar
     }
 
     /**
-     * Sanituje pola specyficzne dla paska postępu, łącząc je z istniejącymi opcjami.
+     * Zaktualizowana funkcja sanitacji.
      */
     public function sanitize(array $input): array
     {
         $sanitized = get_option(self::OPTION_NAME, []);
 
+        // Sanitacja nowych pól
+        $sanitized['progress_bar_enable'] = !empty($input['progress_bar_enable']) ? '1' : '0';
+        if (!empty($input['progress_bar_display_on']) && is_array($input['progress_bar_display_on'])) {
+            $sanitized['progress_bar_display_on'] = array_map('sanitize_key', $input['progress_bar_display_on']);
+        } else {
+            $sanitized['progress_bar_display_on'] = [];
+        }
+
+        // Sanitacja istniejących pól
         $sanitized['position']       = isset($input['position']) ? sanitize_key($input['position']) : 'top';
         $sanitized['bar_height']     = isset($input['bar_height']) ? absint($input['bar_height']) : 20;
         $sanitized['bar_width']      = isset($input['bar_width']) ? max(1, min(100, intval($input['bar_width']))) : 100;
@@ -88,6 +102,52 @@ class Settings_Progress_Bar
 
         return $sanitized;
     }
+
+    // === NOWE FUNKCJE WYŚWIETLAJĄCE POLA ===
+
+    /**
+     * Wyświetla checkbox do włączania/wyłączania modułu paska postępu.
+     */
+    public function enable_callback(): void
+    {
+        $value = $this->options['progress_bar_enable'] ?? '0';
+        printf(
+            '<input type="checkbox" id="progress_bar_enable" name="%s[progress_bar_enable]" value="1" %s /> <label for="progress_bar_enable">%s</label>',
+            self::OPTION_NAME,
+            checked('1', $value, false),
+            esc_html__('Aktywuj pasek postępu na stronie.', 'pro_reader')
+        );
+        echo '<p class="description">' . esc_html__('Po włączeniu, pasek pojawi się automatycznie na wybranych poniżej typach treści, bez potrzeby używania shortcode.', 'pro_reader') . '</p>';
+    }
+
+    /**
+     * Wyświetla checkboxy dla publicznych typów postów.
+     */
+    public function display_on_callback(): void
+    {
+        $post_types = get_post_types(['public' => true], 'objects');
+        $selected_types = $this->options['progress_bar_display_on'] ?? [];
+        
+        echo '<fieldset>';
+        foreach ($post_types as $post_type) {
+            // Pomijamy załączniki, które zwykle nie mają własnych stron z treścią
+            if ($post_type->name === 'attachment') {
+                continue;
+            }
+            $is_checked = in_array($post_type->name, $selected_types);
+            printf(
+                '<label style="margin-right: 15px; display: inline-block;"><input type="checkbox" name="%s[progress_bar_display_on][]" value="%s" %s> %s</label>',
+                self::OPTION_NAME,
+                esc_attr($post_type->name),
+                checked($is_checked, true, false),
+                esc_html($post_type->label)
+            );
+        }
+        echo '</fieldset>';
+        echo '<p class="description">' . esc_html__('Wybierz typy treści, na których ma być automatycznie wyświetlany pasek postępu.', 'pro_reader') . '</p>';
+    }
+
+    // === ISTNIEJĄCE FUNKCJE (bez zmian) ===
 
     public function position_callback(): void
     {

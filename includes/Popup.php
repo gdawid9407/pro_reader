@@ -9,8 +9,8 @@ if (!defined('ABSPATH')) {
 class Popup
 {
     private array $options = [];
+    private bool $should_render = false;
     private static bool $assets_enqueued = false;
-    private static bool $shortcode_used = false;
 
     public function __construct()
     {
@@ -20,36 +20,37 @@ class Popup
             return;
         }
 
-        add_action('init', [$this, 'register_shortcode']);
-        add_action('wp_ajax_nopriv_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
-        add_action('wp_ajax_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
-        add_action('wp_footer', [$this, 'render_popup_in_footer']);
+        add_action('wp', [$this, 'decide_to_render']);
     }
 
-    public function register_shortcode(): void
+    public function decide_to_render(): void
     {
-        add_shortcode('pro_reader_popup', [$this, 'handle_shortcode']);
-    }
-
-    public function handle_shortcode(array $atts = []): string
-    {
-        if (!self::$shortcode_used) {
-            self::$shortcode_used = true;
-            $this->enqueue_assets();
+        $display_on = $this->options['popup_display_on'] ?? [];
+        
+        if (empty($display_on)) {
+            return;
         }
-        return '';
+
+        if (is_singular($display_on)) {
+            $this->should_render = true;
+            
+            add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
+            add_action('wp_ajax_nopriv_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
+            add_action('wp_ajax_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
+            add_action('wp_footer', [$this, 'render_popup_in_footer']);
+        }
     }
 
     public function render_popup_in_footer(): void
     {
-        if (self::$shortcode_used) {
+        if ($this->should_render) {
             echo $this->generate_popup_html();
         }
     }
 
-    private function enqueue_assets(): void
+    public function enqueue_assets(): void
     {
-        if (self::$assets_enqueued) {
+        if (!$this->should_render || self::$assets_enqueued) {
             return;
         }
 
@@ -101,38 +102,36 @@ class Popup
         return ob_get_clean();
     }
 
-    /**
-     * Metoda pomocnicza do pobierania ID najpopularniejszych postów.
-     */
+    // === POCZĄTEK ZMIANY: Poprawiono logikę budowania zapytania SQL ===
     private function get_popular_post_ids(int $count, array $exclude_ids = []): array
     {
         global $wpdb;
         $table_name = $wpdb->prefix . 'rep_link_index';
-
-        $where_clause = '';
+    
+        // Rozpocznij budowanie zapytania
+        $query = "SELECT linked_post_id FROM {$table_name}";
+        $params = [];
+    
+        // Warunkowo dodaj klauzulę WHERE
         if (!empty($exclude_ids)) {
             $placeholders = implode(', ', array_fill(0, count($exclude_ids), '%d'));
-            // Ważne: prepare jest używane dla całej klauzuli WHERE, aby uniknąć problemów z formatowaniem.
-            $where_clause = $wpdb->prepare("WHERE linked_post_id NOT IN ({$placeholders})", $exclude_ids);
+            $query .= " WHERE linked_post_id NOT IN ({$placeholders})";
+            $params = array_merge($params, $exclude_ids);
         }
-
-        // prepare jest używane dla całego zapytania, przekazując tylko końcowy limit jako parametr.
-        $query_str = $wpdb->prepare(
-            "SELECT linked_post_id FROM {$table_name}
-             {$where_clause}
-             GROUP BY linked_post_id
-             ORDER BY COUNT(linked_post_id) DESC
-             LIMIT %d",
-            $count
-        );
-        
-        $ids = $wpdb->get_col($query_str);
+    
+        // Dodaj resztę zapytania
+        $query .= " GROUP BY linked_post_id ORDER BY COUNT(linked_post_id) DESC LIMIT %d";
+        $params[] = $count;
+    
+        // Przygotuj i wykonaj zapytanie za jednym razem
+        $prepared_query = $wpdb->prepare($query, $params);
+        $ids = $wpdb->get_col($prepared_query);
+    
         return array_map('absint', $ids);
     }
+    // === KONIEC ZMIANY ===
 
-    /**
-     * Metoda pomocnicza do pobierania ID najnowszych postów.
-     */
+
     private function get_latest_post_ids(int $count, array $exclude_ids = []): array
     {
         if ($count <= 0) {
@@ -153,9 +152,6 @@ class Popup
         return $query->posts;
     }
 
-    /**
-     * Pobiera rekomendacje artykułów na podstawie wybranej logiki.
-     */
     public function fetch_recommendations_ajax(): void
     {
         check_ajax_referer('rep_recommendations_nonce', 'nonce');
