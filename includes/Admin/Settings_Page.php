@@ -136,6 +136,10 @@ class Settings_Page
     {
         $options = get_option(self::OPTION_NAME, []);
     
+        // === POCZĄTEK POPRAWKI: Odczytanie liczby postów z opcji ===
+        $posts_count = (int) ($options['popup_recommendations_count'] ?? 3);
+        // === KONIEC POPRAWKI ===
+
         $popup_content  = $options['popup_content_main'] ?? '<h3>Spodobał Ci się ten artykuł?</h3><p>Czytaj dalej i odkryj więcej ciekawych treści, które dla Ciebie przygotowaliśmy!</p>';
         $layout_setting = $options['popup_recommendations_layout'] ?? 'list';
         $layout_class   = 'layout-' . sanitize_html_class($layout_setting);
@@ -162,7 +166,9 @@ class Settings_Page
             </div>
     
             <ul id="rep-intelligent-popup__list" class="<?php echo esc_attr($layout_class); ?>">
-                <?php for ($i = 0; $i < 2; $i++): ?>
+                <?php // === POCZĄTEK POPRAWKI: Użycie zmiennej w pętli ===
+                for ($i = 0; $i < $posts_count; $i++): 
+                // === KONIEC POPRAWKI === ?>
                 <li class="<?php echo esc_attr($item_class); ?>">
                     <a href="#" onclick="return false;" class="rep-rec-thumb-link" style="aspect-ratio: 16 / 9;">
                         <img src="<?php echo esc_url(REP_PLUGIN_URL . 'assets/images/placeholder.png'); ?>" alt="placeholder" class="rep-rec-thumb thumb-fit-cover">
@@ -217,7 +223,7 @@ class Settings_Page
             return;
         }
 
-        wp_enqueue_style('rep-popup-style-preview', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.0.5');
+        wp_enqueue_style('rep-popup-style-preview', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.0.6');
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
         wp_enqueue_script('jquery-ui-sortable');
@@ -228,7 +234,6 @@ class Settings_Page
         ";
         wp_add_inline_style('wp-admin', $inline_css);
 
-        // --- POPRAWIONY BLOK JAVASCRIPT ---
         $option_name_attr = esc_js(self::OPTION_NAME);
         $reindex_nonce = wp_create_nonce('rep_reindex_nonce');
         $reindex_text_default = esc_js(__('Uruchom pełne indeksowanie', 'pro_reader'));
@@ -241,14 +246,12 @@ class Settings_Page
             
             const optionPrefix = '{$option_name_attr}';
 
-            // --- Logika Drag-and-Drop ---
             $('#rep-layout-builder').sortable({
                 axis: 'y', cursor: 'move', placeholder: 'ui-sortable-placeholder',
                 helper: 'clone', opacity: 0.8,
                 update: function() { $(this).trigger('sortupdate'); }
             });
 
-            // --- Logika przełączania widoczności opcji ---
             const mainPopupEnableCheckbox = $('#popup_enable');
             if (mainPopupEnableCheckbox.length) {
                 const dependentPopupOptions = mainPopupEnableCheckbox.closest('tr').siblings();
@@ -268,7 +271,6 @@ class Settings_Page
                 nestedCheckbox.on('change', toggleNestedVisibility);
             }
             
-            // --- Logika przełączania pól limitu zajawki ---
             const limitTypeRadios = $('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]');
             if (limitTypeRadios.length) {
                 const wordsRow = $('#popup_rec_excerpt_length').closest('tr');
@@ -281,7 +283,6 @@ class Settings_Page
                 limitTypeRadios.on('change', toggleExcerptLimitFields).trigger('change');
             }
 
-            // --- Logika przycisku do reindeksowania ---
             $('#rep-reindex-button').on('click', function(e) {
                 e.preventDefault();
                 const \$button = $(this);
@@ -305,7 +306,6 @@ class Settings_Page
                 });
             });
 
-            // --- Inicjalizacja Color Pickera ---
             $('.wp-color-picker-field').wpColorPicker();
 
             // --- POCZĄTEK: LOGIKA PODGLĄDU NA ŻYWO ---
@@ -315,7 +315,6 @@ class Settings_Page
                 const \$previewContent = \$previewContainer.find('#rep-intelligent-popup__custom-content');
                 const \$previewList = \$previewContainer.find('#rep-intelligent-popup__list');
 
-                // 1. Aktualizacja treści z edytora WP Editor
                 if (typeof tinymce !== 'undefined') {
                     const contentEditor = tinymce.get('popup_content_main_editor');
                     if (contentEditor) {
@@ -327,7 +326,6 @@ class Settings_Page
                     }
                 }
 
-                // 2. Aktualizacja stylów przycisku 'Czytaj dalej'
                 function updateButtonStyles() {
                     const \$buttons = \$previewContainer.find('.rep-rec-button');
                     const bgColor = \$('input[name="' + optionPrefix + '[popup_rec_button_bg_color]"]').val();
@@ -339,18 +337,15 @@ class Settings_Page
                 $('.wp-color-picker-field[name*="[popup_rec_button_"]').on('wpcolorpickerchange', updateButtonStyles);
                 updateButtonStyles();
 
-                // 3. Aktualizacja układu ogólnego (Lista / Siatka)
                 \$('select[name="' + optionPrefix + '[popup_recommendations_layout]"]').on('change', function() {
                     \$previewList.removeClass('layout-list layout-grid').addClass('layout-' + $(this).val());
                 }).trigger('change');
 
-                // 4. Aktualizacja struktury elementu (Wertykalny / Horyzontalny)
                 \$('input[name="' + optionPrefix + '[popup_rec_item_layout]"]').on('change', function() {
                     const layout = $(this).filter(':checked').val();
                     \$previewList.find('.rep-rec-item').removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + layout);
                 }).filter(':checked').trigger('change');
                 
-                // 5. Aktualizacja widoczności i kolejności komponentów
                 function updateComponentVisibilityAndOrder() {
                     \$previewList.find('.rep-rec-item').each(function() {
                         const \$item = $(this);
@@ -370,7 +365,6 @@ class Settings_Page
                 $('#rep-layout-builder').on('sortupdate change', updateComponentVisibilityAndOrder);
                 updateComponentVisibilityAndOrder();
                 
-                // 6. Aktualizacja limitu linii dla zajawki
                 const \$excerpt = \$previewList.find('.rep-rec-excerpt');
                 function updateExcerptClamp() {
                     if (\$('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]:checked').val() === 'lines') {
@@ -382,8 +376,28 @@ class Settings_Page
                 \$('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]').on('change', updateExcerptClamp);
                 \$('#popup_rec_excerpt_lines').on('input change', updateExcerptClamp);
                 updateExcerptClamp();
+
+                // === POCZĄTEK NOWEJ LOGIKI: Aktualizacja liczby postów w podglądzie ===
+                const \$countInput = $('#popup_recommendations_count');
+                function updatePreviewPostCount() {
+                    const newCount = parseInt(\$countInput.val(), 10) || 0;
+                    const \$items = \$previewList.find('.rep-rec-item');
+                    const currentCount = \$items.length;
+
+                    if (newCount > currentCount) {
+                        // Dodaj brakujące elementy
+                        const \$template = \$items.first().clone();
+                        for (let i = 0; i < newCount - currentCount; i++) {
+                            \$previewList.append(\$template.clone());
+                        }
+                    } else if (newCount < currentCount) {
+                        // Usuń nadmiarowe elementy
+                        \$items.filter(':gt(' + (newCount - 1) + ')').remove();
+                    }
+                }
+                \$countInput.on('input change', updatePreviewPostCount);
+                // === KONIEC NOWEJ LOGIKI ===
             }
-            // --- KONIEC: LOGIKA PODGLĄDU NA ŻYWO ---
         });
 JS;
         wp_add_inline_script('jquery-ui-sortable', $custom_js);
