@@ -29,7 +29,6 @@ class Settings_Popup
         add_settings_section('popup_content_section', __('Treść Popupa', 'pro_reader'), null, $page);
         add_settings_field('popup_content_main', __('Edytor treści', 'pro_reader'), [$this, 'content_main_callback'], $page, 'popup_content_section');
         
-        // Pole "Treść linku" zostało przeniesione tutaj, do sekcji 'popup_content_section'
         add_settings_field('popup_recommendations_link_text', __('Treść linku "Czytaj dalej"', 'pro_reader'), [$this, 'recommendations_link_text_callback'], $page, 'popup_content_section');
         
         
@@ -63,7 +62,10 @@ class Settings_Popup
     private function register_recommendation_fields(string $page, string $section): void
     {
         add_settings_field('popup_recommendations_count', __('Liczba wpisów', 'pro_reader'), [$this, 'recommendations_count_callback'], $page, $section);
-        add_settings_field('popup_recommendation_logic', __('Logika rekomendacji', 'pro_reader'), [$this, 'recommendation_logic_callback'], $page, $section);
+        // === POCZĄTEK ZMIANY: Dodanie nowego pola wyboru typów treści do rekomendacji ===
+        add_settings_field('popup_recommendation_post_types', __('Źródło rekomendacji', 'pro_reader'), [$this, 'recommendation_post_types_callback'], $page, $section);
+        // === KONIEC ZMIANY ===
+        add_settings_field('popup_recommendation_logic', __('Kolejność rekomendacji', 'pro_reader'), [$this, 'recommendation_logic_callback'], $page, $section);
         add_settings_field('popup_recommendations_layout', __('Układ ogólny (Lista/Siatka)', 'pro_reader'), [$this, 'recommendations_layout_callback'], $page, $section);
     }
 
@@ -143,6 +145,15 @@ class Settings_Popup
         if (isset($input['popup_rec_item_layout'])) {
             $sanitized['popup_recommendations_count']     = max(1, min(10, absint($input['popup_recommendations_count'] ?? 3)));
             
+            // === POCZĄTEK ZMIANY: Sanitacja nowego pola ===
+            if (!empty($input['popup_recommendation_post_types']) && is_array($input['popup_recommendation_post_types'])) {
+                $sanitized['popup_recommendation_post_types'] = array_map('sanitize_key', $input['popup_recommendation_post_types']);
+            } else {
+                // Ustawienie domyślne, jeśli nic nie jest wybrane, aby uniknąć błędów
+                $sanitized['popup_recommendation_post_types'] = ['post'];
+            }
+            // === KONIEC ZMIANY ===
+
             $allowed_logics = ['date', 'popularity', 'hybrid_fill', 'hybrid_mix'];
             if (isset($input['popup_recommendation_logic']) && in_array($input['popup_recommendation_logic'], $allowed_logics)) {
                 $sanitized['popup_recommendation_logic'] = $input['popup_recommendation_logic'];
@@ -275,6 +286,31 @@ class Settings_Popup
         echo '<p class="description">' . esc_html__('Dla logiki "Mieszane" użyj parzystej liczby (2, 4 lub 6) dla najlepszych rezultatów.', 'pro_reader') . '</p>';
     }
 
+    // === POCZĄTEK ZMIANY: Nowa funkcja do wyświetlania pola wyboru typów treści ===
+    public function recommendation_post_types_callback(): void
+    {
+        $post_types = get_post_types(['public' => true], 'objects');
+        $selected_types = $this->options['popup_recommendation_post_types'] ?? ['post'];
+
+        echo '<fieldset>';
+        foreach ($post_types as $post_type) {
+            if ($post_type->name === 'attachment') {
+                continue;
+            }
+            $is_checked = in_array($post_type->name, $selected_types, true);
+            printf(
+                '<label style="margin-right: 15px; display: inline-block;"><input type="checkbox" name="%s[popup_recommendation_post_types][]" value="%s" %s> %s</label>',
+                self::OPTION_NAME,
+                esc_attr($post_type->name),
+                checked($is_checked, true, false),
+                esc_html($post_type->label)
+            );
+        }
+        echo '</fieldset>';
+        echo '<p class="description">' . esc_html__('Zaznacz typy treści, które mogą być używane w rekomendacjach.', 'pro_reader') . '</p>';
+    }
+    // === KONIEC ZMIANY ===
+
     public function recommendation_logic_callback(): void
     {
         $value = $this->options['popup_recommendation_logic'] ?? 'hybrid_fill';
@@ -292,7 +328,9 @@ class Settings_Popup
             echo '<option value="' . esc_attr($key) . '"' . selected($value, $key, false) . '>' . esc_html($label) . '</option>';
         }
         echo '</select>';
-        echo '<p class="description">' . esc_html__('Wybierz, w jaki sposób wtyczka ma dobierać artykuły do rekomendacji.', 'pro_reader') . '</p>';
+        // === POCZĄTEK ZMIANY: Aktualizacja opisu pola ===
+        echo '<p class="description">' . esc_html__('Wybierz, w jaki sposób sortować treści wybrane w polu "Źródło rekomendacji".', 'pro_reader') . '</p>';
+        // === KONIEC ZMIANY ===
     }
 
     public function recommendations_layout_callback(): void

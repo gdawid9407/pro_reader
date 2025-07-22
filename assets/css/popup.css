@@ -68,7 +68,6 @@
 }
 
 #rep-intelligent-popup__list.layout-list {
-  /* ZMIANA: Zwiększono max-height, aby zapewnić widoczność 3 pełnych elementów. */
   max-height: 540px; 
 }
 

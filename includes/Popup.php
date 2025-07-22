@@ -16,18 +16,12 @@ class Popup
     {
         $this->options = get_option('reader_engagement_pro_options', []);
         
-        // === POCZĄTEK ZMIANY: Kluczowa zmiana w architekturze ===
-        // Rejestrujemy obsługę AJAX bezwarunkowo. Logika decydująca o wyświetleniu
-        // będzie sprawdzana wewnątrz funkcji AJAX, a nie podczas jej rejestracji.
-        // To zapewnia, że WordPress zawsze "wie", co zrobić z żądaniem.
         add_action('wp_ajax_nopriv_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
         add_action('wp_ajax_fetch_recommendations', [$this, 'fetch_recommendations_ajax']);
         
-        // Logikę decydującą o wyświetleniu popupa na stronie zostawiamy tak jak była.
         if (!empty($this->options['popup_enable']) && $this->options['popup_enable'] === '1') {
             add_action('wp', [$this, 'decide_to_render']);
         }
-        // === KONIEC ZMIANY ===
     }
 
     public function decide_to_render(): void
@@ -105,25 +99,40 @@ class Popup
         return ob_get_clean();
     }
     
-    private function get_popular_post_ids(int $count, array $exclude_ids = []): array
+    // === POCZĄTEK ZMIANY: Modyfikacja funkcji, aby filtrowała wg typu postów ===
+    private function get_popular_post_ids(int $count, array $exclude_ids = [], array $post_types = ['post']): array
     {
         global $wpdb;
         $table_name = $wpdb->prefix . 'rep_link_index';
+        
+        if (empty($post_types)) {
+            return [];
+        }
 
         if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name)) != $table_name) {
             return [];
         }
-
-        $query = "SELECT linked_post_id FROM {$table_name}";
+    
+        $where_clauses = ["p.post_status = 'publish'"];
         $params = [];
+    
+        $post_type_placeholders = implode(', ', array_fill(0, count($post_types), '%s'));
+        $where_clauses[] = "p.post_type IN ($post_type_placeholders)";
+        $params = array_merge($params, $post_types);
 
         if (!empty($exclude_ids)) {
-            $placeholders = implode(', ', array_fill(0, count($exclude_ids), '%d'));
-            $query .= " WHERE linked_post_id NOT IN ({$placeholders})";
+            $exclude_placeholders = implode(', ', array_fill(0, count($exclude_ids), '%d'));
+            $where_clauses[] = "li.linked_post_id NOT IN ($exclude_placeholders)";
             $params = array_merge($params, $exclude_ids);
         }
 
-        $query .= " GROUP BY linked_post_id ORDER BY COUNT(linked_post_id) DESC LIMIT %d";
+        $query = "SELECT li.linked_post_id 
+                  FROM {$table_name} AS li 
+                  JOIN {$wpdb->posts} AS p ON li.linked_post_id = p.ID 
+                  WHERE " . implode(' AND ', $where_clauses) . " 
+                  GROUP BY li.linked_post_id 
+                  ORDER BY COUNT(li.linked_post_id) DESC 
+                  LIMIT %d";
         $params[] = $count;
     
         $prepared_query = $wpdb->prepare($query, $params);
@@ -135,76 +144,98 @@ class Popup
     
         return array_map('absint', $ids);
     }
+    // === KONIEC ZMIANY ===
 
-    private function get_latest_post_ids(int $count, array $exclude_ids = []): array
+    // === POCZĄTEK ZMIANY: Modyfikacja funkcji, aby przyjmowała typy postów dynamicznie ===
+    private function get_latest_post_ids(int $count, array $exclude_ids = [], array $post_types = ['post']): array
     {
-        if ($count <= 0) { return []; }
+        if ($count <= 0 || empty($post_types)) { 
+            return []; 
+        }
         $args = [
-            'post_type' => ['post', 'page'], 'post_status' => 'publish',
-            'posts_per_page' => $count, 'orderby' => 'date', 'order' => 'DESC',
-            'post__not_in' => array_unique(array_filter($exclude_ids)), 'fields' => 'ids',
+            'post_type' => $post_types, 
+            'post_status' => 'publish',
+            'posts_per_page' => $count, 
+            'orderby' => 'date', 
+            'order' => 'DESC',
+            'post__not_in' => array_unique(array_filter($exclude_ids)), 
+            'fields' => 'ids',
         ];
         $query = new \WP_Query($args);
         return $query->posts;
     }
+    // === KONIEC ZMIANY ===
 
     public function fetch_recommendations_ajax(): void
     {
         check_ajax_referer('rep_recommendations_nonce', 'nonce');
         
+        // === POCZĄTEK ZMIANY: Pobranie nowych opcji i zdefiniowanie domyślnych wartości ===
         $logic = $this->options['popup_recommendation_logic'] ?? 'hybrid_fill';
         $posts_count = (int) ($this->options['popup_recommendations_count'] ?? 3);
+        $source_post_types = $this->options['popup_recommendation_post_types'] ?? ['post'];
+        if (empty($source_post_types)) {
+            $source_post_types = ['post'];
+        }
+        // === KONIEC ZMIANY ===
+
         $current_post_id = isset($_POST['current_post_id']) ? absint($_POST['current_post_id']) : 0;
         
         $recommended_ids = [];
         $exclude_ids = $current_post_id > 0 ? [$current_post_id] : [];
 
+        // === POCZĄTEK ZMIANY: Przekazanie $source_post_types do funkcji pobierających ID ===
         switch ($logic) {
             case 'popularity':
-                $recommended_ids = $this->get_popular_post_ids($posts_count, $exclude_ids);
+                $recommended_ids = $this->get_popular_post_ids($posts_count, $exclude_ids, $source_post_types);
                 break;
             case 'hybrid_fill':
-                $popular_ids = $this->get_popular_post_ids($posts_count, $exclude_ids);
+                $popular_ids = $this->get_popular_post_ids($posts_count, $exclude_ids, $source_post_types);
                 $recommended_ids = $popular_ids;
                 $found_count = count($recommended_ids);
                 if ($found_count < $posts_count) {
                     $needed_count = $posts_count - $found_count;
                     $fill_exclude_ids = array_merge($exclude_ids, $recommended_ids);
-                    $latest_ids = $this->get_latest_post_ids($needed_count, $fill_exclude_ids);
+                    $latest_ids = $this->get_latest_post_ids($needed_count, $fill_exclude_ids, $source_post_types);
                     $recommended_ids = array_merge($recommended_ids, $latest_ids);
                 }
                 break;
             case 'hybrid_mix':
                 $popular_count = (int) ceil($posts_count / 2);
                 $latest_count = (int) floor($posts_count / 2);
-                $popular_ids = $this->get_popular_post_ids($popular_count, $exclude_ids);
+                $popular_ids = $this->get_popular_post_ids($popular_count, $exclude_ids, $source_post_types);
                 $latest_exclude_ids = array_merge($exclude_ids, $popular_ids);
-                $latest_ids = $this->get_latest_post_ids($latest_count, $latest_exclude_ids);
+                $latest_ids = $this->get_latest_post_ids($latest_count, $latest_exclude_ids, $source_post_types);
                 $recommended_ids = array_merge($popular_ids, $latest_ids);
                 $found_count = count($recommended_ids);
                 if ($found_count < $posts_count) {
                     $needed_count = $posts_count - $found_count;
                     $final_fill_exclude_ids = array_merge($exclude_ids, $recommended_ids);
-                    $fill_ids = $this->get_latest_post_ids($needed_count, $final_fill_exclude_ids);
+                    $fill_ids = $this->get_latest_post_ids($needed_count, $final_fill_exclude_ids, $source_post_types);
                     $recommended_ids = array_merge($recommended_ids, $fill_ids);
                 }
                 break;
             case 'date':
             default:
-                $recommended_ids = $this->get_latest_post_ids($posts_count, $exclude_ids);
+                $recommended_ids = $this->get_latest_post_ids($posts_count, $exclude_ids, $source_post_types);
                 break;
         }
+        // === KONIEC ZMIANY ===
 
         if (empty($recommended_ids)) {
             wp_send_json_error(['message' => 'Nie znaleziono rekomendacji.']);
             return;
         }
         
+        // === POCZĄTEK ZMIANY: Użycie $source_post_types w finalnym zapytaniu ===
         $args = [
-            'post_type' => ['post', 'page'], 'post_status' => 'publish',
-            'posts_per_page' => count($recommended_ids), 'post__in' => $recommended_ids,
+            'post_type' => $source_post_types, 
+            'post_status' => 'publish',
+            'posts_per_page' => count($recommended_ids), 
+            'post__in' => $recommended_ids,
             'orderby' => 'post__in',
         ];
+        // === KONIEC ZMIANY ===
         $query = new \WP_Query($args);
         
         if ($query->have_posts()) {
@@ -306,14 +337,12 @@ class Popup
             case 'link':
     $link_text = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
 
-    // Pobierz opcje stylu przycisku
     $bg_color        = $this->options['popup_rec_button_bg_color'] ?? '#0073aa';
     $text_color      = $this->options['popup_rec_button_text_color'] ?? '#ffffff';
     $bg_hover_color  = $this->options['popup_rec_button_bg_hover_color'] ?? '#005177';
     $text_hover_color= $this->options['popup_rec_button_text_hover_color'] ?? '#ffffff';
     $border_radius   = $this->options['popup_rec_button_border_radius'] ?? 4;
 
-    // Przygotuj zmienne CSS dla stylów inline
     $style_vars = sprintf(
         '--rep-btn-bg: %s; --rep-btn-text: %s; --rep-btn-bg-hover: %s; --rep-btn-text-hover: %s; border-radius: %dpx;',
         esc_attr($bg_color),
@@ -322,8 +351,7 @@ class Popup
         esc_attr($text_hover_color),
         esc_attr($border_radius)
     );
-    
-    // Zamiast klasy 'rep-rec-link', użyj 'rep-rec-button' i dodaj style
+
     return sprintf(
         '<a href="%s" class="rep-rec-button" style="%s">%s</a>',
         esc_url($post_link),

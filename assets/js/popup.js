@@ -1,11 +1,8 @@
 jQuery(function($) {
     'use strict';
 
-    // --- 1. INICJALIZACJA I POBRANIE ELEMENTÓW ---
-
     const settings = window.REP_Popup_Settings || {};
     
-    // Sprawdzenie, czy popup jest włączony.
     if (!settings.popupEnable || settings.popupEnable !== '1') {
         return;
     }
@@ -15,7 +12,6 @@ jQuery(function($) {
     const $closeButton = $('#rep-intelligent-popup__close');
     const $recommendationList = $('#rep-intelligent-popup__list');
 
-    // Przerwij działanie, jeśli kluczowe elementy nie istnieją w DOM.
     if (!$popupContainer.length) {
         return;
     }
@@ -24,7 +20,7 @@ jQuery(function($) {
     let ajaxRequestSent = false;
     let lastScrollTop = 0;
     let hasScrolledDown = false;
-    const scrollDownThreshold = 500; // Minimalna odległość przewinięcia w dół, aby uznać to za znaczący ruch.
+    const scrollDownThreshold = 500; 
 
 
     // --- 2. GŁÓWNE FUNKCJE KONTROLUJĄCE POPUP ---
@@ -39,14 +35,12 @@ jQuery(function($) {
 
         $overlay.add($popupContainer).addClass('is-visible');
         
-        // Zablokuj scrollowanie głównej strony, gdy popup jest otwarty.
         $('body').addClass('rep-popup-is-open');
     }
     
     function hidePopup() {
         $overlay.add($popupContainer).removeClass('is-visible');
         
-        // Odblokuj scrollowanie.
         $('body').removeClass('rep-popup-is-open');
     }
     
@@ -62,7 +56,7 @@ jQuery(function($) {
             data: {
                 action: 'fetch_recommendations',
                 nonce: settings.nonce,
-                current_post_id: settings.currentPostId // WAŻNA ZMIANA: Przekazanie ID posta do backendu.
+                current_post_id: settings.currentPostId 
             },
             success: function(response) {
                 if (response.success && response.data.html) {
@@ -114,7 +108,7 @@ jQuery(function($) {
                 const currentScrollPercent = (scrollTop / scrollableHeight) * 100;
                 if (currentScrollPercent >= parseFloat(settings.triggerByScrollPercent)) {
                     showPopup();
-                    return; // Zatrzymaj dalsze sprawdzanie po aktywacji.
+                    return; 
                 }
             }
         }
@@ -131,7 +125,7 @@ jQuery(function($) {
                 // Użytkownik scrolluje w górę.
                 if (hasScrolledDown) {
                     showPopup();
-                    return; // Zatrzymaj dalsze sprawdzanie po aktywacji.
+                    return; 
                 }
             }
         }
@@ -147,8 +141,7 @@ jQuery(function($) {
     // Zamykanie popupa
     $closeButton.on('click', hidePopup);
     $overlay.on('click', hidePopup);
-    
-    // Zamykanie popupa klawiszem Escape.
+
     $(document).on('keyup', function(e) {
         if (e.key === "Escape" && $popupContainer.hasClass('is-visible')) {
             hidePopup();

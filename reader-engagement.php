@@ -31,10 +31,7 @@ use ReaderEngagementPro\ProgressBar;
 use ReaderEngagementPro\Popup;
 use ReaderEngagementPro\Admin\Settings_Page;
 
-/**
- * Tworzy dedykowaną tabelę w bazie danych do indeksowania linków.
- * Używa dbDelta do bezpiecznego tworzenia/aktualizowania struktury tabeli.
- */
+
 function rep_create_link_index_table() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'rep_link_index';
@@ -121,9 +118,7 @@ class REP_Link_Indexer {
     }
 }
 
-/**
- * Inicjalizuje główne klasy wtyczki.
- */
+
 function rep_init_plugin()
 {
     new ProgressBar();
@@ -133,9 +128,19 @@ function rep_init_plugin()
         new Settings_Page();
     }
     
-    // Uruchamia indeksowanie przy zapisie posta.
-    // Używamy 'save_post_post', aby działało tylko dla postów typu 'post'.
-    add_action('save_post_post', 'rep_handle_post_save', 10, 2);
+    // === POCZĄTEK ZMIANY: Dynamiczne podpinanie akcji save_post ===
+    // Pobieramy opcje wtyczki, aby sprawdzić, dla jakich typów treści mamy indeksować linki.
+    $options = get_option('reader_engagement_pro_options', []);
+    // Domyślnie indeksujemy tylko 'post', jeśli nic innego nie jest ustawione.
+    $post_types_to_index = $options['popup_display_on'] ?? ['post'];
+
+    if (!empty($post_types_to_index) && is_array($post_types_to_index)) {
+        foreach ($post_types_to_index as $post_type) {
+            // Dodajemy akcję dla każdego wybranego typu treści, np. 'save_post_post', 'save_post_page'.
+            add_action('save_post_' . $post_type, 'rep_handle_post_save', 10, 2);
+        }
+    }
+    // === KONIEC ZMIANY ===
 }
 add_action('plugins_loaded', 'rep_init_plugin');
 
@@ -154,7 +159,17 @@ function rep_handle_post_save(int $post_id, \WP_Post $post) {
     if (wp_is_post_revision($post_id)) {
         return;
     }
-    // Upewnij się, że status to 'publish'.
+    
+    // === POCZĄTEK ZMIANY: Weryfikacja, czy dany typ treści jest na liście do indeksowania ===
+    $options = get_option('reader_engagement_pro_options', []);
+    $post_types_to_index = $options['popup_display_on'] ?? ['post'];
+
+    // Sprawdzamy, czy typ zapisywanego posta znajduje się w tablicy typów, które mają być indeksowane.
+    if (!in_array($post->post_type, $post_types_to_index, true)) {
+        return;
+    }
+    // === KONIEC ZMIANY ===
+    
     if ('publish' !== $post->post_status) {
         return;
     }
@@ -162,4 +177,3 @@ function rep_handle_post_save(int $post_id, \WP_Post $post) {
     $indexer = new REP_Link_Indexer();
     $indexer->index_post($post_id);
 }
-

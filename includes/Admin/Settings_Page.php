@@ -385,7 +385,6 @@ class Settings_Page
                     const currentCount = \$items.length;
 
                     if (newCount > currentCount) {
-                        // Dodaj brakujące elementy
                         const \$template = \$items.first().clone();
                         for (let i = 0; i < newCount - currentCount; i++) {
                             \$previewList.append(\$template.clone());
@@ -396,7 +395,6 @@ class Settings_Page
                     }
                 }
                 \$countInput.on('input change', updatePreviewPostCount);
-                // === KONIEC NOWEJ LOGIKI ===
             }
         });
 JS;
