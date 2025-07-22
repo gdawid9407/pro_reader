@@ -28,19 +28,24 @@ class Settings_Popup
         // Sekcja 2: Treść
         add_settings_section('popup_content_section', __('Treść Popupa', 'pro_reader'), null, $page);
         add_settings_field('popup_content_main', __('Edytor treści', 'pro_reader'), [$this, 'content_main_callback'], $page, 'popup_content_section');
-
+        
+        // Pole "Treść linku" zostało przeniesione tutaj, do sekcji 'popup_content_section'
+        add_settings_field('popup_recommendations_link_text', __('Treść linku "Czytaj dalej"', 'pro_reader'), [$this, 'recommendations_link_text_callback'], $page, 'popup_content_section');
+        
+        
         // Sekcja 3: Rekomendacje Ogólne
         add_settings_section('popup_recommendations_section', __('Ustawienia Ogólne Rekomendacji', 'pro_reader'), null, $page);
         $this->register_recommendation_fields($page, 'popup_recommendations_section');
-
-        add_settings_section('popup_button_settings_section', __('Ustawienia Przycisku "Czytaj dalej"', 'pro_reader'), null, $page);
-        $this->register_button_fields($page, 'popup_button_settings_section');
-
+        
         // Sekcja 4: Konstruktor Układu
         add_settings_section('popup_layout_builder_section', __('Konstruktor Układu Rekomendacji', 'pro_reader'), null, $page);
         $this->register_layout_builder_fields($page, 'popup_layout_builder_section');
+        
+        // Sekcja 5: Ustawienia przycisku
+        add_settings_section('popup_button_settings_section', __('Ustawienia Przycisku "Czytaj dalej"', 'pro_reader'), null, $page);
+        $this->register_button_fields($page, 'popup_button_settings_section');
 
-        // Sekcja 5: Ustawienia Miniaturki
+        // Sekcja 6: Ustawienia Miniaturki
         add_settings_section('popup_thumbnail_settings_section', __('Ustawienia Miniaturki', 'pro_reader'), null, $page);
         $this->register_thumbnail_fields($page, 'popup_thumbnail_settings_section');
     }
@@ -48,9 +53,7 @@ class Settings_Popup
     private function register_trigger_fields(string $page, string $section): void
     {
         add_settings_field('popup_enable', __('Włącz Moduł Popup', 'pro_reader'), [$this, 'enable_callback'], $page, $section);
-        // === NOWE POLE ===
         add_settings_field('popup_display_on', __('Wyświetlaj na', 'pro_reader'), [$this, 'display_on_callback'], $page, $section);
-        // === KONIEC NOWEGO POLA ===
         add_settings_field('popup_trigger_scroll_percent_enable', __('Wyzwalacz: Procent przewinięcia', 'pro_reader'), [$this, 'trigger_scroll_percent_enable_callback'], $page, $section);
         add_settings_field('popup_trigger_scroll_percent', __('Wartość procentowa', 'pro_reader'), [$this, 'trigger_scroll_percent_callback'], $page, $section);
         add_settings_field('popup_trigger_time', __('Wyzwalacz: Czas na stronie (sekundy)', 'pro_reader'), [$this, 'trigger_time_callback'], $page, $section);
@@ -62,10 +65,7 @@ class Settings_Popup
         add_settings_field('popup_recommendations_count', __('Liczba wpisów', 'pro_reader'), [$this, 'recommendations_count_callback'], $page, $section);
         add_settings_field('popup_recommendation_logic', __('Logika rekomendacji', 'pro_reader'), [$this, 'recommendation_logic_callback'], $page, $section);
         add_settings_field('popup_recommendations_layout', __('Układ ogólny (Lista/Siatka)', 'pro_reader'), [$this, 'recommendations_layout_callback'], $page, $section);
-        add_settings_field('popup_recommendations_link_text', __('Treść linku "Czytaj dalej"', 'pro_reader'), [$this, 'recommendations_link_text_callback'], $page, $section);
     }
-
-    
 
     private function register_layout_builder_fields(string $page, string $section): void
     {
@@ -84,60 +84,55 @@ class Settings_Popup
     }
     
     private function register_button_fields(string $page, string $section): void
-{
-    add_settings_field('popup_rec_button_bg_color', __('Kolor tła', 'pro_reader'), [$this, 'button_bg_color_callback'], $page, $section);
-    add_settings_field('popup_rec_button_text_color', __('Kolor tekstu', 'pro_reader'), [$this, 'button_text_color_callback'], $page, $section);
-    add_settings_field('popup_rec_button_bg_hover_color', __('Kolor tła (hover)', 'pro_reader'), [$this, 'button_bg_hover_color_callback'], $page, $section);
-    add_settings_field('popup_rec_button_text_hover_color', __('Kolor tekstu (hover)', 'pro_reader'), [$this, 'button_text_hover_color_callback'], $page, $section);
-    add_settings_field('popup_rec_button_border_radius', __('Zaokrąglenie rogów (px)', 'pro_reader'), [$this, 'button_border_radius_callback'], $page, $section);
-}
+    {
+        add_settings_field('popup_rec_button_bg_color', __('Kolor tła', 'pro_reader'), [$this, 'button_bg_color_callback'], $page, $section);
+        add_settings_field('popup_rec_button_text_color', __('Kolor tekstu', 'pro_reader'), [$this, 'button_text_color_callback'], $page, $section);
+        add_settings_field('popup_rec_button_bg_hover_color', __('Kolor tła (hover)', 'pro_reader'), [$this, 'button_bg_hover_color_callback'], $page, $section);
+        add_settings_field('popup_rec_button_text_hover_color', __('Kolor tekstu (hover)', 'pro_reader'), [$this, 'button_text_hover_color_callback'], $page, $section);
+        add_settings_field('popup_rec_button_border_radius', __('Zaokrąglenie rogów (px)', 'pro_reader'), [$this, 'button_border_radius_callback'], $page, $section);
+    }
 
-// Dodaj poniższe callbacki do klasy Settings_Popup
+    public function button_bg_color_callback(): void
+    {
+        $value = $this->options['popup_rec_button_bg_color'] ?? '#0073aa';
+        printf('<input type="text" name="%s[popup_rec_button_bg_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+    }
 
-public function button_bg_color_callback(): void
-{
-    $value = $this->options['popup_rec_button_bg_color'] ?? '#0073aa';
-    printf('<input type="text" name="%s[popup_rec_button_bg_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
-}
+    public function button_text_color_callback(): void
+    {
+        $value = $this->options['popup_rec_button_text_color'] ?? '#ffffff';
+        printf('<input type="text" name="%s[popup_rec_button_text_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+    }
 
-public function button_text_color_callback(): void
-{
-    $value = $this->options['popup_rec_button_text_color'] ?? '#ffffff';
-    printf('<input type="text" name="%s[popup_rec_button_text_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
-}
+    public function button_bg_hover_color_callback(): void
+    {
+        $value = $this->options['popup_rec_button_bg_hover_color'] ?? '#005177';
+        printf('<input type="text" name="%s[popup_rec_button_bg_hover_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+    }
 
-public function button_bg_hover_color_callback(): void
-{
-    $value = $this->options['popup_rec_button_bg_hover_color'] ?? '#005177';
-    printf('<input type="text" name="%s[popup_rec_button_bg_hover_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
-}
+    public function button_text_hover_color_callback(): void
+    {
+        $value = $this->options['popup_rec_button_text_hover_color'] ?? '#ffffff';
+        printf('<input type="text" name="%s[popup_rec_button_text_hover_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+    }
 
-public function button_text_hover_color_callback(): void
-{
-    $value = $this->options['popup_rec_button_text_hover_color'] ?? '#ffffff';
-    printf('<input type="text" name="%s[popup_rec_button_text_hover_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
-}
-
-public function button_border_radius_callback(): void
-{
-    $value = $this->options['popup_rec_button_border_radius'] ?? 4;
-    printf('<input type="number" name="%s[popup_rec_button_border_radius]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
-}
+    public function button_border_radius_callback(): void
+    {
+        $value = $this->options['popup_rec_button_border_radius'] ?? 4;
+        printf('<input type="number" name="%s[popup_rec_button_border_radius]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
+    }
 
     public function sanitize(array $input): array
     {
         $sanitized = get_option(self::OPTION_NAME, []);
         
-        // Sanitacja pól z sekcji Wyzwalacze i Treść
         if (isset($input['popup_trigger_time'])) {
             $sanitized['popup_enable']                      = !empty($input['popup_enable']) ? '1' : '0';
-            // === SANITACJA NOWEGO POLA ===
             if (!empty($input['popup_display_on']) && is_array($input['popup_display_on'])) {
                 $sanitized['popup_display_on'] = array_map('sanitize_key', $input['popup_display_on']);
             } else {
                 $sanitized['popup_display_on'] = [];
             }
-            // === KONIEC SANITACJI ===
             $sanitized['popup_trigger_scroll_up']           = !empty($input['popup_trigger_scroll_up']) ? '1' : '0';
             $sanitized['popup_trigger_scroll_percent_enable'] = !empty($input['popup_trigger_scroll_percent_enable']) ? '1' : '0';
             $sanitized['popup_trigger_scroll_percent']      = max(1, min(100, absint($input['popup_trigger_scroll_percent'] ?? 85)));
@@ -145,7 +140,6 @@ public function button_border_radius_callback(): void
             $sanitized['popup_content_main']                = wp_kses_post($input['popup_content_main'] ?? '');
         }
 
-        // Sanitacja pól z sekcji Rekomendacje, Układ i Miniaturka
         if (isset($input['popup_rec_item_layout'])) {
             $sanitized['popup_recommendations_count']     = max(1, min(10, absint($input['popup_recommendations_count'] ?? 3)));
             
@@ -177,11 +171,10 @@ public function button_border_radius_callback(): void
             $allowed_fits = ['cover', 'contain'];
             $sanitized['popup_rec_thumb_fit'] = in_array($input['popup_rec_thumb_fit'] ?? 'cover', $allowed_fits) ? $input['popup_rec_thumb_fit'] : 'cover';
             $sanitized['popup_rec_button_bg_color']          = sanitize_hex_color($input['popup_rec_button_bg_color'] ?? '#0073aa');
-    $sanitized['popup_rec_button_text_color']        = sanitize_hex_color($input['popup_rec_button_text_color'] ?? '#ffffff');
-    $sanitized['popup_rec_button_bg_hover_color']    = sanitize_hex_color($input['popup_rec_button_bg_hover_color'] ?? '#005177');
-    $sanitized['popup_rec_button_text_hover_color']  = sanitize_hex_color($input['popup_rec_button_text_hover_color'] ?? '#ffffff');
-    $sanitized['popup_rec_button_border_radius']     = absint($input['popup_rec_button_border_radius'] ?? 4);
-        
+            $sanitized['popup_rec_button_text_color']        = sanitize_hex_color($input['popup_rec_button_text_color'] ?? '#ffffff');
+            $sanitized['popup_rec_button_bg_hover_color']    = sanitize_hex_color($input['popup_rec_button_bg_hover_color'] ?? '#005177');
+            $sanitized['popup_rec_button_text_hover_color']  = sanitize_hex_color($input['popup_rec_button_text_hover_color'] ?? '#ffffff');
+            $sanitized['popup_rec_button_border_radius']     = absint($input['popup_rec_button_border_radius'] ?? 4);
         }
         
         return $sanitized;
@@ -214,11 +207,6 @@ public function button_border_radius_callback(): void
         echo ' <label for="popup_enable">' . esc_html__('Aktywuj popup na stronie.', 'pro_reader') . '</label>';
     }
     
-    // === NOWA FUNKCJA WYŚWIETLAJĄCA POLE ===
-    
-    /**
-     * Wyświetla checkboxy dla publicznych typów postów.
-     */
     public function display_on_callback(): void
     {
         $post_types = get_post_types(['public' => true], 'objects');
@@ -241,8 +229,6 @@ public function button_border_radius_callback(): void
         echo '</fieldset>';
         echo '<p class="description">' . esc_html__('Wybierz typy treści, na których ma być automatycznie wyświetlany popup.', 'pro_reader') . '</p>';
     }
-
-    // === ISTNIEJĄCE FUNKCJE (bez zmian) ===
 
     public function trigger_scroll_percent_enable_callback(): void
     {
