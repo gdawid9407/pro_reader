@@ -7,8 +7,8 @@
         "composer/installers": "^2.2"
     },
     "autoload": {
-  "psr-4": {
-    "ReaderEngagementPro\\": "includes/"
+        "psr-4": {
+            "ReaderEngagementPro\\": "src/"
   }
 },
     

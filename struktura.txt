@@ -1,39 +1,49 @@
-
-PRO_READER/
-├── assets/
+/PRO_READER/
+|
+├── assets/                   // Bez zmian (CSS, JS, images)
 │   ├── css/
-│   │   ├── popup.css
-│   │   └── style.css
-│   └── js/
-│       ├── popup.js
-│       ├── progress-bar.js
-│       ├── recommendations.js
-│       └── script.js
-├── includes/
-│   ├── Admin/
+│   ├── js/
+│   │   ├── admin-settings.js // NOWY: JS dla panelu admina
+│   │   ├── popup.js
+│   │   └── progress-bar.js
+|
+├── src/                      // NOWY KATALOG: Cały kod źródłowy PHP
+│   ├── Admin/                // Klasy związane z panelem administracyjnym
 │   │   ├── Settings_Page.php
 │   │   ├── Settings_Popup.php
 │   │   └── Settings_Progress_Bar.php
-│   ├── class-integration.php
-│   ├── class-recommendations.php
-│   ├── Popup.php
-│   └── ProgressBar.php
-├── languages/
-├── node_modules/
-├── templates/
-│   └── progress-bar-template.php
-├── vendor/
-│   ├── bin/
-│   ├── composer/
-│   └── autoload.php
+│   │
+│   ├── Blocks/               // NOWY KATALOG: Logika dla bloków Gutenberga
+│   │   └── Popup/
+│   │       └── block.json    // Przeniesiony plik
+│   │
+│   ├── Core/                 // Kluczowe pliki startowe i zarządzające
+│   │   ├── Plugin.php        // NOWY: Główny kontroler wtyczki
+│   │   ├── Installer.php     // NOWY: Logika aktywacji
+│   │   └── AjaxHandler.php   // NOWY: Obsługa wszystkich zapytań AJAX
+│   │
+│   ├── Database/             // Klasy do interakcji z bazą danych
+│   │   ├── LinkIndexer.php   // NOWY: Klasa przeniesiona z pliku głównego
+│   │   └── RecommendationQuery.php // NOWY: Zapytania dla rekomendacji
+│   │
+│   ├── Frontend/             // Klasy obsługujące logikę po stronie frontendu
+│   │   ├── Popup.php
+│   │   └── ProgressBar.php
+│   │
+│   └── Templates/            // Szablony z kodem HTML
+│       ├── popup/
+│       │   ├── main-popup.php          // NOWY
+│       │   ├── recommendation-item.php // NOWY
+│       │   └── preview.php             // NOWY
+│       │
+│       └── progress-bar/
+│           └── bar.php                 // NOWY (zastąpi progress-bar-template.php)
+|
+├── vendor/                   // Bez zmian
+├── node_modules/             // Bez zmian
 ├── .gitignore
-├── composer.json
-├── composer.lock
-├── package-lock.json
+├── composer.json             // Będzie wymagał aktualizacji (sekcja autoload)
 ├── package.json
-├── reader-engagement.php
-├── readme.txt
-├── struktura.txt
-├── uninstall.php
-└── webpack.config.js
-
+├── webpack.config.js         // Może wymagać aktualizacji ścieżek
+├── reader-engagement.php     // Zostanie BARDZO odchudzony
+└── uninstall.php             // Bez zmian (zakładając, że jest już poprawiony)

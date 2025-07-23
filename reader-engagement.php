@@ -2,23 +2,28 @@
 /**
  * Plugin Name: Pro Reader
  * Description: Uniwersalny pasek czytania, popup "Czytaj więcej" i rekomendacje artykułów.
- * Version:     1.0.0
+ * Version:     1.1.0
  * Author:      Dawid Gołis
  * Text Domain: pro_reader
+ * Requires at least: 5.8
+ * Requires PHP:      7.4
  */
 
 if (!defined('ABSPATH')) {
-    exit;
+    exit; // Exit if accessed directly.
 }
 
+// Definicje kluczowych stałych wtyczki.
 define('REP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('REP_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define('REP_PLUGIN_FILE', __FILE__); // Ważne dla haka aktywacyjnego
 
 // Sprawdzenie i załadowanie autoloadera composera.
 $autoload_file = REP_PLUGIN_PATH . 'vendor/autoload.php';
 if (file_exists($autoload_file)) {
     require_once $autoload_file;
 } else {
+    // Wyświetl powiadomienie w panelu admina, jeśli autoloader nie istnieje.
     add_action('admin_notices', function () {
         echo '<div class="error"><p>';
         echo '<strong>Pro Reader Plugin:</strong> Nie można załadować klas wtyczki. Proszę uruchomić <code>composer install</code> w katalogu wtyczki lub skontaktować się z autorem.';
@@ -27,153 +32,5 @@ if (file_exists($autoload_file)) {
     return;
 }
 
-use ReaderEngagementPro\ProgressBar;
-use ReaderEngagementPro\Popup;
-use ReaderEngagementPro\Admin\Settings_Page;
-
-
-function rep_create_link_index_table() {
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'rep_link_index';
-    $charset_collate = $wpdb->get_charset_collate();
-
-    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-
-    $sql = "CREATE TABLE $table_name (
-        id mediumint(9) NOT NULL AUTO_INCREMENT,
-        source_post_id bigint(20) UNSIGNED NOT NULL,
-        linked_post_id bigint(20) UNSIGNED NOT NULL,
-        PRIMARY KEY  (id),
-        UNIQUE KEY unique_link (source_post_id, linked_post_id),
-        KEY source_post_id (source_post_id),
-        KEY linked_post_id (linked_post_id)
-    ) $charset_collate;";
-
-    dbDelta($sql);
-}
-
-/**
- * Funkcja uruchamiana podczas aktywacji wtyczki.
- */
-function rep_activate_plugin() {
-    rep_create_link_index_table();
-}
-register_activation_hook(__FILE__, 'rep_activate_plugin');
-
-
-/**
- * Klasa odpowiedzialna za skanowanie treści postów i zapisywanie relacji linków.
- */
-class REP_Link_Indexer {
-    
-    /**
-     * Analizuje treść posta, wyodrębnia linki wewnętrzne i zapisuje je do bazy danych.
-     *
-     * @param int $post_id ID analizowanego posta.
-     */
-    public function index_post(int $post_id): void {
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'rep_link_index';
-        
-        $post_content = get_post_field('post_content', $post_id);
-        if (empty($post_content)) {
-            return;
-        }
-
-        // Krok 1: Wyczyść stare wpisy dla tego artykułu, aby uniknąć duplikatów.
-        $wpdb->delete($table_name, ['source_post_id' => $post_id], ['%d']);
-
-        // Krok 2: Znajdź wszystkie linki w treści.
-        preg_match_all('/<a\s[^>]*href=[\"\'](http[^\"\']+)[\"\']/i', $post_content, $matches);
-        
-        $site_url = site_url();
-        $linked_ids = [];
-
-        foreach ($matches[1] as $url) {
-            // Krok 3: Sprawdź, czy link prowadzi do tej samej witryny.
-            if (strpos($url, $site_url) !== 0) {
-                continue;
-            }
-            
-            // Krok 4: Przekonwertuj URL na ID posta.
-            $linked_post_id = url_to_postid($url);
-            
-            // Sprawdź, czy ID jest poprawne, czy nie jest to link do samego siebie i czy już go nie dodaliśmy.
-            if ($linked_post_id > 0 && $linked_post_id !== $post_id && !in_array($linked_post_id, $linked_ids)) {
-                $linked_ids[] = $linked_post_id;
-            }
-        }
-        
-        // Krok 5: Zapisz unikalne, znalezione ID do bazy danych.
-        foreach ($linked_ids as $linked_id) {
-            $wpdb->insert(
-                $table_name,
-                [
-                    'source_post_id' => $post_id,
-                    'linked_post_id' => $linked_id
-                ],
-                ['%d', '%d']
-            );
-        }
-    }
-}
-
-
-function rep_init_plugin()
-{
-    new ProgressBar();
-    new Popup();
-
-    if (is_admin()) {
-        new Settings_Page();
-    }
-    
-    // === POCZĄTEK ZMIANY: Dynamiczne podpinanie akcji save_post ===
-    // Pobieramy opcje wtyczki, aby sprawdzić, dla jakich typów treści mamy indeksować linki.
-    $options = get_option('reader_engagement_pro_options', []);
-    // Domyślnie indeksujemy tylko 'post', jeśli nic innego nie jest ustawione.
-    $post_types_to_index = $options['popup_display_on'] ?? ['post'];
-
-    if (!empty($post_types_to_index) && is_array($post_types_to_index)) {
-        foreach ($post_types_to_index as $post_type) {
-            // Dodajemy akcję dla każdego wybranego typu treści, np. 'save_post_post', 'save_post_page'.
-            add_action('save_post_' . $post_type, 'rep_handle_post_save', 10, 2);
-        }
-    }
-    // === KONIEC ZMIANY ===
-}
-add_action('plugins_loaded', 'rep_init_plugin');
-
-
-/**
- * Funkcja obsługująca zapis posta - sprawdza warunki i uruchamia indeksowanie.
- *
- * @param int $post_id ID zapisanego posta.
- * @param \WP_Post $post Obiekt zapisanego posta.
- */
-function rep_handle_post_save(int $post_id, \WP_Post $post) {
-    // Ignoruj autozapisy i rewizje.
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-        return;
-    }
-    if (wp_is_post_revision($post_id)) {
-        return;
-    }
-    
-    // === POCZĄTEK ZMIANY: Weryfikacja, czy dany typ treści jest na liście do indeksowania ===
-    $options = get_option('reader_engagement_pro_options', []);
-    $post_types_to_index = $options['popup_display_on'] ?? ['post'];
-
-    // Sprawdzamy, czy typ zapisywanego posta znajduje się w tablicy typów, które mają być indeksowane.
-    if (!in_array($post->post_type, $post_types_to_index, true)) {
-        return;
-    }
-    // === KONIEC ZMIANY ===
-    
-    if ('publish' !== $post->post_status) {
-        return;
-    }
-    
-    $indexer = new REP_Link_Indexer();
-    $indexer->index_post($post_id);
-}
+// Inicjalizacja wtyczki.
+new ReaderEngagementPro\Core\Plugin();
