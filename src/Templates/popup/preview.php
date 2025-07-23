@@ -42,6 +42,15 @@ foreach ($spacing_styles as $key => $value) {
     $container_styles .= esc_attr($key) . ':' . esc_attr($value) . ';';
 }
 
+// Tablica z nazwami plików obrazów do podglądu.
+// Upewnij się, że te pliki istnieją w folderze /assets/images/
+$preview_images = [
+    'placeholder-1.jpg',
+    'placeholder-2.jpg',
+    'placeholder-3.jpg',
+];
+$images_total = count($preview_images);
+
 ?>
 
 <div id="rep-intelligent-popup__overlay-preview" class="is-visible" style="position: absolute; opacity: 0.1; top:0; left:0; right:0; bottom:0; z-index: -1;"></div>
@@ -57,11 +66,15 @@ foreach ($spacing_styles as $key => $value) {
 
     <ul id="rep-intelligent-popup__list" class="<?php echo esc_attr($layout_class); ?>">
         <?php
+        // Pętla generująca elementy listy z różnymi obrazkami.
         for ($i = 0; $i < $posts_count; $i++) :
+            // Wybierz obraz cyklicznie z tablicy, aby uniknąć powtórzeń.
+            $current_image_file = $preview_images[$i % $images_total];
+            $image_url = REP_PLUGIN_URL . 'assets/images/' . $current_image_file;
         ?>
         <li class="<?php echo esc_attr($item_class); ?>">
             <a href="#" onclick="return false;" class="rep-rec-thumb-link" style="aspect-ratio: 16 / 9;">
-                <img src="<?php echo esc_url(REP_PLUGIN_URL . 'assets/images/placeholder.png'); ?>" alt="placeholder" class="rep-rec-thumb thumb-fit-cover">
+                <img src="<?php echo esc_url($image_url); ?>" alt="placeholder-<?php echo ($i % $images_total) + 1; ?>" class="rep-rec-thumb thumb-fit-cover">
             </a>
             <div class="rep-rec-content">
                 <p class="rep-rec-meta"><span class="rep-rec-date">1 Styczeń, 2025</span> <span class="rep-rec-meta-separator">•</span> <span class="rep-rec-category">Kategoria</span></p>
