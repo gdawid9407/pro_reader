@@ -42,11 +42,8 @@ class Settings_Progress_Bar
         $adv_section  = 'progress_bar_advanced_section';
         $page         = 'reader-engagement-pro-progress-bar';
 
-        // === NOWE POLA ===
         add_settings_field('progress_bar_enable', __('Włącz Pasek Postępu', 'pro_reader'), [$this, 'enable_callback'], $page, $main_section);
         add_settings_field('progress_bar_display_on', __('Wyświetlaj na', 'pro_reader'), [$this, 'display_on_callback'], $page, $main_section);
-        // === KONIEC NOWYCH PÓL ===
-        
         add_settings_field('position', __('Pozycja paska', 'pro_reader'), [$this, 'position_callback'], $page, $main_section);
         add_settings_field('bar_height', __('Wysokość paska', 'pro_reader'), [$this, 'bar_height_callback'], $page, $main_section);
         add_settings_field('bar_width', __('Szerokość paska', 'pro_reader'), [$this, 'bar_width_callback'], $page, $main_section);
@@ -103,8 +100,6 @@ class Settings_Progress_Bar
         return $sanitized;
     }
 
-    // === NOWE FUNKCJE WYŚWIETLAJĄCE POLA ===
-
     /**
      * Wyświetla checkbox do włączania/wyłączania modułu paska postępu.
      */
@@ -146,8 +141,6 @@ class Settings_Progress_Bar
         echo '</fieldset>';
         echo '<p class="description">' . esc_html__('Wybierz typy treści, na których ma być automatycznie wyświetlany pasek postępu.', 'pro_reader') . '</p>';
     }
-
-    // === ISTNIEJĄCE FUNKCJE (bez zmian) ===
 
     public function position_callback(): void
     {

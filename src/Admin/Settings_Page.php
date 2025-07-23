@@ -84,17 +84,15 @@ class Settings_Page
      */
     public function route_sanitize_callback(array $input): array
     {
-        // Sprawdź, czy dane pochodzą z formularza paska postępu.
+
         if (isset($input['position'])) {
             return $this->progress_bar_settings->sanitize($input);
         }
 
-        // Sprawdź, czy dane pochodzą z formularza popupa.
         if (isset($input['popup_trigger_time']) || isset($input['popup_rec_item_layout'])) {
             return $this->popup_settings->sanitize($input);
         }
 
-        // Zwróć istniejące opcje, jeśli nie pasuje żaden warunek.
         return get_option(self::OPTION_NAME, []);
     }
 
@@ -151,9 +149,6 @@ class Settings_Page
         <?php
     }
 
-    /**
-     * Renderuje podgląd popupa, ładując zewnętrzny plik szablonu.
-     */
     private function render_preview_placeholder(): string
     {
         ob_start();
@@ -192,9 +187,9 @@ class Settings_Page
         wp_enqueue_script(
             'rep-admin-script',
             REP_PLUGIN_URL . 'assets/js/admin-settings.js',
-            ['jquery', 'wp-color-picker', 'jquery-ui-sortable'], // Zależności
-            '1.1.0', // Wersja pliku
-            true // Załaduj w stopce
+            ['jquery', 'wp-color-picker', 'jquery-ui-sortable'], 
+            '1.1.0', 
+            true 
         );
 
         // Bezpieczne przekazanie danych z PHP do JavaScript za pomocą wp_localize_script.

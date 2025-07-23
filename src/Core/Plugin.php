@@ -76,7 +76,7 @@ final class Plugin
      */
     public function handle_post_save(int $post_id, \WP_Post $post): void
     {
-        // Ignoruj autozapisy, rewizje i nieopublikowane posty.
+
         if (
             (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) ||
             wp_is_post_revision($post_id) ||
@@ -85,7 +85,6 @@ final class Plugin
             return;
         }
 
-        // Sprawdzenie, czy dany typ treści jest na liście do indeksowania.
         $options = get_option('reader_engagement_pro_options', []);
         $post_types_to_index = $options['popup_display_on'] ?? ['post'];
 

@@ -1,7 +1,6 @@
 jQuery(function($) {
     'use strict';
 
-    // Sprawdź, czy obiekt z ustawieniami z PHP istnieje. Jeśli nie, zakończ, aby uniknąć błędów.
     if (typeof REP_Admin_Settings === 'undefined') {
         console.error('REP Admin Settings object not found.');
         return;
@@ -9,7 +8,6 @@ jQuery(function($) {
 
     const optionPrefix = REP_Admin_Settings.option_name_attr;
 
-    // Inicjalizacja sortowania dla konstruktora układu
     $('#rep-layout-builder').sortable({
         axis: 'y',
         cursor: 'move',
@@ -21,7 +19,6 @@ jQuery(function($) {
         }
     });
 
-    // Logika ukrywania/pokazywania opcji zależnych od głównego włącznika popupa
     const mainPopupEnableCheckbox = $('#popup_enable');
     if (mainPopupEnableCheckbox.length) {
         const dependentPopupOptions = mainPopupEnableCheckbox.closest('tr').siblings();
@@ -36,7 +33,6 @@ jQuery(function($) {
         mainPopupEnableCheckbox.on('change', togglePopupOptionsVisibility).trigger('change');
     }
 
-    // Logika ukrywania/pokazywania opcji zależnej od włącznika "procent przewinięcia"
     const nestedCheckbox = $('#popup_trigger_scroll_percent_enable');
     if (nestedCheckbox.length) {
         const targetRow = $('#popup_trigger_scroll_percent').closest('tr');
@@ -47,7 +43,6 @@ jQuery(function($) {
         nestedCheckbox.on('change', toggleNestedVisibility);
     }
 
-    // Logika przełączania pól dla limitu zajawki (słowa vs. linie)
     const limitTypeRadios = $('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]');
     if (limitTypeRadios.length) {
         const wordsRow = $('#popup_rec_excerpt_length').closest('tr');
@@ -61,7 +56,6 @@ jQuery(function($) {
         limitTypeRadios.on('change', toggleExcerptLimitFields).trigger('change');
     }
 
-    // Obsługa przycisku ręcznego reindeksowania (AJAX)
     $('#rep-reindex-button').on('click', function(e) {
         e.preventDefault();
         const $button = $(this);
@@ -116,7 +110,6 @@ jQuery(function($) {
             }
         }
 
-        // Aktualizacja stylów przycisku "Czytaj dalej"
         function updateButtonStyles() {
             const $buttons = $previewContainer.find('.rep-rec-button');
             const bgColor = $('input[name="' + optionPrefix + '[popup_rec_button_bg_color]"]').val();
@@ -201,5 +194,27 @@ jQuery(function($) {
             }
         }
         $countInput.on('input change', updatePreviewPostCount);
+        
+        
+        const spacingInputs = {
+        '#popup_padding_container': '--rep-popup-padding',
+        '#popup_margin_content_bottom': '--rep-content-margin-bottom',
+        '#popup_gap_list_items': '--rep-list-item-gap',
+        '#popup_gap_grid_items': '--rep-grid-item-gap'
+    };
+
+    $.each(spacingInputs, function(selector, cssVar) {
+        const $input = $(selector);
+
+        if ($input.length) {
+            function updateSpacingPreview() {
+                const value = $input.val();
+
+                $previewContainer.css(cssVar, value + 'px');
+            }
+            $input.on('input change', updateSpacingPreview);
+            updateSpacingPreview();
+        }
+    });
     }
 });

@@ -50,19 +50,36 @@ class Popup
      * Renderuje główny kontener popupa w stopce, korzystając z szablonu.
      */
     public function render_popup_in_footer(): void
-    {
-        if (!$this->should_render) {
-            return;
-        }
-
-        $template_vars = [
-            'popup_content'  => $this->options['popup_content_main'] ?? '',
-            'layout_class'   => 'layout-' . sanitize_html_class($this->options['popup_recommendations_layout'] ?? 'list'),
-        ];
-
-        extract($template_vars);
-        include REP_PLUGIN_PATH . 'src/Templates/popup/main-popup.php';
+{
+    if (!$this->should_render) {
+        return;
     }
+
+    $layout_class   = 'layout-' . sanitize_html_class($this->options['popup_recommendations_layout'] ?? 'list');
+    $popup_content  = $this->options['popup_content_main'] ?? '';
+
+    $styles = [
+        '--rep-popup-padding'         => ($this->options['popup_padding_container'] ?? 24) . 'px',
+        '--rep-content-margin-bottom' => ($this->options['popup_margin_content_bottom'] ?? 20) . 'px',
+        '--rep-list-item-gap'         => ($this->options['popup_gap_list_items'] ?? 16) . 'px',
+        '--rep-grid-item-gap'         => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
+    ];
+
+    // Składamy zmienne w jeden ciąg atrybutu 'style'
+    $container_styles = '';
+    foreach ($styles as $key => $value) {
+        $container_styles .= esc_attr($key) . ':' . esc_attr($value) . ';';
+    }
+
+    $template_vars = [
+        'layout_class'     => $layout_class,
+        'popup_content'    => $popup_content,
+        'container_styles' => $container_styles, 
+    ];
+
+    extract($template_vars);
+    include REP_PLUGIN_PATH . 'src/Templates/popup/main-popup.php';
+}
 
     /**
      * Rejestruje skrypty i style potrzebne dla popupa.

@@ -55,26 +55,23 @@
             let progressPercentage = 0;
 
             if (useCustomSelector && contentElement) {
-                // NOWA LOGIKA: Obliczanie postępu na podstawie konkretnego elementu
                 const elementRect = contentElement.getBoundingClientRect();
-                const elementTop = elementRect.top + window.scrollY; // Odległość elementu od góry dokumentu
+                const elementTop = elementRect.top + window.scrollY; 
                 const elementHeight = contentElement.scrollHeight;
-                
-                // Ile pikseli trzeba przewinąć, aby "przeczytać" cały element
-                // To jest wysokość elementu minus wysokość okna przeglądarki
+
                 const totalScrollableDistanceInElement = elementHeight - window.innerHeight;
                 
                 if (totalScrollableDistanceInElement <= 0) {
-                    // Jeśli element jest krótszy niż okno, postęp jest albo 0% albo 100%
+
                     progressPercentage = (elementRect.top < 0) ? 100 : 0;
                 } else {
-                    // Aktualna pozycja przewijania względem początku elementu
+
                     const currentScrollInElement = window.scrollY - elementTop;
                     progressPercentage = (currentScrollInElement / totalScrollableDistanceInElement) * 100;
                 }
                 
             } else {
-                // STARA LOGIKA (FALLBACK): Obliczanie postępu dla całej strony
+
                 const pageHeight = Math.max(
                     document.body.scrollHeight, document.documentElement.scrollHeight,
                     document.body.offsetHeight, document.documentElement.offsetHeight,
@@ -89,13 +86,11 @@
                 }
             }
 
-            // Ogranicz procenty do zakresu 0-100
+
             const clampedProgress = Math.max(0, Math.min(100, progressPercentage));
 
-            // Aktualizuj szerokość maski (odwrotność postępu)
             progressBarMask.style.width = `${100 - clampedProgress}%`;
 
-            // Aktualizuj licznik procentowy, jeśli jest włączony
             if (percentageDisplay) {
                 percentageDisplay.textContent = `${Math.round(clampedProgress)}%`;
             }
@@ -103,8 +98,6 @@
 
         window.addEventListener('scroll', updateProgressBar, { passive: true });
         window.addEventListener('resize', updateProgressBar, { passive: true });
-        
-        // Wywołaj funkcję z opóźnieniem, aby zapewnić, że wszystkie elementy strony są w pełni załadowane
         setTimeout(updateProgressBar, 150);
     });
 })();

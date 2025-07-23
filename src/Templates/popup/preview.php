@@ -28,10 +28,24 @@ $button_style   = sprintf(
     esc_attr($text_color),
     esc_attr($border_radius)
 );
+
+// Przygotowanie zmiennych CSS dla podglądu ---
+$spacing_styles = [
+    '--rep-popup-padding'         => ($options['popup_padding_container'] ?? 24) . 'px',
+    '--rep-content-margin-bottom' => ($options['popup_margin_content_bottom'] ?? 20) . 'px',
+    '--rep-list-item-gap'         => ($options['popup_gap_list_items'] ?? 16) . 'px',
+    '--rep-grid-item-gap'         => ($options['popup_gap_grid_items'] ?? 24) . 'px',
+];
+
+$container_styles = 'position: relative; top: auto; left: auto; transform: none; max-width: 800px; z-index: 1;';
+foreach ($spacing_styles as $key => $value) {
+    $container_styles .= esc_attr($key) . ':' . esc_attr($value) . ';';
+}
+
 ?>
 
 <div id="rep-intelligent-popup__overlay-preview" class="is-visible" style="position: absolute; opacity: 0.1; top:0; left:0; right:0; bottom:0; z-index: -1;"></div>
-<div id="rep-intelligent-popup__container" class="is-visible" style="position: relative; top: auto; left: auto; transform: none; max-width: 800px; z-index: 1;">
+<div id="rep-intelligent-popup__container" class="is-visible" style="<?php echo $container_styles; ?>">
     <header id="rep-intelligent-popup__header">
         <h2 id="rep-intelligent-popup__title-static" class="screen-reader-text">Rekomendowane treści</h2>
         <button id="rep-intelligent-popup__close" aria-label="Zamknij">×</button>
@@ -43,7 +57,6 @@ $button_style   = sprintf(
 
     <ul id="rep-intelligent-popup__list" class="<?php echo esc_attr($layout_class); ?>">
         <?php
-        // Generujemy pętlę z przykładowymi elementami na podstawie ustawionej liczby.
         for ($i = 0; $i < $posts_count; $i++) :
         ?>
         <li class="<?php echo esc_attr($item_class); ?>">

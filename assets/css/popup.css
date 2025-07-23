@@ -1,3 +1,9 @@
+/**
+ * Style dla modułu Popup "Czytaj Więcej"
+ * Wersja: 1.2.0 (z obsługą Zmiennych CSS dla odstępów)
+ */
+
+/* --- Główny kontener i nakładka --- */
 #rep-intelligent-popup__overlay {
   position: fixed;
   top: 0;
@@ -16,11 +22,11 @@
   width: auto;
   box-sizing: border-box;
   position: fixed;
-  top: 50%; 
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding: 24px;
-  background: #ffffff; 
+  padding: var(--rep-popup-padding, 24px);
+  background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   z-index: 9999;
@@ -28,19 +34,19 @@
 }
 
 @media(max-width: 480px) {
-  #rep-intelligent-popup__container { 
-    padding: 16px; 
+  #rep-intelligent-popup__container {
+    padding: var(--rep-popup-padding, 16px);
     min-width: 90%;
   }
 }
 
 #rep-intelligent-popup__header {
-  padding-right: 40px;
+  padding-right: 40px; 
   flex-shrink: 0;
 }
 
 #rep-intelligent-popup__custom-content {
-  margin-bottom: 20px;
+  margin-bottom: var(--rep-content-margin-bottom, 20px);
   flex-shrink: 0;
 }
 
@@ -59,8 +65,8 @@
 }
 
 #rep-intelligent-popup__list {
-  list-style: none; 
-  margin: 0; 
+  list-style: none;
+  margin: 0;
   padding: 0;
   overflow-y: auto;
   border-top: 1px solid #eee;
@@ -68,12 +74,13 @@
 }
 
 #rep-intelligent-popup__list.layout-list {
-  max-height: 540px; 
+  max-height: 540px;
 }
 
+/* --- Pojedynczy element rekomendacji --- */
 
 .rep-rec-item {
-  margin-bottom: 16px;
+  margin-bottom: var(--rep-list-item-gap, 16px);
 }
 .rep-rec-item:last-child {
   margin-bottom: 0;
@@ -84,7 +91,7 @@
   align-items: flex-start;
 }
 .item-layout-horizontal .rep-rec-thumb-link {
-  flex: 0 0 120px; 
+  flex: 0 0 120px;
   height: 90px;
   margin-right: 16px;
 }
@@ -92,7 +99,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0; 
+  min-width: 0;
 }
 
 .rep-rec-item.item-layout-vertical {
@@ -110,7 +117,7 @@
   border-radius: 8px;
   overflow: hidden;
   background-color: #f0f0f0;
-  height: 100%; 
+  height: 100%;
 }
 
 .rep-rec-thumb {
@@ -138,10 +145,10 @@
 }
 .rep-rec-meta-separator { margin: 0 0.5em; }
 
-.rep-rec-title { 
-  font-size: 1.1rem; 
+.rep-rec-title {
+  font-size: 1.1rem;
   line-height: 1.3;
-  margin: 0 0 12px; 
+  margin: 0 0 12px;
 }
 .rep-rec-title a {
   text-decoration: none;
@@ -154,6 +161,10 @@
   color: #555;
   margin: 0 0 12px;
   line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rep-rec-button {
@@ -177,32 +188,35 @@
   color: var(--rep-btn-text-hover, #ffffff);
 }
 
+/* --- Układ siatki (Grid) --- */
 #rep-intelligent-popup__list.layout-grid {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
   max-width: 100%;
   padding-bottom: 16px;
-  gap: 24px;
+  gap: var(--rep-grid-item-gap, 24px);
 }
 #rep-intelligent-popup__list.layout-grid .rep-rec-item {
-  width: 234px; 
+  width: 234px;
   flex-shrink: 0;
-  margin-bottom: 0;
+  margin-bottom: 0; 
 }
 @media(max-width: 782px) {
-    #rep-intelligent-popup__list.layout-grid .rep-rec-item {
-        width: 240px;
-    }
+  #rep-intelligent-popup__list.layout-grid .rep-rec-item {
+    width: 240px;
+  }
 }
 @media(max-width: 480px) {
-    #rep-intelligent-popup__list.layout-grid { gap: 16px; }
-    #rep-intelligent-popup__list.layout-grid .rep-rec-item {
-        width: 220px;
-    }
+  #rep-intelligent-popup__list.layout-grid {
+    gap: var(--rep-grid-item-gap, 16px);
+  }
+  #rep-intelligent-popup__list.layout-grid .rep-rec-item {
+    width: 220px;
+  }
 }
 
-
+/* --- Stany ładowania i błędu --- */
 .rep-rec-item-loading,
 .rep-rec-item-error {
   color: #555;
@@ -211,6 +225,7 @@
   width: 100%;
 }
 
+/* --- Animacje i widoczność --- */
 #rep-intelligent-popup__overlay,
 #rep-intelligent-popup__container {
   opacity: 0;
@@ -219,6 +234,7 @@
 }
 #rep-intelligent-popup__container {
   transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translate(-50%, -50%) scale(0.95);
 }
 #rep-intelligent-popup__overlay.is-visible,
 #rep-intelligent-popup__container.is-visible {
@@ -231,11 +247,4 @@
 }
 body.rep-popup-is-open {
   overflow: hidden;
-}
-
-.rep-rec-excerpt {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }

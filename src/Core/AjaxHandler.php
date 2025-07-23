@@ -123,7 +123,7 @@ class AjaxHandler
 
         $indexer = new LinkIndexer();
         $args = [
-            'post_type'      => 'post', // TODO: To powinno być dynamiczne, na podstawie opcji.
+            'post_type'      => 'post', 
             'post_status'    => 'publish',
             'posts_per_page' => -1,
             'fields'         => 'ids'

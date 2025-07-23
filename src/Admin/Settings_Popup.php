@@ -28,7 +28,6 @@ class Settings_Popup
         // Sekcja 2: Treść
         add_settings_section('popup_content_section', __('Treść Popupa', 'pro_reader'), null, $page);
         add_settings_field('popup_content_main', __('Edytor treści', 'pro_reader'), [$this, 'content_main_callback'], $page, 'popup_content_section');
-        
         add_settings_field('popup_recommendations_link_text', __('Treść linku "Czytaj dalej"', 'pro_reader'), [$this, 'recommendations_link_text_callback'], $page, 'popup_content_section');
         
         
@@ -40,6 +39,10 @@ class Settings_Popup
         add_settings_section('popup_layout_builder_section', __('Konstruktor Układu Rekomendacji', 'pro_reader'), null, $page);
         $this->register_layout_builder_fields($page, 'popup_layout_builder_section');
         
+        // sekcja odstepów 
+        add_settings_section('popup_layout_spacing_section', __('Układ i Odstępy', 'pro_reader'), null, $page);
+        $this->register_spacing_fields($page, 'popup_layout_spacing_section');
+        
         // Sekcja 5: Ustawienia przycisku
         add_settings_section('popup_button_settings_section', __('Ustawienia Przycisku "Czytaj dalej"', 'pro_reader'), null, $page);
         $this->register_button_fields($page, 'popup_button_settings_section');
@@ -47,7 +50,9 @@ class Settings_Popup
         // Sekcja 6: Ustawienia Miniaturki
         add_settings_section('popup_thumbnail_settings_section', __('Ustawienia Miniaturki', 'pro_reader'), null, $page);
         $this->register_thumbnail_fields($page, 'popup_thumbnail_settings_section');
+    
     }
+    
 
     private function register_trigger_fields(string $page, string $section): void
     {
@@ -58,6 +63,14 @@ class Settings_Popup
         add_settings_field('popup_trigger_time', __('Wyzwalacz: Czas na stronie (sekundy)', 'pro_reader'), [$this, 'trigger_time_callback'], $page, $section);
         add_settings_field('popup_trigger_scroll_up', __('Wyzwalacz: Scroll w górę', 'pro_reader'), [$this, 'trigger_scroll_up_callback'], $page, $section);
     }
+
+    private function register_spacing_fields(string $page, string $section): void
+{
+    add_settings_field('popup_padding_container', __('Padding kontenera (px)', 'pro_reader'), [$this, 'padding_container_callback'], $page, $section);
+    add_settings_field('popup_margin_content_bottom', __('Odstęp pod treścią (px)', 'pro_reader'), [$this, 'margin_content_bottom_callback'], $page, $section);
+    add_settings_field('popup_gap_list_items', __('Odstęp między elementami - Lista (px)', 'pro_reader'), [$this, 'gap_list_items_callback'], $page, $section);
+    add_settings_field('popup_gap_grid_items', __('Odstęp między elementami - Siatka (px)', 'pro_reader'), [$this, 'gap_grid_items_callback'], $page, $section);
+}
 
     private function register_recommendation_fields(string $page, string $section): void
     {
@@ -145,15 +158,11 @@ class Settings_Popup
         if (isset($input['popup_rec_item_layout'])) {
             $sanitized['popup_recommendations_count']     = max(1, min(10, absint($input['popup_recommendations_count'] ?? 3)));
             
-            // === POCZĄTEK ZMIANY: Sanitacja nowego pola ===
             if (!empty($input['popup_recommendation_post_types']) && is_array($input['popup_recommendation_post_types'])) {
                 $sanitized['popup_recommendation_post_types'] = array_map('sanitize_key', $input['popup_recommendation_post_types']);
             } else {
-                // Ustawienie domyślne, jeśli nic nie jest wybrane, aby uniknąć błędów
                 $sanitized['popup_recommendation_post_types'] = ['post'];
             }
-            // === KONIEC ZMIANY ===
-
             $allowed_logics = ['date', 'popularity', 'hybrid_fill', 'hybrid_mix'];
             if (isset($input['popup_recommendation_logic']) && in_array($input['popup_recommendation_logic'], $allowed_logics)) {
                 $sanitized['popup_recommendation_logic'] = $input['popup_recommendation_logic'];
@@ -186,6 +195,10 @@ class Settings_Popup
             $sanitized['popup_rec_button_bg_hover_color']    = sanitize_hex_color($input['popup_rec_button_bg_hover_color'] ?? '#005177');
             $sanitized['popup_rec_button_text_hover_color']  = sanitize_hex_color($input['popup_rec_button_text_hover_color'] ?? '#ffffff');
             $sanitized['popup_rec_button_border_radius']     = absint($input['popup_rec_button_border_radius'] ?? 4);
+        $sanitized['popup_padding_container']     = isset($input['popup_padding_container']) ? absint($input['popup_padding_container']) : 24;
+        $sanitized['popup_margin_content_bottom'] = isset($input['popup_margin_content_bottom']) ? absint($input['popup_margin_content_bottom']) : 20;
+        $sanitized['popup_gap_list_items']        = isset($input['popup_gap_list_items']) ? absint($input['popup_gap_list_items']) : 16;
+        $sanitized['popup_gap_grid_items']        = isset($input['popup_gap_grid_items']) ? absint($input['popup_gap_grid_items']) : 24;
         }
         
         return $sanitized;
@@ -481,5 +494,44 @@ class Settings_Popup
         }
         $formatted_sizes['full'] = __('Pełny rozmiar (Full)', 'pro_reader');
         return $formatted_sizes;
+    }
+        /**
+     * Renderuje pole input dla opcji 'padding_container'.
+     */
+    public function padding_container_callback(): void
+    {
+        $value = $this->options['popup_padding_container'] ?? 24;
+        printf('<input type="number" id="popup_padding_container" name="%s[popup_padding_container]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Wewnętrzny margines dla całego okna popupa.', 'pro_reader') . '</p>';
+    }
+
+    /**
+     * Renderuje pole input dla opcji 'margin_content_bottom'.
+     */
+    public function margin_content_bottom_callback(): void
+    {
+        $value = $this->options['popup_margin_content_bottom'] ?? 20;
+        printf('<input type="number" id="popup_margin_content_bottom" name="%s[popup_margin_content_bottom]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Odstęp między niestandardową treścią a listą rekomendacji.', 'pro_reader') . '</p>';
+    }
+
+    /**
+     * Renderuje pole input dla opcji 'popup_gap_list_items'.
+     */
+    public function gap_list_items_callback(): void
+    {
+        $value = $this->options['popup_gap_list_items'] ?? 16;
+        printf('<input type="number" id="popup_gap_list_items" name="%s[popup_gap_list_items]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Pionowy odstęp między artykułami w układzie listy.', 'pro_reader') . '</p>';
+    }
+
+    /**
+     * Renderuje pole input dla opcji 'popup_gap_grid_items'.
+     */
+    public function gap_grid_items_callback(): void
+    {
+        $value = $this->options['popup_gap_grid_items'] ?? 24;
+        printf('<input type="number" id="popup_gap_grid_items" name="%s[popup_gap_grid_items]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Poziomy odstęp między artykułami w układzie siatki.', 'pro_reader') . '</p>';
     }
 }

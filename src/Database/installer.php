@@ -19,9 +19,7 @@ class Installer
         self::create_link_index_table();
     }
 
-    /**
-     * Tworzy niestandardową tabelę bazy danych do indeksowania linków.
-     */
+
     private static function create_link_index_table(): void
     {
         global $wpdb;
