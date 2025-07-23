@@ -70,14 +70,13 @@ class Settings_Popup
     add_settings_field('popup_margin_content_bottom', __('Odstęp pod treścią (px)', 'pro_reader'), [$this, 'margin_content_bottom_callback'], $page, $section);
     add_settings_field('popup_gap_list_items', __('Odstęp między elementami - Lista (px)', 'pro_reader'), [$this, 'gap_list_items_callback'], $page, $section);
     add_settings_field('popup_gap_grid_items', __('Odstęp między elementami - Siatka (px)', 'pro_reader'), [$this, 'gap_grid_items_callback'], $page, $section);
+    add_settings_field('popup_spacing_reset', '', [$this, 'spacing_reset_callback'], $page, $section);
 }
 
     private function register_recommendation_fields(string $page, string $section): void
     {
         add_settings_field('popup_recommendations_count', __('Liczba wpisów', 'pro_reader'), [$this, 'recommendations_count_callback'], $page, $section);
-        // === POCZĄTEK ZMIANY: Dodanie nowego pola wyboru typów treści do rekomendacji ===
         add_settings_field('popup_recommendation_post_types', __('Źródło rekomendacji', 'pro_reader'), [$this, 'recommendation_post_types_callback'], $page, $section);
-        // === KONIEC ZMIANY ===
         add_settings_field('popup_recommendation_logic', __('Kolejność rekomendacji', 'pro_reader'), [$this, 'recommendation_logic_callback'], $page, $section);
         add_settings_field('popup_recommendations_layout', __('Układ ogólny (Lista/Siatka)', 'pro_reader'), [$this, 'recommendations_layout_callback'], $page, $section);
     }
@@ -299,7 +298,6 @@ class Settings_Popup
         echo '<p class="description">' . esc_html__('Dla logiki "Mieszane" użyj parzystej liczby (2, 4 lub 6) dla najlepszych rezultatów.', 'pro_reader') . '</p>';
     }
 
-    // === POCZĄTEK ZMIANY: Nowa funkcja do wyświetlania pola wyboru typów treści ===
     public function recommendation_post_types_callback(): void
     {
         $post_types = get_post_types(['public' => true], 'objects');
@@ -322,7 +320,6 @@ class Settings_Popup
         echo '</fieldset>';
         echo '<p class="description">' . esc_html__('Zaznacz typy treści, które mogą być używane w rekomendacjach.', 'pro_reader') . '</p>';
     }
-    // === KONIEC ZMIANY ===
 
     public function recommendation_logic_callback(): void
     {
@@ -341,9 +338,8 @@ class Settings_Popup
             echo '<option value="' . esc_attr($key) . '"' . selected($value, $key, false) . '>' . esc_html($label) . '</option>';
         }
         echo '</select>';
-        // === POCZĄTEK ZMIANY: Aktualizacja opisu pola ===
         echo '<p class="description">' . esc_html__('Wybierz, w jaki sposób sortować treści wybrane w polu "Źródło rekomendacji".', 'pro_reader') . '</p>';
-        // === KONIEC ZMIANY ===
+        
     }
 
     public function recommendations_layout_callback(): void
@@ -533,5 +529,14 @@ class Settings_Popup
         $value = $this->options['popup_gap_grid_items'] ?? 24;
         printf('<input type="number" id="popup_gap_grid_items" name="%s[popup_gap_grid_items]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
         echo '<p class="description">' . esc_html__('Poziomy odstęp między artykułami w układzie siatki.', 'pro_reader') . '</p>';
+    }
+
+    /**
+     * Renderuje przycisk do resetowania wartości odstępów.
+     */
+    public function spacing_reset_callback(): void
+    {
+        echo '<button type="button" id="rep-spacing-reset-button" class="button button-secondary">' . esc_html__('Przywróć domyślne', 'pro_reader') . '</button>';
+        echo '<p class="description">' . esc_html__('Resetuje wszystkie powyższe wartości odstępów do rekomendowanych ustawień domyślnych.', 'pro_reader') . '</p>';
     }
 }
