@@ -8,7 +8,9 @@ if (!defined('ABSPATH')) {
 
 // Import klas, których będziemy używać w tym pliku.
 use ReaderEngagementPro\Admin\Settings_Progress_Bar;
-use ReaderEngagementPro\Admin\Settings_Popup;
+use ReaderEngagementPro\Admin\Settings_Popup_General;
+use ReaderEngagementPro\Admin\Settings_Popup_Desktop;
+use ReaderEngagementPro\Admin\Settings_Popup_Mobile;
 
 /**
  * Klasa odpowiedzialna za tworzenie i zarządzanie główną stroną ustawień wtyczki.
@@ -19,12 +21,16 @@ class Settings_Page
     private const OPTION_NAME = 'reader_engagement_pro_options';
 
     private Settings_Progress_Bar $progress_bar_settings;
-    private Settings_Popup $popup_settings;
+    private Settings_Popup_General $popup_settings_general;
+    private Settings_Popup_Desktop $popup_settings_desktop;
+    private Settings_Popup_Mobile $popup_settings_mobile;
 
     public function __construct()
     {
         $this->progress_bar_settings = new Settings_Progress_Bar();
-        $this->popup_settings        = new Settings_Popup();
+        $this->popup_settings_general = new Settings_Popup_General();
+        $this->popup_settings_desktop = new Settings_Popup_Desktop();
+        $this->popup_settings_mobile  = new Settings_Popup_Mobile();
 
         add_action('admin_init', [$this, 'page_init']);
         add_action('admin_menu', [$this, 'add_plugin_page']);
@@ -44,23 +50,26 @@ class Settings_Page
                 'sanitize_callback' => [$this, 'route_sanitize_callback']
             ]
         );
-
-        // Sekcja dla narzędzi indeksowania (zawiera przycisk reindeksacji)
+        
+        // --- POCZĄTEK ZMIANY ---
+        // Zmieniamy docelową stronę dla sekcji z 'reader-engagement-pro-popup'
+        // na 'reader-engagement-pro-popup-general', aby wyświetlała się w odpowiedniej zakładce.
         add_settings_section(
             'popup_reindex_section',
             __('Narzędzia Indeksowania', 'pro_reader'),
             null,
-            'reader-engagement-pro-popup'
+            'reader-engagement-pro-popup-general' // Zmieniona wartość
         );
 
-        // Pole z przyciskiem do ręcznego indeksowania
+        // Zmieniamy również docelową stronę dla samego pola.
         add_settings_field(
             'popup_reindex_button',
             __('Ręczne Indeksowanie', 'pro_reader'),
             [$this, 'reindex_button_callback'],
-            'reader-engagement-pro-popup',
+            'reader-engagement-pro-popup-general', // Zmieniona wartość
             'popup_reindex_section'
         );
+        // --- KONIEC ZMIANY ---
     }
 
     /**
@@ -84,16 +93,23 @@ class Settings_Page
      */
     public function route_sanitize_callback(array $input): array
     {
+        $options = get_option(self::OPTION_NAME, []);
+        $active_sub_tab = sanitize_key($_POST['rep_active_sub_tab'] ?? '');
 
         if (isset($input['position'])) {
             return $this->progress_bar_settings->sanitize($input);
         }
 
-        if (isset($input['popup_trigger_time']) || isset($input['popup_rec_item_layout'])) {
-            return $this->popup_settings->sanitize($input);
+        switch ($active_sub_tab) {
+            case 'general':
+                return $this->popup_settings_general->sanitize($input, $options);
+            case 'desktop':
+                return $this->popup_settings_desktop->sanitize($input, $options);
+            case 'mobile':
+                return $this->popup_settings_mobile->sanitize($input, $options);
         }
-
-        return get_option(self::OPTION_NAME, []);
+        return $options;
+        
     }
 
     /**
@@ -124,17 +140,45 @@ class Settings_Page
                         if ($active_tab === 'progress_bar') {
                             settings_fields(self::SETTINGS_GROUP);
                             do_settings_sections('reader-engagement-pro-progress-bar');
+                            submit_button();
                         } elseif ($active_tab === 'popup') {
+                            // Logika pod-zakładek dla sekcji "Popup"
+                            $active_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : 'general';
+                            ?>
+                            <h2 class="nav-tab-wrapper" style="margin-bottom: 20px;">
+                                <a href="?page=reader-engagement-pro&tab=popup&sub_tab=general" class="nav-tab <?php echo $active_sub_tab === 'general' ? 'nav-tab-active' : ''; ?>">
+                                    <?php esc_html_e('Ustawienia Ogólne', 'pro_reader'); ?>
+                                </a>
+                                <a href="?page=reader-engagement-pro&tab=popup&sub_tab=desktop" class="nav-tab <?php echo $active_sub_tab === 'desktop' ? 'nav-tab-active' : ''; ?>">
+                                    <?php esc_html_e('Wygląd - Desktop', 'pro_reader'); ?>
+                                </a>
+                                <a href="?page=reader-engagement-pro&tab=popup&sub_tab=mobile" class="nav-tab <?php echo $active_sub_tab === 'mobile' ? 'nav-tab-active' : ''; ?>">
+                                    <?php esc_html_e('Wygląd - Mobilny', 'pro_reader'); ?>
+                                </a>
+                            </h2>
+                            <?php
                             settings_fields(self::SETTINGS_GROUP);
-                            do_settings_sections('reader-engagement-pro-popup');
+
+                            echo '<input type="hidden" name="rep_active_sub_tab" value="' . esc_attr($active_sub_tab) . '">';
+
+                            if ($active_sub_tab === 'general') {
+                                do_settings_sections('reader-engagement-pro-popup-general');
+                            } elseif ($active_sub_tab === 'desktop') {
+                                do_settings_sections('reader-engagement-pro-popup-desktop');
+                            } elseif ($active_sub_tab === 'mobile') {
+                                do_settings_sections('reader-engagement-pro-popup-mobile');
+                            }
+                            submit_button();
                         }
-                        submit_button();
                         ?>
                     </form>
                 </div>
 
-                <?php if ($active_tab === 'popup') : ?>
-                <div id="rep-live-preview-wrapper" style="flex: 1; min-width: 400px;">
+                <?php if ($active_tab === 'popup') : 
+                    $active_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : 'general';
+                    $preview_wrapper_class = 'rep-preview-mode-' . esc_attr($active_sub_tab);
+                    ?>
+                <div id="rep-live-preview-wrapper" class="<?php echo $preview_wrapper_class; ?>" style="flex: 1; min-width: 400px;">
                     <div style="position: sticky; top: 50px;">
                         <h3 style="margin: 0 0 10px; padding: 0;"><?php esc_html_e('Podgląd na żywo', 'pro_reader'); ?></h3>
                         <div id="rep-live-preview-area" style="transform: scale(0.5); transform-origin: top left; width: 200%; height: 200%; pointer-events: none; background: #f0f0f1; padding: 20px; border-radius: 4px;">
@@ -152,7 +196,6 @@ class Settings_Page
     private function render_preview_placeholder(): string
     {
         ob_start();
-        // Dołączamy plik szablonu, zamiast trzymać HTML w metodzie.
         include REP_PLUGIN_PATH . 'src/Templates/popup/preview.php';
         return ob_get_clean();
     }
@@ -172,27 +215,23 @@ class Settings_Page
      */
     public function enqueue_admin_assets($hook): void
     {
-        // Sprawdź, czy jesteśmy na właściwej stronie ustawień.
         if ($hook !== 'toplevel_page_reader-engagement-pro') {
             return;
         }
 
-        // Rejestracja stylów i zależności.
-        wp_enqueue_style('rep-popup-style-preview', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.1.0');
+        wp_enqueue_style('rep-popup-style-preview', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.2.0'); // Bump wersji
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
         wp_enqueue_script('jquery-ui-sortable');
 
-        // Rejestracja naszego nowego, dedykowanego pliku JavaScript.
         wp_enqueue_script(
             'rep-admin-script',
             REP_PLUGIN_URL . 'assets/js/admin-settings.js',
             ['jquery', 'wp-color-picker', 'jquery-ui-sortable'], 
-            '1.1.0', 
+            '1.2.0', 
             true 
         );
 
-        // Bezpieczne przekazanie danych z PHP do JavaScript za pomocą wp_localize_script.
         wp_localize_script('rep-admin-script', 'REP_Admin_Settings', [
             'option_name_attr'      => self::OPTION_NAME,
             'reindex_nonce'         => wp_create_nonce('rep_reindex_nonce'),
@@ -202,10 +241,14 @@ class Settings_Page
             'reindex_text_error'    => __('Wystąpił nieoczekiwany błąd serwera.', 'pro_reader'),
         ]);
 
-        // Dodanie stylów inline (to jest w porządku, bo jest małe i specyficzne).
         $inline_css = "
             #rep-layout-builder .ui-sortable-placeholder { border: 2px dashed #ccd0d4; background: #f6f7f7; height: 40px; margin-bottom: 5px; visibility: visible !important; }
             #rep-layout-builder .ui-sortable-helper { box-shadow: 0 5px 15px rgba(0,0,0,0.15); opacity: 0.95; }
+            #rep-live-preview-wrapper.rep-preview-mode-mobile #rep-live-preview-area {
+                max-width: 415px !important; /* Szerokość symulująca telefon + padding */
+                margin: 0 auto;
+                transition: max-width 0.3s ease-in-out;
+            }
         ";
         wp_add_inline_style('wp-admin', $inline_css);
     }

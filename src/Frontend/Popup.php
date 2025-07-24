@@ -19,13 +19,10 @@ class Popup
     {
         $this->options = get_option('reader_engagement_pro_options', []);
 
-        // Zakończ, jeśli moduł popupa jest wyłączony.
         if (empty($this->options['popup_enable']) || $this->options['popup_enable'] !== '1') {
             return;
         }
-        // Właściwa obsługa AJAX jest teraz w AjaxHandler, więc usuwamy stąd hooki.
 
-        // Podepnij metodę decyzyjną do haka 'wp'.
         add_action('wp', [$this, 'decide_to_render']);
     }
 
@@ -46,38 +43,50 @@ class Popup
         }
     }
 
+    /**
+     * Renderuje popup w stopce, przekazując ustawienia jako zmienne CSS.
+     */
     public function render_popup_in_footer(): void
-{
-    if (!$this->should_render) {
-        return;
+    {
+        if (!$this->should_render) {
+            return;
+        }
+
+        $layout_class   = 'layout-' . sanitize_html_class($this->options['popup_recommendations_layout'] ?? 'list');
+        $popup_content  = $this->options['popup_content_main'] ?? '';
+
+        // --- POCZĄTEK ZMIAN ---
+        // Dodajemy nowe zmienne CSS dla ustawień mobilnych.
+        $styles = [
+            // Ustawienia Desktop (z fallbackami)
+            '--rep-popup-max-width'         => ($this->options['popup_max_width'] ?? 800) . 'px',
+            '--rep-popup-max-height'        => ($this->options['popup_max_height'] ?? 90) . 'vh',
+            '--rep-popup-padding'           => ($this->options['popup_padding_container'] ?? 24) . 'px',
+            '--rep-content-margin-bottom'   => ($this->options['popup_margin_content_bottom'] ?? 20) . 'px',
+            '--rep-list-item-gap'           => ($this->options['popup_gap_list_items'] ?? 16) . 'px',
+            '--rep-grid-item-gap'           => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
+            
+            // Ustawienia Mobilne (z fallbackami)
+            // Używamy tych samych nazw zmiennych, które będą nadpisane w CSS przez media query.
+            '--rep-popup-width-mobile'      => ($this->options['popup_max_width_mobile'] ?? 90) . 'vw',
+            '--rep-popup-padding-mobile'    => ($this->options['popup_padding_container_mobile'] ?? 16) . 'px',
+        ];
+        // --- KONIEC ZMIAN ---
+
+        $container_styles = '';
+        foreach ($styles as $key => $value) {
+            $container_styles .= esc_attr($key) . ':' . esc_attr($value) . ';';
+        }
+
+        $template_vars = [
+            'layout_class'     => $layout_class,
+            'popup_content'    => $popup_content,
+            'container_styles' => $container_styles, 
+        ];
+
+        extract($template_vars);
+        include REP_PLUGIN_PATH . 'src/Templates/popup/main-popup.php';
     }
-
-    $layout_class   = 'layout-' . sanitize_html_class($this->options['popup_recommendations_layout'] ?? 'list');
-    $popup_content  = $this->options['popup_content_main'] ?? '';
-
-    $styles = [
-        '--rep-popup-padding'         => ($this->options['popup_padding_container'] ?? 24) . 'px',
-        '--rep-content-margin-bottom' => ($this->options['popup_margin_content_bottom'] ?? 20) . 'px',
-        '--rep-list-item-gap'         => ($this->options['popup_gap_list_items'] ?? 16) . 'px',
-        '--rep-grid-item-gap'         => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
-        '--rep-popup-max-width'       => ($this->options['popup_max_width'] ?? 800) . 'px',
-        '--rep-popup-max-height'      => ($this->options['popup_max_height'] ?? 90) . 'vh',
-    ];
-
-    $container_styles = '';
-    foreach ($styles as $key => $value) {
-        $container_styles .= esc_attr($key) . ':' . esc_attr($value) . ';';
-    }
-
-    $template_vars = [
-        'layout_class'     => $layout_class,
-        'popup_content'    => $popup_content,
-        'container_styles' => $container_styles, 
-    ];
-
-    extract($template_vars);
-    include REP_PLUGIN_PATH . 'src/Templates/popup/main-popup.php';
-}
 
     /**
      * Rejestruje skrypty i style potrzebne dla popupa.
@@ -88,7 +97,7 @@ class Popup
             return;
         }
 
-        wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.1.0');
+        wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.3.0'); // Bump wersji
         wp_enqueue_script('rep-popup-script', REP_PLUGIN_URL . 'assets/js/popup.js', ['jquery'], '1.1.0', true);
 
         wp_localize_script(
@@ -111,10 +120,6 @@ class Popup
 
     /**
      * Generuje HTML dla pojedynczego elementu rekomendacji.
-     * Ta metoda jest publiczna, aby AjaxHandler mógł z niej korzystać.
-     *
-     * @param int $post_id ID posta do wyrenderowania.
-     * @return string HTML elementu <li>.
      */
     public function generate_recommendation_item_html(int $post_id): string
     {
@@ -146,11 +151,7 @@ class Popup
     }
 
     /**
-     * Generuje HTML dla konkretnego komponentu (np. tytuł, obrazek).
-     *
-     * @param string $key Nazwa komponentu.
-     * @param int $post_id ID posta.
-     * @return string Kod HTML komponentu.
+     * Generuje HTML dla konkretnego komponentu.
      */
     private function get_component_html(string $key, int $post_id): string
     {
@@ -191,13 +192,15 @@ class Popup
                 return sprintf('<p class="rep-rec-meta"><span class="rep-rec-date">%s</span>%s</p>', esc_html($date_html), $category_html);
             case 'link':
                 $link_text = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
+                $bg_color = $this->options['popup_rec_button_bg_color'] ?? '#0073aa';
+                $text_color = $this->options['popup_rec_button_text_color'] ?? '#ffffff';
+                $bg_hover = $this->options['popup_rec_button_bg_hover_color'] ?? '#005177';
+                $text_hover = $this->options['popup_rec_button_text_hover_color'] ?? '#ffffff';
+                $radius = $this->options['popup_rec_button_border_radius'] ?? 4;
+                
                 $style_vars = sprintf(
                     '--rep-btn-bg: %s; --rep-btn-text: %s; --rep-btn-bg-hover: %s; --rep-btn-text-hover: %s; border-radius: %dpx;',
-                    esc_attr($this->options['popup_rec_button_bg_color'] ?? '#0073aa'),
-                    esc_attr($this->options['popup_rec_button_text_color'] ?? '#ffffff'),
-                    esc_attr($this->options['popup_rec_button_bg_hover_color'] ?? '#005177'),
-                    esc_attr($this->options['popup_rec_button_text_hover_color'] ?? '#ffffff'),
-                    esc_attr($this->options['popup_rec_button_border_radius'] ?? 4)
+                    esc_attr($bg_color), esc_attr($text_color), esc_attr($bg_hover), esc_attr($text_hover), esc_attr($radius)
                 );
                 return sprintf('<a href="%s" class="rep-rec-button" style="%s">%s</a>', esc_url($post_link), $style_vars, wp_kses_post($link_text));
             default:
@@ -206,10 +209,7 @@ class Popup
     }
 
     /**
-     * Przetwarza zajawkę posta zgodnie z ustawieniami (limit słów).
-     *
-     * @param int $post_id ID posta.
-     * @return string Przetworzona zajawka.
+     * Przetwarza zajawkę posta zgodnie z ustawieniami.
      */
     private function get_processed_excerpt(int $post_id): string
     {

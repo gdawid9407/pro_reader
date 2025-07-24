@@ -1,16 +1,19 @@
 <?php
 /**
  * Szablon podglądu na żywo dla popupa w panelu admina.
+ * Wersja: 1.1 - Zapewnia stabilne działanie we wszystkich zakładkach.
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
+// --- POCZĄTEK ZMIAN ---
 // Pobieramy najnowsze opcje, aby podgląd był zawsze aktualny.
 $options = get_option('reader_engagement_pro_options', []);
 
-// Ustawienie wartości domyślnych dla podglądu.
+// Ustawienie wartości domyślnych dla KAŻDEJ opcji używanej w podglądzie.
+// To kluczowe dla stabilności, gdy opcje nie zostały jeszcze zapisane w danej zakładce.
 $posts_count    = (int) ($options['popup_recommendations_count'] ?? 3);
 $popup_content  = $options['popup_content_main'] ?? '<h3>Spodobał Ci się ten artykuł?</h3><p>Czytaj dalej i odkryj więcej ciekawych treści, które dla Ciebie przygotowaliśmy!</p>';
 $layout_setting = $options['popup_recommendations_layout'] ?? 'list';
@@ -19,6 +22,7 @@ $item_layout    = $options['popup_rec_item_layout'] ?? 'vertical';
 $item_class     = 'rep-rec-item item-layout-' . sanitize_html_class($item_layout);
 $link_text      = $options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
 
+// Domyślne wartości dla stylów przycisku
 $bg_color       = $options['popup_rec_button_bg_color'] ?? '#0073aa';
 $text_color     = $options['popup_rec_button_text_color'] ?? '#ffffff';
 $border_radius  = $options['popup_rec_button_border_radius'] ?? 4;
@@ -26,31 +30,32 @@ $button_style   = sprintf(
     'background-color: %s; color: %s; border-radius: %dpx;',
     esc_attr($bg_color),
     esc_attr($text_color),
-    esc_attr($border_radius)
+    (int) $border_radius
 );
 
-// Przygotowanie zmiennych CSS dla podglądu ---
+// Przygotowanie zmiennych CSS dla podglądu (również z wartościami domyślnymi)
 $spacing_styles = [
-    '--rep-popup-padding'         => ($options['popup_padding_container'] ?? 24) . 'px',
-    '--rep-content-margin-bottom' => ($options['popup_margin_content_bottom'] ?? 20) . 'px',
-    '--rep-list-item-gap'         => ($options['popup_gap_list_items'] ?? 16) . 'px',
-    '--rep-grid-item-gap'         => ($options['popup_gap_grid_items'] ?? 24) . 'px',
+    // Desktop
+    '--rep-popup-max-width'         => ($options['popup_max_width'] ?? 800) . 'px',
+    '--rep-popup-max-height'        => ($options['popup_max_height'] ?? 90) . 'vh',
+    '--rep-popup-padding'           => ($options['popup_padding_container'] ?? 24) . 'px',
+    '--rep-content-margin-bottom'   => ($options['popup_margin_content_bottom'] ?? 20) . 'px',
+    '--rep-list-item-gap'           => ($options['popup_gap_list_items'] ?? 16) . 'px',
+    '--rep-grid-item-gap'           => ($options['popup_gap_grid_items'] ?? 24) . 'px',
+    // Mobile
+    '--rep-popup-width-mobile'      => ($options['popup_max_width_mobile'] ?? 90) . 'vw',
+    '--rep-popup-padding-mobile'    => ($options['popup_padding_container_mobile'] ?? 16) . 'px',
 ];
 
-// --- POPRAWIONA LINIA ---
-// Usunęliśmy 'max-width: 800px;' z poniższego stringa.
 $container_styles = 'position: relative; top: auto; left: auto; transform: none; z-index: 1;';
 foreach ($spacing_styles as $key => $value) {
     $container_styles .= esc_attr($key) . ':' . esc_attr($value) . ';';
 }
 
 // Tablica z nazwami plików obrazów do podglądu.
-$preview_images = [
-    'placeholder-1.jpg',
-    'placeholder-2.jpg',
-    'placeholder-3.jpg',
-];
+$preview_images = ['placeholder-1.jpg', 'placeholder-2.jpg', 'placeholder-3.jpg'];
 $images_total = count($preview_images);
+// --- KONIEC ZMIAN ---
 
 ?>
 
@@ -67,6 +72,7 @@ $images_total = count($preview_images);
 
     <ul id="rep-intelligent-popup__list" class="<?php echo esc_attr($layout_class); ?>">
         <?php
+        // Pętla renderująca podgląd rekomendacji
         for ($i = 0; $i < $posts_count; $i++) :
             $current_image_file = $preview_images[$i % $images_total];
             $image_url = REP_PLUGIN_URL . 'assets/images/' . $current_image_file;
