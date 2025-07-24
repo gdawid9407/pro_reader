@@ -1,9 +1,13 @@
 <?php
+/**
+ * Szablon podglądu na żywo dla popupa w panelu admina.
+ */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
+// Pobieramy najnowsze opcje, aby podgląd był zawsze aktualny.
 $options = get_option('reader_engagement_pro_options', []);
 
 // Ustawienie wartości domyślnych dla podglądu.
@@ -33,11 +37,14 @@ $spacing_styles = [
     '--rep-grid-item-gap'         => ($options['popup_gap_grid_items'] ?? 24) . 'px',
 ];
 
-$container_styles = 'position: relative; top: auto; left: auto; transform: none; max-width: 800px; z-index: 1;';
+// --- POPRAWIONA LINIA ---
+// Usunęliśmy 'max-width: 800px;' z poniższego stringa.
+$container_styles = 'position: relative; top: auto; left: auto; transform: none; z-index: 1;';
 foreach ($spacing_styles as $key => $value) {
     $container_styles .= esc_attr($key) . ':' . esc_attr($value) . ';';
 }
 
+// Tablica z nazwami plików obrazów do podglądu.
 $preview_images = [
     'placeholder-1.jpg',
     'placeholder-2.jpg',

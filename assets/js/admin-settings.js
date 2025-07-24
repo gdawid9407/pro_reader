@@ -201,29 +201,30 @@ jQuery(function($) {
         $countInput.on('input change', updatePreviewPostCount);
         
         
-        const spacingInputs = {
-        '#popup_padding_container': '--rep-popup-padding',
-        '#popup_margin_content_bottom': '--rep-content-margin-bottom',
-        '#popup_gap_list_items': '--rep-list-item-gap',
-        '#popup_gap_grid_items': '--rep-grid-item-gap'
-    };
+        const styleInputs = {
+            // Istniejące pola odstępów
+            '#popup_padding_container': { variable: '--rep-popup-padding', unit: 'px' },
+            '#popup_margin_content_bottom': { variable: '--rep-content-margin-bottom', unit: 'px' },
+            '#popup_gap_list_items': { variable: '--rep-list-item-gap', unit: 'px' },
+            '#popup_gap_grid_items': { variable: '--rep-grid-item-gap', unit: 'px' },
+            // Nowe pola wymiarów
+            '#popup_max_width': { variable: '--rep-popup-max-width', unit: 'px' },
+            '#popup_max_height': { variable: '--rep-popup-max-height', unit: 'vh' }
+        };
 
-    $.each(spacingInputs, function(selector, cssVar) {
-        const $input = $(selector);
+        $.each(styleInputs, function(selector, data) {
+            const $input = $(selector);
 
-        if ($input.length) {
-
-            function updateSpacingPreview() {
-                const value = $input.val();
-
-                $previewContainer.css(cssVar, value + 'px');
+            if ($input.length) {
+                function updateStylePreview() {
+                    const value = $input.val();
+                    // Używamy zmiennej 'variable' i 'unit' z obiektu 'data'
+                    $previewContainer.css(data.variable, value + data.unit);
+                }
+                $input.on('input change', updateStylePreview);
+                updateStylePreview(); // Uruchom raz przy inicjalizacji
             }
-
-            $input.on('input change', updateSpacingPreview);
-
-            updateSpacingPreview();
-        }
-    });
+        });
 
         $('#rep-spacing-reset-button').on('click', function(e) {
             e.preventDefault();
@@ -231,8 +232,8 @@ jQuery(function($) {
             const defaultSpacings = {
                 '#popup_padding_container': '24',
                 '#popup_margin_content_bottom': '20',
-                '#popup_gap_list_items': '18',
-                '#popup_gap_grid_items': '20'
+                '#popup_gap_list_items': '16',
+                '#popup_gap_grid_items': '24'
             };
 
             $.each(defaultSpacings, function(selector, value) {
