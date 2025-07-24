@@ -39,6 +39,11 @@ class Settings_Popup
         add_settings_section('popup_layout_builder_section', __('Konstruktor Układu Rekomendacji', 'pro_reader'), null, $page);
         $this->register_layout_builder_fields($page, 'popup_layout_builder_section');
         
+        // Sekcja 4.5: Ustawienia Wymiarów Popupa
+        add_settings_section('popup_dimensions_section', __('Ustawienia Wymiarów Popupa', 'pro_reader'), null, $page);
+        add_settings_field('popup_max_width', __('Maksymalna szerokość (px)', 'pro_reader'), [$this, 'max_width_callback'], $page, 'popup_dimensions_section');
+        add_settings_field('popup_max_height', __('Maksymalna wysokość (vh)', 'pro_reader'), [$this, 'max_height_callback'], $page, 'popup_dimensions_section');
+
         // sekcja odstepów 
         add_settings_section('popup_layout_spacing_section', __('Układ i Odstępy', 'pro_reader'), null, $page);
         $this->register_spacing_fields($page, 'popup_layout_spacing_section');
@@ -104,6 +109,20 @@ class Settings_Popup
         add_settings_field('popup_rec_button_bg_hover_color', __('Kolor tła (hover)', 'pro_reader'), [$this, 'button_bg_hover_color_callback'], $page, $section);
         add_settings_field('popup_rec_button_text_hover_color', __('Kolor tekstu (hover)', 'pro_reader'), [$this, 'button_text_hover_color_callback'], $page, $section);
         add_settings_field('popup_rec_button_border_radius', __('Zaokrąglenie rogów (px)', 'pro_reader'), [$this, 'button_border_radius_callback'], $page, $section);
+    }
+
+    public function max_width_callback(): void
+    {
+        $value = $this->options['popup_max_width'] ?? 800;
+        printf('<input type="number" id="popup_max_width" name="%s[popup_max_width]" value="%d" min="300" max="1600" style="width: 100px;" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Domyślnie 800. Popup będzie responsywny i zmniejszy się na węższych ekranach.', 'pro_reader') . '</p>';
+    }
+
+    public function max_height_callback(): void
+    {
+        $value = $this->options['popup_max_height'] ?? 90;
+        printf('<input type="number" id="popup_max_height" name="%s[popup_max_height]" value="%d" min="40" max="100" style="width: 100px;" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Domyślnie 90. Jednostka "vh" oznacza % wysokości okna przeglądarki.', 'pro_reader') . '</p>';
     }
 
     public function button_bg_color_callback(): void
@@ -194,6 +213,8 @@ class Settings_Popup
             $sanitized['popup_rec_button_bg_hover_color']    = sanitize_hex_color($input['popup_rec_button_bg_hover_color'] ?? '#005177');
             $sanitized['popup_rec_button_text_hover_color']  = sanitize_hex_color($input['popup_rec_button_text_hover_color'] ?? '#ffffff');
             $sanitized['popup_rec_button_border_radius']     = absint($input['popup_rec_button_border_radius'] ?? 4);
+            $sanitized['popup_max_width']         = isset($input['popup_max_width']) ? absint($input['popup_max_width']) : 800;
+            $sanitized['popup_max_height']        = isset($input['popup_max_height']) ? absint($input['popup_max_height']) : 90;
         $sanitized['popup_padding_container']     = isset($input['popup_padding_container']) ? absint($input['popup_padding_container']) : 24;
         $sanitized['popup_margin_content_bottom'] = isset($input['popup_margin_content_bottom']) ? absint($input['popup_margin_content_bottom']) : 20;
         $sanitized['popup_gap_list_items']        = isset($input['popup_gap_list_items']) ? absint($input['popup_gap_list_items']) : 16;
@@ -491,9 +512,7 @@ class Settings_Popup
         $formatted_sizes['full'] = __('Pełny rozmiar (Full)', 'pro_reader');
         return $formatted_sizes;
     }
-        /**
-     * Renderuje pole input dla opcji 'padding_container'.
-     */
+
     public function padding_container_callback(): void
     {
         $value = $this->options['popup_padding_container'] ?? 24;
@@ -501,9 +520,6 @@ class Settings_Popup
         echo '<p class="description">' . esc_html__('Wewnętrzny margines dla całego okna popupa.', 'pro_reader') . '</p>';
     }
 
-    /**
-     * Renderuje pole input dla opcji 'margin_content_bottom'.
-     */
     public function margin_content_bottom_callback(): void
     {
         $value = $this->options['popup_margin_content_bottom'] ?? 20;
@@ -521,9 +537,6 @@ class Settings_Popup
         echo '<p class="description">' . esc_html__('Pionowy odstęp między artykułami w układzie listy.', 'pro_reader') . '</p>';
     }
 
-    /**
-     * Renderuje pole input dla opcji 'popup_gap_grid_items'.
-     */
     public function gap_grid_items_callback(): void
     {
         $value = $this->options['popup_gap_grid_items'] ?? 24;
@@ -531,9 +544,6 @@ class Settings_Popup
         echo '<p class="description">' . esc_html__('Poziomy odstęp między artykułami w układzie siatki.', 'pro_reader') . '</p>';
     }
 
-    /**
-     * Renderuje przycisk do resetowania wartości odstępów.
-     */
     public function spacing_reset_callback(): void
     {
         echo '<button type="button" id="rep-spacing-reset-button" class="button button-secondary">' . esc_html__('Przywróć domyślne', 'pro_reader') . '</button>';

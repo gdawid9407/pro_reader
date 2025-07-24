@@ -1,13 +1,9 @@
 <?php
-/**
- * Szablon podglądu na żywo dla popupa w panelu admina.
- */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-// Pobieramy najnowsze opcje, aby podgląd był zawsze aktualny.
 $options = get_option('reader_engagement_pro_options', []);
 
 // Ustawienie wartości domyślnych dla podglądu.
@@ -42,8 +38,6 @@ foreach ($spacing_styles as $key => $value) {
     $container_styles .= esc_attr($key) . ':' . esc_attr($value) . ';';
 }
 
-// Tablica z nazwami plików obrazów do podglądu.
-// Upewnij się, że te pliki istnieją w folderze /assets/images/
 $preview_images = [
     'placeholder-1.jpg',
     'placeholder-2.jpg',
@@ -66,9 +60,7 @@ $images_total = count($preview_images);
 
     <ul id="rep-intelligent-popup__list" class="<?php echo esc_attr($layout_class); ?>">
         <?php
-        // Pętla generująca elementy listy z różnymi obrazkami.
         for ($i = 0; $i < $posts_count; $i++) :
-            // Wybierz obraz cyklicznie z tablicy, aby uniknąć powtórzeń.
             $current_image_file = $preview_images[$i % $images_total];
             $image_url = REP_PLUGIN_URL . 'assets/images/' . $current_image_file;
         ?>

@@ -46,9 +46,6 @@ class Popup
         }
     }
 
-    /**
-     * Renderuje główny kontener popupa w stopce, korzystając z szablonu.
-     */
     public function render_popup_in_footer(): void
 {
     if (!$this->should_render) {
@@ -63,9 +60,10 @@ class Popup
         '--rep-content-margin-bottom' => ($this->options['popup_margin_content_bottom'] ?? 20) . 'px',
         '--rep-list-item-gap'         => ($this->options['popup_gap_list_items'] ?? 16) . 'px',
         '--rep-grid-item-gap'         => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
+        '--rep-popup-max-width'       => ($this->options['popup_max_width'] ?? 800) . 'px',
+        '--rep-popup-max-height'      => ($this->options['popup_max_height'] ?? 90) . 'vh',
     ];
 
-    // Składamy zmienne w jeden ciąg atrybutu 'style'
     $container_styles = '';
     foreach ($styles as $key => $value) {
         $container_styles .= esc_attr($key) . ':' . esc_attr($value) . ';';
@@ -135,8 +133,7 @@ class Popup
         $item_class = 'rep-rec-item item-layout-' . sanitize_html_class($item_layout);
 
         ob_start();
-        
-        // Przekaż zmienne i załaduj szablon elementu.
+
         extract([
             'item_class'        => $item_class,
             'item_layout'       => $item_layout,
