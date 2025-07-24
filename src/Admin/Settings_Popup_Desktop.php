@@ -45,23 +45,18 @@ class Settings_Popup_Desktop
         add_settings_field('popup_rec_excerpt_limit_type', __('Typ limitu zajawki', 'pro_reader'), [$this, 'excerpt_limit_type_callback'], $page, 'popup_layout_builder_section');
         add_settings_field('popup_rec_excerpt_length', __('Limit słów zajawki', 'pro_reader'), [$this, 'excerpt_length_callback'], $page, 'popup_layout_builder_section');
         add_settings_field('popup_rec_excerpt_lines', __('Limit linii zajawki', 'pro_reader'), [$this, 'excerpt_lines_callback'], $page, 'popup_layout_builder_section');
-
-        add_settings_section('popup_button_settings_section', __('Ustawienia Przycisku "Czytaj dalej"', 'pro_reader'), null, $page);
-        add_settings_field('popup_recommendations_link_text', __('Treść przycisku', 'pro_reader'), [$this, 'recommendations_link_text_callback'], $page, 'popup_button_settings_section');
-        $this->register_button_fields($page, 'popup_button_settings_section');
+        
+        // --- POCZĄTEK ZMIAN ---
+        // Usunięto sekcję ustawień przycisku.
+        // --- KONIEC ZMIAN ---
 
         add_settings_section('popup_thumbnail_settings_section', __('Ustawienia Miniaturki', 'pro_reader'), null, $page);
         $this->register_thumbnail_fields($page, 'popup_thumbnail_settings_section');
     }
 
-    private function register_button_fields(string $page, string $section): void
-    {
-        add_settings_field('popup_rec_button_bg_color', __('Kolor tła', 'pro_reader'), [$this, 'button_bg_color_callback'], $page, $section);
-        add_settings_field('popup_rec_button_text_color', __('Kolor tekstu', 'pro_reader'), [$this, 'button_text_color_callback'], $page, $section);
-        add_settings_field('popup_rec_button_bg_hover_color', __('Kolor tła (hover)', 'pro_reader'), [$this, 'button_bg_hover_color_callback'], $page, $section);
-        add_settings_field('popup_rec_button_text_hover_color', __('Kolor tekstu (hover)', 'pro_reader'), [$this, 'button_text_hover_color_callback'], $page, $section);
-        add_settings_field('popup_rec_button_border_radius', __('Zaokrąglenie rogów (px)', 'pro_reader'), [$this, 'button_border_radius_callback'], $page, $section);
-    }
+    // --- POCZĄTEK ZMIAN ---
+    // Usunięto metodę register_button_fields.
+    // --- KONIEC ZMIAN ---
 
     private function register_thumbnail_fields(string $page, string $section): void
     {
@@ -84,7 +79,6 @@ class Settings_Popup_Desktop
         $sanitized['popup_gap_list_items']            = isset($input['popup_gap_list_items']) ? absint($input['popup_gap_list_items']) : 16;
         $sanitized['popup_gap_grid_items']            = isset($input['popup_gap_grid_items']) ? absint($input['popup_gap_grid_items']) : 24;
         $sanitized['popup_recommendations_layout']    = isset($input['popup_recommendations_layout']) && in_array($input['popup_recommendations_layout'], ['list', 'grid']) ? $input['popup_recommendations_layout'] : 'list';
-        $sanitized['popup_recommendations_link_text'] = isset($input['popup_recommendations_link_text']) ? wp_kses_post($input['popup_recommendations_link_text']) : 'Zobacz więcej →';
         $sanitized['popup_rec_item_layout']           = isset($input['popup_rec_item_layout']) && in_array($input['popup_rec_item_layout'], ['vertical', 'horizontal']) ? $input['popup_rec_item_layout'] : 'vertical';
         $sanitized['popup_rec_excerpt_limit_type']    = isset($input['popup_rec_excerpt_limit_type']) && in_array($input['popup_rec_excerpt_limit_type'], ['words', 'lines']) ? $input['popup_rec_excerpt_limit_type'] : 'words';
         $sanitized['popup_rec_excerpt_length']        = isset($input['popup_rec_excerpt_length']) ? absint($input['popup_rec_excerpt_length']) : 15;
@@ -103,11 +97,9 @@ class Settings_Popup_Desktop
         $allowed_fits = ['cover', 'contain'];
         $sanitized['popup_rec_thumb_fit'] = isset($input['popup_rec_thumb_fit']) && in_array($input['popup_rec_thumb_fit'], $allowed_fits) ? $input['popup_rec_thumb_fit'] : 'cover';
         
-        $sanitized['popup_rec_button_bg_color']          = isset($input['popup_rec_button_bg_color']) ? sanitize_hex_color($input['popup_rec_button_bg_color']) : '#0073aa';
-        $sanitized['popup_rec_button_text_color']        = isset($input['popup_rec_button_text_color']) ? sanitize_hex_color($input['popup_rec_button_text_color']) : '#ffffff';
-        $sanitized['popup_rec_button_bg_hover_color']    = isset($input['popup_rec_button_bg_hover_color']) ? sanitize_hex_color($input['popup_rec_button_bg_hover_color']) : '#005177';
-        $sanitized['popup_rec_button_text_hover_color']  = isset($input['popup_rec_button_text_hover_color']) ? sanitize_hex_color($input['popup_rec_button_text_hover_color']) : '#ffffff';
-        $sanitized['popup_rec_button_border_radius']     = isset($input['popup_rec_button_border_radius']) ? absint($input['popup_rec_button_border_radius']) : 4;
+        // --- POCZĄTEK ZMIAN ---
+        // Usunięto sanitację dla opcji przycisku.
+        // --- KONIEC ZMIAN ---
 
         return $sanitized;
     }
@@ -152,18 +144,14 @@ class Settings_Popup_Desktop
     {
         $value = $this->options['popup_max_width'] ?? 800;
         printf('<input type="number" id="popup_max_width" name="%s[popup_max_width]" value="%d" min="300" max="1600" style="width: 100px;" />', self::OPTION_NAME, esc_attr($value));
-        // --- POCZĄTEK ZMIANY ---
         echo '<p class="description">' . esc_html__('Dla układu "Lista" zalecana szerokość to maksymalnie 925px. Układ "Siatka" może wymagać większej szerokości.', 'pro_reader') . '</p>';
-        // --- KONIEC ZMIANY ---
     }
 
     public function max_height_callback(): void
     {
         $value = $this->options['popup_max_height'] ?? 90;
         printf('<input type="number" id="popup_max_height" name="%s[popup_max_height]" value="%d" min="40" max="90" style="width: 100px;" />', self::OPTION_NAME, esc_attr($value));
-        // --- POCZĄTEK ZMIANY ---
         echo '<p class="description">' . esc_html__('Dotyczy głównie układu "Lista". Zalecana maksymalna wartość to 70, aby zapewnić pełną widoczność treści na niższych ekranach.', 'pro_reader') . '</p>';
-        // --- KONIEC ZMIANY ---
     }
 
     public function padding_container_callback(): void
@@ -204,14 +192,9 @@ class Settings_Popup_Desktop
         echo '</select>';
     }
 
-    public function recommendations_link_text_callback(): void
-    {
-        $content = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
-        wp_editor($content, 'popup_recommendations_link_text_editor', [
-            'textarea_name' => self::OPTION_NAME . '[popup_recommendations_link_text]',
-            'media_buttons' => false, 'teeny' => true, 'textarea_rows' => 3,
-        ]);
-    }
+    // --- POCZĄTEK ZMIAN ---
+    // Usunięto funkcje callback dla ustawień przycisku.
+    // --- KONIEC ZMIAN ---
 
     public function item_layout_callback(): void
     {
@@ -269,37 +252,7 @@ class Settings_Popup_Desktop
         $value = $this->options['popup_rec_excerpt_lines'] ?? 3;
         printf('<input type="number" id="popup_rec_excerpt_lines" name="%s[popup_rec_excerpt_lines]" value="%d" min="0" style="width: 80px;" />', self::OPTION_NAME, esc_attr($value));
     }
-
-    public function button_bg_color_callback(): void
-    {
-        $value = $this->options['popup_rec_button_bg_color'] ?? '#0073aa';
-        printf('<input type="text" name="%s[popup_rec_button_bg_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
-    }
-
-    public function button_text_color_callback(): void
-    {
-        $value = $this->options['popup_rec_button_text_color'] ?? '#ffffff';
-        printf('<input type="text" name="%s[popup_rec_button_text_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
-    }
-
-    public function button_bg_hover_color_callback(): void
-    {
-        $value = $this->options['popup_rec_button_bg_hover_color'] ?? '#005177';
-        printf('<input type="text" name="%s[popup_rec_button_bg_hover_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
-    }
-
-    public function button_text_hover_color_callback(): void
-    {
-        $value = $this->options['popup_rec_button_text_hover_color'] ?? '#ffffff';
-        printf('<input type="text" name="%s[popup_rec_button_text_hover_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
-    }
-
-    public function button_border_radius_callback(): void
-    {
-        $value = $this->options['popup_rec_button_border_radius'] ?? 4;
-        printf('<input type="number" name="%s[popup_rec_button_border_radius]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
-    }
-
+    
     public function thumb_size_callback(): void
     {
         $value = $this->options['popup_rec_thumb_size'] ?? 'medium';

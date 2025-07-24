@@ -38,6 +38,12 @@ class Settings_Popup_General
         // Sekcja 3: Rekomendacje Ogólne
         add_settings_section('popup_recommendations_section', __('Ustawienia Ogólne Rekomendacji', 'pro_reader'), null, $page);
         $this->register_recommendation_fields($page, 'popup_recommendations_section');
+
+        // --- POCZĄTEK ZMIAN ---
+        // Sekcja 4: Ustawienia Przycisku
+        add_settings_section('popup_button_settings_section', __('Ustawienia Przycisku "Czytaj dalej"', 'pro_reader'), null, $page);
+        $this->register_button_fields($page, 'popup_button_settings_section');
+        // --- KONIEC ZMIAN ---
     }
 
     private function register_trigger_fields(string $page, string $section): void
@@ -57,12 +63,26 @@ class Settings_Popup_General
         add_settings_field('popup_recommendation_logic', __('Kolejność rekomendacji', 'pro_reader'), [$this, 'recommendation_logic_callback'], $page, $section);
     }
 
+    // --- POCZĄTEK ZMIAN ---
+    /**
+     * Rejestruje pola dla ustawień przycisku.
+     */
+    private function register_button_fields(string $page, string $section): void
+    {
+        add_settings_field('popup_recommendations_link_text', __('Treść przycisku', 'pro_reader'), [$this, 'recommendations_link_text_callback'], $page, $section);
+        add_settings_field('popup_rec_button_bg_color', __('Kolor tła', 'pro_reader'), [$this, 'button_bg_color_callback'], $page, $section);
+        add_settings_field('popup_rec_button_text_color', __('Kolor tekstu', 'pro_reader'), [$this, 'button_text_color_callback'], $page, $section);
+        add_settings_field('popup_rec_button_bg_hover_color', __('Kolor tła (hover)', 'pro_reader'), [$this, 'button_bg_hover_color_callback'], $page, $section);
+        add_settings_field('popup_rec_button_text_hover_color', __('Kolor tekstu (hover)', 'pro_reader'), [$this, 'button_text_hover_color_callback'], $page, $section);
+        add_settings_field('popup_rec_button_border_radius', __('Zaokrąglenie rogów (px)', 'pro_reader'), [$this, 'button_border_radius_callback'], $page, $section);
+    }
+    // --- KONIEC ZMIAN ---
+
     /**
      * Sanitacja danych tylko dla tej zakładki.
      */
     public function sanitize(array $input, array $current_options): array
     {
-        // Rozpoczynamy z aktualnymi opcjami, aby nie nadpisać ustawień z innych zakładek.
         $sanitized = $current_options;
 
         $sanitized['popup_enable'] = !empty($input['popup_enable']) ? '1' : '0';
@@ -90,6 +110,16 @@ class Settings_Popup_General
         } else {
             $sanitized['popup_recommendation_logic'] = 'hybrid_fill';
         }
+
+        // --- POCZĄTEK ZMIAN ---
+        // Dodano sanitację dla opcji przycisku.
+        $sanitized['popup_recommendations_link_text'] = isset($input['popup_recommendations_link_text']) ? wp_kses_post($input['popup_recommendations_link_text']) : 'Zobacz więcej →';
+        $sanitized['popup_rec_button_bg_color']          = isset($input['popup_rec_button_bg_color']) ? sanitize_hex_color($input['popup_rec_button_bg_color']) : '#0073aa';
+        $sanitized['popup_rec_button_text_color']        = isset($input['popup_rec_button_text_color']) ? sanitize_hex_color($input['popup_rec_button_text_color']) : '#ffffff';
+        $sanitized['popup_rec_button_bg_hover_color']    = isset($input['popup_rec_button_bg_hover_color']) ? sanitize_hex_color($input['popup_rec_button_bg_hover_color']) : '#005177';
+        $sanitized['popup_rec_button_text_hover_color']  = isset($input['popup_rec_button_text_hover_color']) ? sanitize_hex_color($input['popup_rec_button_text_hover_color']) : '#ffffff';
+        $sanitized['popup_rec_button_border_radius']     = isset($input['popup_rec_button_border_radius']) ? absint($input['popup_rec_button_border_radius']) : 4;
+        // --- KONIEC ZMIAN ---
 
         return $sanitized;
     }
@@ -198,4 +228,46 @@ class Settings_Popup_General
         echo '</select>';
         echo '<p class="description">' . esc_html__('Wybierz, w jaki sposób sortować treści wybrane w polu "Źródło rekomendacji".', 'pro_reader') . '</p>';
     }
+
+    // --- POCZĄTEK ZMIAN ---
+    // Dodano funkcje callback dla ustawień przycisku.
+    public function recommendations_link_text_callback(): void
+    {
+        $content = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
+        wp_editor($content, 'popup_recommendations_link_text_editor', [
+            'textarea_name' => self::OPTION_NAME . '[popup_recommendations_link_text]',
+            'media_buttons' => false, 'teeny' => true, 'textarea_rows' => 3,
+        ]);
+    }
+
+    public function button_bg_color_callback(): void
+    {
+        $value = $this->options['popup_rec_button_bg_color'] ?? '#0073aa';
+        printf('<input type="text" name="%s[popup_rec_button_bg_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+    }
+
+    public function button_text_color_callback(): void
+    {
+        $value = $this->options['popup_rec_button_text_color'] ?? '#ffffff';
+        printf('<input type="text" name="%s[popup_rec_button_text_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+    }
+
+    public function button_bg_hover_color_callback(): void
+    {
+        $value = $this->options['popup_rec_button_bg_hover_color'] ?? '#005177';
+        printf('<input type="text" name="%s[popup_rec_button_bg_hover_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+    }
+
+    public function button_text_hover_color_callback(): void
+    {
+        $value = $this->options['popup_rec_button_text_hover_color'] ?? '#ffffff';
+        printf('<input type="text" name="%s[popup_rec_button_text_hover_color]" value="%s" class="wp-color-picker-field" />', self::OPTION_NAME, esc_attr($value));
+    }
+
+    public function button_border_radius_callback(): void
+    {
+        $value = $this->options['popup_rec_button_border_radius'] ?? 4;
+        printf('<input type="number" name="%s[popup_rec_button_border_radius]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
+    }
+    // --- KONIEC ZMIAN ---
 }

@@ -51,25 +51,20 @@ class Settings_Page
             ]
         );
         
-        // --- POCZĄTEK ZMIANY ---
-        // Zmieniamy docelową stronę dla sekcji z 'reader-engagement-pro-popup'
-        // na 'reader-engagement-pro-popup-general', aby wyświetlała się w odpowiedniej zakładce.
         add_settings_section(
             'popup_reindex_section',
             __('Narzędzia Indeksowania', 'pro_reader'),
             null,
-            'reader-engagement-pro-popup-general' // Zmieniona wartość
+            'reader-engagement-pro-popup-general'
         );
 
-        // Zmieniamy również docelową stronę dla samego pola.
         add_settings_field(
             'popup_reindex_button',
             __('Ręczne Indeksowanie', 'pro_reader'),
             [$this, 'reindex_button_callback'],
-            'reader-engagement-pro-popup-general', // Zmieniona wartość
+            'reader-engagement-pro-popup-general',
             'popup_reindex_section'
         );
-        // --- KONIEC ZMIANY ---
     }
 
     /**
@@ -142,7 +137,6 @@ class Settings_Page
                             do_settings_sections('reader-engagement-pro-progress-bar');
                             submit_button();
                         } elseif ($active_tab === 'popup') {
-                            // Logika pod-zakładek dla sekcji "Popup"
                             $active_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : 'general';
                             ?>
                             <h2 class="nav-tab-wrapper" style="margin-bottom: 20px;">
@@ -174,10 +168,15 @@ class Settings_Page
                     </form>
                 </div>
 
-                <?php if ($active_tab === 'popup') : 
+                <?php 
+                // --- POCZĄTEK ZMIAN ---
+                // Dodajemy warunek sprawdzający, czy jesteśmy w zakładce "popup",
+                // a następnie czy pod-zakładka to 'desktop' lub 'mobile'.
+                if ($active_tab === 'popup') :
                     $active_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : 'general';
-                    $preview_wrapper_class = 'rep-preview-mode-' . esc_attr($active_sub_tab);
-                    ?>
+                    if (in_array($active_sub_tab, ['desktop', 'mobile'])) :
+                        $preview_wrapper_class = 'rep-preview-mode-' . esc_attr($active_sub_tab);
+                ?>
                 <div id="rep-live-preview-wrapper" class="<?php echo $preview_wrapper_class; ?>" style="flex: 1; min-width: 400px;">
                     <div style="position: sticky; top: 50px;">
                         <h3 style="margin: 0 0 10px; padding: 0;"><?php esc_html_e('Podgląd na żywo', 'pro_reader'); ?></h3>
@@ -186,7 +185,11 @@ class Settings_Page
                         </div>
                     </div>
                 </div>
-                <?php endif; ?>
+                <?php 
+                    endif; // Koniec warunku dla pod-zakładek
+                endif; // Koniec warunku dla głównej zakładki 'popup'
+                // --- KONIEC ZMIAN ---
+                ?>
 
             </div>
         </div>
@@ -219,7 +222,7 @@ class Settings_Page
             return;
         }
 
-        wp_enqueue_style('rep-popup-style-preview', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.2.0'); // Bump wersji
+        wp_enqueue_style('rep-popup-style-preview', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.2.0');
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
         wp_enqueue_script('jquery-ui-sortable');
