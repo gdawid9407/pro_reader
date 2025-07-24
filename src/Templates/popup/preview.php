@@ -1,19 +1,17 @@
 <?php
 /**
  * Szablon podglądu na żywo dla popupa w panelu admina.
- * Wersja: 1.1 - Zapewnia stabilne działanie we wszystkich zakładkach.
+ * Wersja: 1.2 - Poprawiono dynamiczne wczytywanie stylu aspect-ratio.
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-// --- POCZĄTEK ZMIAN ---
 // Pobieramy najnowsze opcje, aby podgląd był zawsze aktualny.
 $options = get_option('reader_engagement_pro_options', []);
 
 // Ustawienie wartości domyślnych dla KAŻDEJ opcji używanej w podglądzie.
-// To kluczowe dla stabilności, gdy opcje nie zostały jeszcze zapisane w danej zakładce.
 $posts_count    = (int) ($options['popup_recommendations_count'] ?? 3);
 $popup_content  = $options['popup_content_main'] ?? '<h3>Spodobał Ci się ten artykuł?</h3><p>Czytaj dalej i odkryj więcej ciekawych treści, które dla Ciebie przygotowaliśmy!</p>';
 $layout_setting = $options['popup_recommendations_layout'] ?? 'list';
@@ -33,7 +31,17 @@ $button_style   = sprintf(
     (int) $border_radius
 );
 
-// Przygotowanie zmiennych CSS dla podglądu (również z wartościami domyślnymi)
+// --- POCZĄTEK ZMIAN ---
+// Dynamiczne generowanie stylu dla linka miniaturki, uwzględniając proporcje.
+$aspect_ratio_setting = $options['popup_rec_thumb_aspect_ratio'] ?? '16:9';
+$thumb_link_style = '';
+if ($aspect_ratio_setting !== 'auto') {
+    // Formatujemy '16:9' na '16 / 9' dla CSS
+    $thumb_link_style = 'aspect-ratio: ' . str_replace(':', ' / ', $aspect_ratio_setting) . ';';
+}
+// --- KONIEC ZMIAN ---
+
+// Przygotowanie zmiennych CSS dla podglądu
 $spacing_styles = [
     // Desktop
     '--rep-popup-max-width'         => ($options['popup_max_width'] ?? 800) . 'px',
@@ -55,8 +63,6 @@ foreach ($spacing_styles as $key => $value) {
 // Tablica z nazwami plików obrazów do podglądu.
 $preview_images = ['placeholder-1.jpg', 'placeholder-2.jpg', 'placeholder-3.jpg'];
 $images_total = count($preview_images);
-// --- KONIEC ZMIAN ---
-
 ?>
 
 <div id="rep-intelligent-popup__overlay-preview" class="is-visible" style="position: absolute; opacity: 0.1; top:0; left:0; right:0; bottom:0; z-index: -1;"></div>
@@ -78,7 +84,9 @@ $images_total = count($preview_images);
             $image_url = REP_PLUGIN_URL . 'assets/images/' . $current_image_file;
         ?>
         <li class="<?php echo esc_attr($item_class); ?>">
-            <a href="#" onclick="return false;" class="rep-rec-thumb-link" style="aspect-ratio: 16 / 9;">
+            <?php // --- POCZĄTEK ZMIAN --- ?>
+            <a href="#" onclick="return false;" class="rep-rec-thumb-link" style="<?php echo esc_attr($thumb_link_style); ?>">
+            <?php // --- KONIEC ZMIAN --- ?>
                 <img src="<?php echo esc_url($image_url); ?>" alt="placeholder-<?php echo ($i % $images_total) + 1; ?>" class="rep-rec-thumb thumb-fit-cover">
             </a>
             <div class="rep-rec-content">

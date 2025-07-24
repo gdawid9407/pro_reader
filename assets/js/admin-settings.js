@@ -102,10 +102,6 @@ jQuery(function($) {
             setupEditorUpdate('popup_recommendations_link_text_editor', '.rep-rec-button');
         }
         
-        // --- POCZĄTEK ZMIAN: Zastosowanie delegacji zdarzeń ---
-        
-        // Mapa pól, które wpływają na style CSS podglądu.
-        // Kluczem jest teraz ID pola bez znaku '#'.
         const styleInputsMap = {
             'popup_max_width': { variable: '--rep-popup-max-width', unit: 'px' },
             'popup_max_height': { variable: '--rep-popup-max-height', unit: 'vh' },
@@ -117,23 +113,17 @@ jQuery(function($) {
             'popup_padding_container_mobile': { variable: '--rep-popup-padding-mobile', unit: 'px' }
         };
 
-        // Funkcja do jednorazowej synchronizacji stylów przy załadowaniu.
-        // Ustawia wartości początkowe dla podglądu na podstawie aktywnej zakładki.
         function syncInitialPreviewStyles() {
             $.each(styleInputsMap, function(inputId, data) {
                 const $input = $('#' + inputId);
-                if ($input.length) { // Działa tylko dla pól, które istnieją w DOM.
+                if ($input.length) { 
                     $previewContainer.css(data.variable, $input.val() + data.unit);
                 }
             });
         }
         
-        // Główny "nasłuchiwacz" przypisany do formularza, który obsługuje
-        // zmiany we wszystkich polach, nawet tych dodanych później.
         $settingsForm.on('input change', 'input', function(event) {
             const inputId = event.target.id;
-            
-            // Sprawdzamy, czy zmienione pole jest w naszej mapie stylów.
             if (styleInputsMap[inputId]) {
                 const data = styleInputsMap[inputId];
                 const value = $(this).val();
@@ -141,10 +131,7 @@ jQuery(function($) {
             }
         });
 
-        // Wywołujemy synchronizację raz, aby ustawić stan początkowy.
         syncInitialPreviewStyles();
-
-        // --- KONIEC ZMIAN ---
 
         function updateButtonStyles() {
             const $buttons = $previewContainer.find('.rep-rec-button');
@@ -233,5 +220,33 @@ jQuery(function($) {
             };
             $.each(defaultSpacings, (selector, value) => $(selector).val(value).trigger('change'));
         });
+
+        // --- POCZĄTEK ZMIAN: Dodana logika dla podglądu ustawień miniaturki ---
+
+        // Aktualizacja proporcji obrazka
+        const $aspectRatioSelect = $('#popup_rec_thumb_aspect_ratio');
+        function updateAspectRatio() {
+            const $thumbLinks = $previewList.find('.rep-rec-thumb-link');
+            let ratio = $aspectRatioSelect.val();
+            if (ratio === 'auto') {
+                $thumbLinks.css('aspect-ratio', '');
+            } else {
+                ratio = ratio.replace(':', ' / ');
+                $thumbLinks.css('aspect-ratio', ratio);
+            }
+        }
+        $aspectRatioSelect.on('change', updateAspectRatio).trigger('change');
+
+
+        // Aktualizacja dopasowania obrazka
+        const $thumbFitSelect = $('#popup_rec_thumb_fit');
+        function updateThumbFit() {
+            const $thumbs = $previewList.find('.rep-rec-thumb');
+            const fitClass = 'thumb-fit-' + $thumbFitSelect.val();
+            $thumbs.removeClass('thumb-fit-cover thumb-fit-contain').addClass(fitClass);
+        }
+        $thumbFitSelect.on('change', updateThumbFit).trigger('change');
+
+        // --- KONIEC ZMIAN ---
     }
 });
