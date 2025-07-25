@@ -176,13 +176,19 @@ jQuery(function($) {
                     'link': $item.find('.rep-rec-button')
                 };
 
+                // Upewnij się, że miniaturka jest wewnątrz kontenera treści, aby mogła być sortowana z innymi elementami.
+                if ($components.thumbnail.parent().is($item)) {
+                    $contentWrapper.prepend($components.thumbnail);
+                }
+
                 Object.keys($components).forEach(key => {
                     $components[key].toggle($('#v_' + key).is(':checked'));
                 });
 
                 $('#rep-layout-builder li').each(function() {
                     const key = $(this).find('input[type=hidden]').val();
-                    if (key !== 'thumbnail' && $components[key]) {
+                    if ($components[key]) {
+                        // Dołącz komponent do kontenera treści zgodnie z nową kolejnością
                         $contentWrapper.append($components[key]);
                     }
                 });
