@@ -54,6 +54,7 @@ class Popup
 
         $layout_class   = 'layout-' . sanitize_html_class($this->options['popup_recommendations_layout'] ?? 'list');
         $popup_content  = $this->options['popup_content_main'] ?? '';
+        $button_width_class = 'btn-width-' . sanitize_html_class($this->options['popup_rec_button_width'] ?? 'compact');
 
         // --- POCZĄTEK ZMIAN ---
         // Zaktualizowano generowanie paddingu dla desktopa.
@@ -70,6 +71,7 @@ class Popup
             '--rep-grid-item-gap'           => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
              '--rep-rec-thumb-margin-right'  => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
             '--rep-rec-thumb-margin-bottom' => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
+            '--rep-btn-border-radius'       => ($this->options['popup_rec_button_border_radius'] ?? 4) . 'px',
             // Ustawienia Mobilne (z fallbackami)
             '--rep-popup-width-mobile'      => ($this->options['popup_max_width_mobile'] ?? 90) . 'vw',
             '--rep-popup-padding-mobile'    => ($this->options['popup_padding_container_mobile'] ?? 16) . 'px',
@@ -84,7 +86,10 @@ class Popup
         $template_vars = [
             'layout_class'     => $layout_class,
             'popup_content'    => $popup_content,
-            'container_styles' => $container_styles, 
+            'container_styles' => $container_styles,
+            'item_layout'      => $this->options['popup_rec_item_layout'] ?? 'vertical',
+            'components_order' => $this->options['popup_rec_components_order'] ?? ['thumbnail', 'meta', 'title', 'excerpt', 'link'],
+            'components_visibility' => $this->options['popup_rec_components_visibility'] ?? array_fill_keys(['thumbnail', 'meta', 'title', 'excerpt', 'link'], '1'),
         ];
 
         extract($template_vars);
@@ -132,7 +137,7 @@ class Popup
         $components_visibility = $this->options['popup_rec_components_visibility'] ?? array_fill_keys($default_order, '1');
         $components_html = [];
 
-        foreach ($components_order as $component_key) {
+        foreach ($default_order as $component_key) { // Użyj domyślnej kolejności, aby upewnić się, że wszystkie komponenty są dostępne
             if (!empty($components_visibility[$component_key])) {
                 $components_html[$component_key] = $this->get_component_html($component_key, $post_id);
             }
@@ -199,13 +204,13 @@ class Popup
                 $text_color = $this->options['popup_rec_button_text_color'] ?? '#ffffff';
                 $bg_hover = $this->options['popup_rec_button_bg_hover_color'] ?? '#005177';
                 $text_hover = $this->options['popup_rec_button_text_hover_color'] ?? '#ffffff';
-                $radius = $this->options['popup_rec_button_border_radius'] ?? 4;
+                $button_width_class = 'btn-width-' . sanitize_html_class($this->options['popup_rec_button_width'] ?? 'compact');
                 
                 $style_vars = sprintf(
-                    '--rep-btn-bg: %s; --rep-btn-text: %s; --rep-btn-bg-hover: %s; --rep-btn-text-hover: %s; border-radius: %dpx;',
-                    esc_attr($bg_color), esc_attr($text_color), esc_attr($bg_hover), esc_attr($text_hover), esc_attr($radius)
+                    '--rep-btn-bg: %s; --rep-btn-text: %s; --rep-btn-bg-hover: %s; --rep-btn-text-hover: %s;',
+                    esc_attr($bg_color), esc_attr($text_color), esc_attr($bg_hover), esc_attr($text_hover)
                 );
-                return sprintf('<a href="%s" class="rep-rec-button" style="%s">%s</a>', esc_url($post_link), $style_vars, wp_kses_post($link_text));
+                return sprintf('<a href="%s" class="rep-rec-button %s" style="%s">%s</a>', esc_url($post_link), esc_attr($button_width_class), $style_vars, wp_kses_post($link_text));
             default:
                 return '';
         }

@@ -97,11 +97,11 @@ class AjaxHandler
 
         if ($query->have_posts()) {
             $html = '';
-            // Użyjemy metody z klasy Popup do generowania HTML pojedynczego elementu
-            $popup_renderer = new Popup();
+            $popup_instance = new Popup(); // Inicjalizacja klasy Popup
+
             while ($query->have_posts()) {
                 $query->the_post();
-                $html .= $popup_renderer->generate_recommendation_item_html(get_the_ID());
+                $html .= $popup_instance->generate_recommendation_item_html(get_the_ID());
             }
             wp_reset_postdata();
             wp_send_json_success(['html' => $html]);

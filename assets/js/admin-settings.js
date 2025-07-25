@@ -121,16 +121,27 @@ jQuery(function($) {
             const $buttons = $previewContainer.find('.rep-rec-button');
             const bgColor = $('input[name="' + optionPrefix + '[popup_rec_button_bg_color]"]').val();
             const textColor = $('input[name="' + optionPrefix + '[popup_rec_button_text_color]"]').val();
-            const borderRadius = $('input[name="' + optionPrefix + '[popup_rec_button_border_radius]"]').val();
+            
             $buttons.css({
                 'background-color': bgColor,
-                'color': textColor,
-                'border-radius': borderRadius + 'px'
+                'color': textColor
             });
         }
-        $('input[name*="[popup_rec_button_"]').on('input', updateButtonStyles);
+
+        function updateButtonWidth() {
+            const widthClass = 'btn-width-' + $('#popup_rec_button_width').val();
+            $previewContainer.find('.rep-rec-button')
+                .removeClass('btn-width-compact btn-width-full-width')
+                .addClass(widthClass);
+        }
+
+        $('input[name*="[popup_rec_button_bg_color]"], input[name*="[popup_rec_button_text_color]"]').on('input', updateButtonStyles);
         $('.wp-color-picker-field[name*="[popup_rec_button_"]').on('wpcolorpickerchange', updateButtonStyles);
+        $('#popup_rec_button_width').on('change', updateButtonWidth);
+
         updateButtonStyles();
+        updateButtonWidth();
+
 
         // Aktualizacja ogólnego układu (lista vs siatka)
         $('select[name="' + optionPrefix + '[popup_recommendations_layout]"]').on('change', function() {
@@ -313,6 +324,7 @@ jQuery(function($) {
             $.each(defaultSpacings, function(selector, value) {
                 $(selector).val(value).trigger('change');
             });
+            $('#popup_rec_button_width').val('compact').trigger('change');
         });
     }
 });

@@ -186,8 +186,14 @@
   text-decoration: none;
   text-align: center;
   border: none;
+  border-radius: var(--rep-btn-border-radius, 4px);
   cursor: pointer;
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.rep-rec-button.btn-width-full-width {
+    display: block;
+    width: 100%;
 }
 
 .rep-rec-button:hover,
