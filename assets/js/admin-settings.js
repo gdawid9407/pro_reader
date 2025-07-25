@@ -165,37 +165,70 @@ jQuery(function($) {
 
         // Aktualizacja widoczności i kolejności komponentów
         function updateComponentVisibilityAndOrder() {
+            const itemLayout = $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]:checked').val();
+
             $previewList.find('.rep-rec-item').each(function() {
                 const $item = $(this);
                 const $contentWrapper = $item.find('.rep-rec-content');
+                
+                // Odłącz wszystkie komponenty, aby dołączyć je ponownie w prawidłowej kolejności i strukturze.
                 const $components = {
-                    'thumbnail': $item.find('.rep-rec-thumb-link'),
-                    'meta': $item.find('.rep-rec-meta'),
-                    'title': $item.find('.rep-rec-title'),
-                    'excerpt': $item.find('.rep-rec-excerpt'),
-                    'link': $item.find('.rep-rec-button')
+                    'thumbnail': $item.find('.rep-rec-thumb-link').detach(),
+                    'meta': $item.find('.rep-rec-meta').detach(),
+                    'title': $item.find('.rep-rec-title').detach(),
+                    'excerpt': $item.find('.rep-rec-excerpt').detach(),
+                    'link': $item.find('.rep-rec-button').detach()
                 };
 
-                // Upewnij się, że miniaturka jest wewnątrz kontenera treści, aby mogła być sortowana z innymi elementami.
-                if ($components.thumbnail.parent().is($item)) {
-                    $contentWrapper.prepend($components.thumbnail);
-                }
-
+                // Przełącz widoczność komponentów na podstawie checkboxów.
                 Object.keys($components).forEach(key => {
                     $components[key].toggle($('#v_' + key).is(':checked'));
                 });
 
-                $('#rep-layout-builder li').each(function() {
-                    const key = $(this).find('input[type=hidden]').val();
-                    if ($components[key]) {
-                        // Dołącz komponent do kontenera treści zgodnie z nową kolejnością
-                        $contentWrapper.append($components[key]);
-                    }
-                });
+                // Wyczyść kontenery przed ponownym dołączeniem elementów.
+                $contentWrapper.empty();
+                $item.empty();
+
+                // Dołącz ponownie komponenty w zależności od wybranego układu.
+                if (itemLayout === 'horizontal') {
+                    // Układ horyzontalny: miniaturka jest obok kontenera z treścią.
+                    $item.append($components.thumbnail);
+                    $item.append($contentWrapper);
+                    
+                    // Dołącz pozostałe komponenty do kontenera z treścią, zgodnie z kolejnością.
+                    $('#rep-layout-builder li').each(function() {
+                        const key = $(this).find('input[type=hidden]').val();
+                        if (key !== 'thumbnail' && $components[key]) {
+                            $contentWrapper.append($components[key]);
+                        }
+                    });
+                } else { // Układ wertykalny
+                    // Układ wertykalny: wszystkie komponenty są wewnątrz kontenera z treścią.
+                    $item.append($contentWrapper);
+                    $('#rep-layout-builder li').each(function() {
+                        const key = $(this).find('input[type=hidden]').val();
+                        if ($components[key]) {
+                            $contentWrapper.append($components[key]);
+                        }
+                    });
+                }
             });
         }
+
+        // Połącz obsługę zmiany układu elementu z aktualizacją kolejności
+        $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]').on('change', function() {
+            const layout = $(this).filter(':checked').val();
+            $previewList.find('.rep-rec-item')
+                .removeClass('item-layout-vertical item-layout-horizontal')
+                .addClass('item-layout-' + layout);
+            updateComponentVisibilityAndOrder();
+        });
+
         $('#rep-layout-builder').on('sortupdate change', updateComponentVisibilityAndOrder);
-        updateComponentVisibilityAndOrder();
+        
+        // Inicjalna aktualizacja jest wywoływana przez .trigger('change') na grupie radio
+        $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]').filter(':checked').trigger('change');
+
 
         const $excerpt = $previewList.find('.rep-rec-excerpt');
         function updateExcerptClamp() {
