@@ -47,7 +47,7 @@ class Popup
      * Renderuje popup w stopce, przekazując ustawienia jako zmienne CSS.
      */
     public function render_popup_in_footer(): void
-    {
+     {
         if (!$this->should_render) {
             return;
         }
@@ -56,18 +56,20 @@ class Popup
         $popup_content  = $this->options['popup_content_main'] ?? '';
 
         // --- POCZĄTEK ZMIAN ---
-        // Dodajemy nowe zmienne CSS dla ustawień mobilnych.
+        // Zaktualizowano generowanie paddingu dla desktopa.
+        $padding_y_desktop = $this->options['popup_padding_y_desktop'] ?? 24;
+        $padding_x_desktop = $this->options['popup_padding_x_desktop'] ?? 32;
+
         $styles = [
             // Ustawienia Desktop (z fallbackami)
             '--rep-popup-max-width'         => ($this->options['popup_max_width'] ?? 800) . 'px',
             '--rep-popup-max-height'        => ($this->options['popup_max_height'] ?? 90) . 'vh',
-            '--rep-popup-padding'           => ($this->options['popup_padding_container'] ?? 24) . 'px',
+            '--rep-popup-padding'           => "{$padding_y_desktop}px {$padding_x_desktop}px",
             '--rep-content-margin-bottom'   => ($this->options['popup_margin_content_bottom'] ?? 20) . 'px',
             '--rep-list-item-gap'           => ($this->options['popup_gap_list_items'] ?? 16) . 'px',
             '--rep-grid-item-gap'           => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
             
             // Ustawienia Mobilne (z fallbackami)
-            // Używamy tych samych nazw zmiennych, które będą nadpisane w CSS przez media query.
             '--rep-popup-width-mobile'      => ($this->options['popup_max_width_mobile'] ?? 90) . 'vw',
             '--rep-popup-padding-mobile'    => ($this->options['popup_padding_container_mobile'] ?? 16) . 'px',
         ];

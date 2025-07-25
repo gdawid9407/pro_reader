@@ -8,6 +8,7 @@ jQuery(function($) {
 
     const optionPrefix = REP_Admin_Settings.option_name_attr;
     const $layoutBuilder = $('#rep-layout-builder');
+    const $settingsForm = $('#rep-settings-form');
 
     if ($layoutBuilder.length) {
         $layoutBuilder.sortable({
@@ -22,11 +23,10 @@ jQuery(function($) {
         });
     }
 
-    // Logika ukrywania opcji zależnych
+    // --- Logika ukrywania/pokazywania opcji w formularzu ---
     const mainPopupEnableCheckbox = $('#popup_enable');
     if (mainPopupEnableCheckbox.length) {
         const dependentPopupOptions = mainPopupEnableCheckbox.closest('form').find('tr').not(mainPopupEnableCheckbox.closest('tr'));
-
         function togglePopupOptionsVisibility() {
             const isChecked = mainPopupEnableCheckbox.is(':checked');
             dependentPopupOptions.toggle(isChecked);
@@ -58,7 +58,7 @@ jQuery(function($) {
         limitTypeRadios.on('change', toggleExcerptLimitFields).trigger('change');
     }
 
-    // Obsługa przycisku reindeksowania
+    // --- Obsługa przycisku reindeksowania ---
     $('#rep-reindex-button').on('click', function(e) {
         e.preventDefault();
         const $button = $(this);
@@ -77,35 +77,19 @@ jQuery(function($) {
             });
     });
 
-    // Inicjalizacja pól koloru
+    // --- Inicjalizacja pól koloru ---
     $('.wp-color-picker-field').wpColorPicker();
 
-    // --- LOGIKA PODGLĄDU NA ŻYWO (ZAKTUALIZOWANA) ---
+    // --- LOGIKA PODGLĄDU NA ŻYWO ---
     const $previewWrapper = $('#rep-live-preview-wrapper');
     if ($previewWrapper.length && $previewWrapper.is(':visible')) {
         const $previewContainer = $('#rep-intelligent-popup__container');
-        const $previewContent = $previewContainer.find('#rep-intelligent-popup__custom-content');
         const $previewList = $previewContainer.find('#rep-intelligent-popup__list');
-        const $settingsForm = $('#rep-settings-form');
 
-        // Aktualizacja z edytorów TinyMCE
-        if (typeof tinymce !== 'undefined') {
-            const setupEditorUpdate = (editorId, targetElement) => {
-                const editor = tinymce.get(editorId);
-                if (editor) {
-                    editor.on('keyup change', function() {
-                        $(targetElement).html(this.getContent());
-                    });
-                }
-            };
-            setupEditorUpdate('popup_content_main_editor', $previewContent);
-            setupEditorUpdate('popup_recommendations_link_text_editor', '.rep-rec-button');
-        }
-        
+        // Mapa prostych pól (1 pole -> 1 zmienna CSS)
         const styleInputsMap = {
             'popup_max_width': { variable: '--rep-popup-max-width', unit: 'px' },
             'popup_max_height': { variable: '--rep-popup-max-height', unit: 'vh' },
-            'popup_padding_container': { variable: '--rep-popup-padding', unit: 'px' },
             'popup_margin_content_bottom': { variable: '--rep-content-margin-bottom', unit: 'px' },
             'popup_gap_list_items': { variable: '--rep-list-item-gap', unit: 'px' },
             'popup_gap_grid_items': { variable: '--rep-grid-item-gap', unit: 'px' },
@@ -113,26 +97,31 @@ jQuery(function($) {
             'popup_padding_container_mobile': { variable: '--rep-popup-padding-mobile', unit: 'px' }
         };
 
-        function syncInitialPreviewStyles() {
-            $.each(styleInputsMap, function(inputId, data) {
-                const $input = $('#' + inputId);
-                if ($input.length) { 
-                    $previewContainer.css(data.variable, $input.val() + data.unit);
-                }
-            });
-        }
-        
-        $settingsForm.on('input change', 'input', function(event) {
-            const inputId = event.target.id;
-            if (styleInputsMap[inputId]) {
-                const data = styleInputsMap[inputId];
-                const value = $(this).val();
-                $previewContainer.css(data.variable, value + data.unit);
+        $.each(styleInputsMap, function(inputId, data) {
+            const $input = $('#' + inputId);
+            if ($input.length) {
+                $input.on('input change', function() {
+                    const value = $(this).val();
+                    $previewContainer.css(data.variable, value + data.unit);
+                }).trigger('change');
             }
         });
 
-        syncInitialPreviewStyles();
+        // --- POCZĄTEK ZMIAN: Dedykowana obsługa dla paddingu ---
+        const $paddingYInput = $('#popup_padding_y_desktop');
+        const $paddingXInput = $('#popup_padding_x_desktop');
 
+        function updatePreviewPadding() {
+            if ($paddingYInput.length && $paddingXInput.length) {
+                const paddingY = $paddingYInput.val() || '24';
+                const paddingX = $paddingXInput.val() || '32';
+                $previewContainer.css('--rep-popup-padding', paddingY + 'px ' + paddingX + 'px');
+            }
+        }
+        $settingsForm.on('input change', '#popup_padding_y_desktop, #popup_padding_x_desktop', updatePreviewPadding);
+        updatePreviewPadding(); // Ustawia stan początkowy
+        // --- KONIEC ZMIAN ---
+        
         function updateButtonStyles() {
             const $buttons = $previewContainer.find('.rep-rec-button');
             const bgColor = $('input[name="' + optionPrefix + '[popup_rec_button_bg_color]"]').val();
@@ -141,112 +130,79 @@ jQuery(function($) {
             $buttons.css({ 'background-color': bgColor, 'color': textColor, 'border-radius': borderRadius + 'px' });
         }
         $settingsForm.on('input wpcolorpickerchange', 'input[name*="[popup_rec_button_"]', updateButtonStyles);
-        updateButtonStyles();
+        
+        if($('input[name="' + optionPrefix + '[popup_rec_button_bg_color]"]').length) {
+             updateButtonStyles();
+        }
 
         $('select[name="' + optionPrefix + '[popup_recommendations_layout]"]').on('change', function() {
-            $previewList.removeClass('layout-list layout-grid').addClass('layout-' .concat($(this).val()));
+            $previewList.removeClass('layout-list layout-grid').addClass('layout-' + $(this).val());
         }).trigger('change');
 
         $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]').on('change', function() {
             const layout = $(this).filter(':checked').val();
-            $previewList.find('.rep-rec-item').removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' .concat(layout));
+            $previewList.find('.rep-rec-item').removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + layout);
         }).filter(':checked').trigger('change');
 
         if ($layoutBuilder.length) {
             function updateComponentVisibilityAndOrder() {
-                $previewList.find('.rep-rec-item').each(function() {
-                    const $item = $(this);
-                    const $contentWrapper = $item.find('.rep-rec-content');
-                    const $components = {
-                        'thumbnail': $item.children('.rep-rec-thumb-link'),
-                        'meta': $contentWrapper.children('.rep-rec-meta'),
-                        'title': $contentWrapper.children('.rep-rec-title'),
-                        'excerpt': $contentWrapper.children('.rep-rec-excerpt'),
-                        'link': $contentWrapper.children('.rep-rec-button')
-                    };
-
-                    Object.keys($components).forEach(key => $components[key].hide());
+                const $item = $previewList.find('.rep-rec-item').first();
+                const $contentWrapper = $item.find('.rep-rec-content');
+                const $components = {
+                    'thumbnail': $item.children('.rep-rec-thumb-link'),
+                    'meta': $contentWrapper.children('.rep-rec-meta'),
+                    'title': $contentWrapper.children('.rep-rec-title'),
+                    'excerpt': $contentWrapper.children('.rep-rec-excerpt'),
+                    'link': $contentWrapper.children('.rep-rec-button')
+                };
+                
+                $layoutBuilder.find('li').each(function() {
+                    const $li = $(this);
+                    const key = $li.find('input[type=hidden]').val();
+                    const isVisible = $li.find('input[type=checkbox]').is(':checked');
                     
-                    $layoutBuilder.find('li').each(function() {
-                        const $li = $(this);
-                        const key = $li.find('input[type=hidden]').val();
-                        const isVisible = $li.find('input[type=checkbox]').is(':checked');
-                        
-                        if (isVisible && $components[key]) {
-                            $components[key].show();
-                            if (key !== 'thumbnail') {
-                                 $contentWrapper.append($components[key]);
-                            }
+                    if ($components[key]) {
+                        $components[key].toggle(isVisible);
+                        if(isVisible && key !== 'thumbnail') {
+                            $contentWrapper.append($components[key]);
                         }
-                    });
+                    }
                 });
             }
-            $layoutBuilder.on('sortupdate change', 'input', updateComponentVisibilityAndOrder);
-            updateComponentVisibilityAndOrder();
+            $layoutBuilder.on('sortupdate change', 'input', updateComponentVisibilityAndOrder).trigger('change');
         }
-
-        const $excerpt = $previewList.find('.rep-rec-excerpt');
-        function updateExcerptClamp() {
-            const type = $('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]:checked').val();
-            $excerpt.css('-webkit-line-clamp', type === 'lines' ? $('#popup_rec_excerpt_lines').val() : 'unset');
-        }
-        $('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]').on('change', updateExcerptClamp);
-        $('#popup_rec_excerpt_lines').on('input change', updateExcerptClamp).trigger('change');
 
         const $countInput = $('#popup_recommendations_count');
-        function updatePreviewPostCount() {
-            const newCount = parseInt($countInput.val(), 10) || 0;
-            const $items = $previewList.children('.rep-rec-item');
-            const currentCount = $items.length;
+        if($countInput.length) {
+            function updatePreviewPostCount() {
+                const newCount = parseInt($countInput.val(), 10) || 0;
+                const $items = $previewList.children('.rep-rec-item');
+                const currentCount = $items.length;
 
-            if (newCount > currentCount) {
-                if(currentCount > 0){
-                    const $template = $items.first().clone();
-                    for (let i = 0; i < newCount - currentCount; i++) $previewList.append($template.clone());
+                if (newCount > currentCount) {
+                    if(currentCount > 0){
+                        const $template = $items.first().clone();
+                        for (let i = 0; i < newCount - currentCount; i++) $previewList.append($template.clone());
+                    }
+                } else if (newCount < currentCount) {
+                    $items.slice(newCount).remove();
                 }
-            } else if (newCount < currentCount) {
-                $items.slice(newCount).remove();
             }
+            $countInput.on('input change', updatePreviewPostCount).trigger('change');
         }
-        $countInput.on('input change', updatePreviewPostCount);
         
         $('#rep-spacing-reset-button').on('click', function(e) {
             e.preventDefault();
             const defaultSpacings = {
-                '#popup_padding_container': '24',
+                // --- POCZĄTEK ZMIAN: Zaktualizowano resetowanie ---
+                '#popup_padding_y_desktop': '24',
+                '#popup_padding_x_desktop': '32',
+                // --- KONIEC ZMIAN ---
                 '#popup_margin_content_bottom': '20',
                 '#popup_gap_list_items': '16',
                 '#popup_gap_grid_items': '24'
             };
-            $.each(defaultSpacings, (selector, value) => $(selector).val(value).trigger('change'));
+            $.each(defaultSpacings, (selector, value) => $(selector).val(value).trigger('input'));
         });
-
-        // --- POCZĄTEK ZMIAN: Dodana logika dla podglądu ustawień miniaturki ---
-
-        // Aktualizacja proporcji obrazka
-        const $aspectRatioSelect = $('#popup_rec_thumb_aspect_ratio');
-        function updateAspectRatio() {
-            const $thumbLinks = $previewList.find('.rep-rec-thumb-link');
-            let ratio = $aspectRatioSelect.val();
-            if (ratio === 'auto') {
-                $thumbLinks.css('aspect-ratio', '');
-            } else {
-                ratio = ratio.replace(':', ' / ');
-                $thumbLinks.css('aspect-ratio', ratio);
-            }
-        }
-        $aspectRatioSelect.on('change', updateAspectRatio).trigger('change');
-
-
-        // Aktualizacja dopasowania obrazka
-        const $thumbFitSelect = $('#popup_rec_thumb_fit');
-        function updateThumbFit() {
-            const $thumbs = $previewList.find('.rep-rec-thumb');
-            const fitClass = 'thumb-fit-' + $thumbFitSelect.val();
-            $thumbs.removeClass('thumb-fit-cover thumb-fit-contain').addClass(fitClass);
-        }
-        $thumbFitSelect.on('change', updateThumbFit).trigger('change');
-
-        // --- KONIEC ZMIAN ---
     }
 });

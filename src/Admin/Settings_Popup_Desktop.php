@@ -32,7 +32,8 @@ class Settings_Popup_Desktop
         add_settings_field('popup_max_height', __('Maksymalna wysokość (vh)', 'pro_reader'), [$this, 'max_height_callback'], $page, 'popup_dimensions_section');
 
         add_settings_section('popup_layout_spacing_section', __('Układ i Odstępy', 'pro_reader'), null, $page);
-        add_settings_field('popup_padding_container', __('Padding kontenera (px)', 'pro_reader'), [$this, 'padding_container_callback'], $page, 'popup_layout_spacing_section');
+        add_settings_field('popup_padding_y_desktop', __('Padding pionowy (góra/dół) (px)', 'pro_reader'), [$this, 'padding_y_desktop_callback'], $page, 'popup_layout_spacing_section');
+        add_settings_field('popup_padding_x_desktop', __('Padding poziomy (lewo/prawo) (px)', 'pro_reader'), [$this, 'padding_x_desktop_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_margin_content_bottom', __('Odstęp pod treścią (px)', 'pro_reader'), [$this, 'margin_content_bottom_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_gap_list_items', __('Odstęp między elementami - Lista (px)', 'pro_reader'), [$this, 'gap_list_items_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_gap_grid_items', __('Odstęp między elementami - Siatka (px)', 'pro_reader'), [$this, 'gap_grid_items_callback'], $page, 'popup_layout_spacing_section');
@@ -74,7 +75,8 @@ class Settings_Popup_Desktop
 
         $sanitized['popup_max_width']                 = isset($input['popup_max_width']) ? absint($input['popup_max_width']) : 800;
         $sanitized['popup_max_height']                = isset($input['popup_max_height']) ? absint($input['popup_max_height']) : 90;
-        $sanitized['popup_padding_container']         = isset($input['popup_padding_container']) ? absint($input['popup_padding_container']) : 24;
+        $sanitized['popup_padding_y_desktop']         = isset($input['popup_padding_y_desktop']) ? absint($input['popup_padding_y_desktop']) : 24;
+        $sanitized['popup_padding_x_desktop']         = isset($input['popup_padding_x_desktop']) ? absint($input['popup_padding_x_desktop']) : 32;
         $sanitized['popup_margin_content_bottom']     = isset($input['popup_margin_content_bottom']) ? absint($input['popup_margin_content_bottom']) : 20;
         $sanitized['popup_gap_list_items']            = isset($input['popup_gap_list_items']) ? absint($input['popup_gap_list_items']) : 16;
         $sanitized['popup_gap_grid_items']            = isset($input['popup_gap_grid_items']) ? absint($input['popup_gap_grid_items']) : 24;
@@ -97,10 +99,6 @@ class Settings_Popup_Desktop
         $allowed_fits = ['cover', 'contain'];
         $sanitized['popup_rec_thumb_fit'] = isset($input['popup_rec_thumb_fit']) && in_array($input['popup_rec_thumb_fit'], $allowed_fits) ? $input['popup_rec_thumb_fit'] : 'cover';
         
-        // --- POCZĄTEK ZMIAN ---
-        // Usunięto sanitację dla opcji przycisku.
-        // --- KONIEC ZMIAN ---
-
         return $sanitized;
     }
 
@@ -154,10 +152,16 @@ class Settings_Popup_Desktop
         echo '<p class="description">' . esc_html__('Dotyczy głównie układu "Lista". Zalecana maksymalna wartość to 70, aby zapewnić pełną widoczność treści na niższych ekranach.', 'pro_reader') . '</p>';
     }
 
-    public function padding_container_callback(): void
+    public function padding_y_desktop_callback(): void
     {
-        $value = $this->options['popup_padding_container'] ?? 24;
-        printf('<input type="number" id="popup_padding_container" name="%s[popup_padding_container]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
+        $value = $this->options['popup_padding_y_desktop'] ?? 24;
+        printf('<input type="number" id="popup_padding_y_desktop" name="%s[popup_padding_y_desktop]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
+    }
+
+    public function padding_x_desktop_callback(): void
+    {
+        $value = $this->options['popup_padding_x_desktop'] ?? 32;
+        printf('<input type="number" id="popup_padding_x_desktop" name="%s[popup_padding_x_desktop]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
     }
 
     public function margin_content_bottom_callback(): void

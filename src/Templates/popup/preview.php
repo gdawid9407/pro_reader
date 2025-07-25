@@ -31,7 +31,6 @@ $button_style   = sprintf(
     (int) $border_radius
 );
 
-// --- POCZĄTEK ZMIAN ---
 // Dynamiczne generowanie stylu dla linka miniaturki, uwzględniając proporcje.
 $aspect_ratio_setting = $options['popup_rec_thumb_aspect_ratio'] ?? '16:9';
 $thumb_link_style = '';
@@ -39,14 +38,18 @@ if ($aspect_ratio_setting !== 'auto') {
     // Formatujemy '16:9' na '16 / 9' dla CSS
     $thumb_link_style = 'aspect-ratio: ' . str_replace(':', ' / ', $aspect_ratio_setting) . ';';
 }
-// --- KONIEC ZMIAN ---
+
+// --- POCZĄTEK ZMIANY ---
+// Zaktualizowano generowanie paddingu dla podglądu.
+$padding_y_desktop = $options['popup_padding_y_desktop'] ?? 24;
+$padding_x_desktop = $options['popup_padding_x_desktop'] ?? 32;
 
 // Przygotowanie zmiennych CSS dla podglądu
 $spacing_styles = [
     // Desktop
     '--rep-popup-max-width'         => ($options['popup_max_width'] ?? 800) . 'px',
     '--rep-popup-max-height'        => ($options['popup_max_height'] ?? 90) . 'vh',
-    '--rep-popup-padding'           => ($options['popup_padding_container'] ?? 24) . 'px',
+    '--rep-popup-padding'           => "{$padding_y_desktop}px {$padding_x_desktop}px",
     '--rep-content-margin-bottom'   => ($options['popup_margin_content_bottom'] ?? 20) . 'px',
     '--rep-list-item-gap'           => ($options['popup_gap_list_items'] ?? 16) . 'px',
     '--rep-grid-item-gap'           => ($options['popup_gap_grid_items'] ?? 24) . 'px',
@@ -54,6 +57,8 @@ $spacing_styles = [
     '--rep-popup-width-mobile'      => ($options['popup_max_width_mobile'] ?? 90) . 'vw',
     '--rep-popup-padding-mobile'    => ($options['popup_padding_container_mobile'] ?? 16) . 'px',
 ];
+// --- KONIEC ZMIANY ---
+
 
 $container_styles = 'position: relative; top: auto; left: auto; transform: none; z-index: 1;';
 foreach ($spacing_styles as $key => $value) {
@@ -84,9 +89,7 @@ $images_total = count($preview_images);
             $image_url = REP_PLUGIN_URL . 'assets/images/' . $current_image_file;
         ?>
         <li class="<?php echo esc_attr($item_class); ?>">
-            <?php // --- POCZĄTEK ZMIAN --- ?>
             <a href="#" onclick="return false;" class="rep-rec-thumb-link" style="<?php echo esc_attr($thumb_link_style); ?>">
-            <?php // --- KONIEC ZMIAN --- ?>
                 <img src="<?php echo esc_url($image_url); ?>" alt="placeholder-<?php echo ($i % $images_total) + 1; ?>" class="rep-rec-thumb thumb-fit-cover">
             </a>
             <div class="rep-rec-content">
