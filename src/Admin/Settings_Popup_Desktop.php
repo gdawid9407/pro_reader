@@ -37,6 +37,7 @@ class Settings_Popup_Desktop
         add_settings_field('popup_margin_content_bottom', __('Odstęp pod treścią (px)', 'pro_reader'), [$this, 'margin_content_bottom_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_gap_list_items', __('Odstęp między elementami - Lista (px)', 'pro_reader'), [$this, 'gap_list_items_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_gap_grid_items', __('Odstęp między elementami - Siatka (px)', 'pro_reader'), [$this, 'gap_grid_items_callback'], $page, 'popup_layout_spacing_section');
+        add_settings_field('popup_rec_thumb_margin_right', __('Odstęp zdjęcia od tekstu (px)', 'pro_reader'), [$this, 'thumb_margin_right_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_spacing_reset', '', [$this, 'spacing_reset_callback'], $page, 'popup_layout_spacing_section');
 
         add_settings_section('popup_layout_builder_section', __('Konstruktor Układu Rekomendacji', 'pro_reader'), null, $page);
@@ -46,18 +47,11 @@ class Settings_Popup_Desktop
         add_settings_field('popup_rec_excerpt_limit_type', __('Typ limitu zajawki', 'pro_reader'), [$this, 'excerpt_limit_type_callback'], $page, 'popup_layout_builder_section');
         add_settings_field('popup_rec_excerpt_length', __('Limit słów zajawki', 'pro_reader'), [$this, 'excerpt_length_callback'], $page, 'popup_layout_builder_section');
         add_settings_field('popup_rec_excerpt_lines', __('Limit linii zajawki', 'pro_reader'), [$this, 'excerpt_lines_callback'], $page, 'popup_layout_builder_section');
-        
-        // --- POCZĄTEK ZMIAN ---
-        // Usunięto sekcję ustawień przycisku.
-        // --- KONIEC ZMIAN ---
 
         add_settings_section('popup_thumbnail_settings_section', __('Ustawienia Miniaturki', 'pro_reader'), null, $page);
         $this->register_thumbnail_fields($page, 'popup_thumbnail_settings_section');
     }
 
-    // --- POCZĄTEK ZMIAN ---
-    // Usunięto metodę register_button_fields.
-    // --- KONIEC ZMIAN ---
 
     private function register_thumbnail_fields(string $page, string $section): void
     {
@@ -80,6 +74,9 @@ class Settings_Popup_Desktop
         $sanitized['popup_margin_content_bottom']     = isset($input['popup_margin_content_bottom']) ? absint($input['popup_margin_content_bottom']) : 20;
         $sanitized['popup_gap_list_items']            = isset($input['popup_gap_list_items']) ? absint($input['popup_gap_list_items']) : 16;
         $sanitized['popup_gap_grid_items']            = isset($input['popup_gap_grid_items']) ? absint($input['popup_gap_grid_items']) : 24;
+        
+         $sanitized['popup_rec_thumb_margin_right']    = isset($input['popup_rec_thumb_margin_right']) ? absint($input['popup_rec_thumb_margin_right']) : 16;
+        
         $sanitized['popup_recommendations_layout']    = isset($input['popup_recommendations_layout']) && in_array($input['popup_recommendations_layout'], ['list', 'grid']) ? $input['popup_recommendations_layout'] : 'list';
         $sanitized['popup_rec_item_layout']           = isset($input['popup_rec_item_layout']) && in_array($input['popup_rec_item_layout'], ['vertical', 'horizontal']) ? $input['popup_rec_item_layout'] : 'vertical';
         $sanitized['popup_rec_excerpt_limit_type']    = isset($input['popup_rec_excerpt_limit_type']) && in_array($input['popup_rec_excerpt_limit_type'], ['words', 'lines']) ? $input['popup_rec_excerpt_limit_type'] : 'words';
@@ -182,6 +179,13 @@ class Settings_Popup_Desktop
         printf('<input type="number" id="popup_gap_grid_items" name="%s[popup_gap_grid_items]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
     }
 
+    public function thumb_margin_right_callback(): void
+    {
+        $value = $this->options['popup_rec_thumb_margin_right'] ?? 16;
+        printf('<input type="number" id="popup_rec_thumb_margin_right" name="%s[popup_rec_thumb_margin_right]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Dotyczy tylko horyzontalnej struktury elementu.', 'pro_reader') . '</p>';
+    }
+
     public function spacing_reset_callback(): void
     {
         echo '<button type="button" id="rep-spacing-reset-button" class="button button-secondary">' . esc_html__('Przywróć domyślne', 'pro_reader') . '</button>';
@@ -195,10 +199,6 @@ class Settings_Popup_Desktop
         echo '<option value="grid"' . selected($value, 'grid', false) . '>' . esc_html__('Siatka', 'pro_reader') . '</option>';
         echo '</select>';
     }
-
-    // --- POCZĄTEK ZMIAN ---
-    // Usunięto funkcje callback dla ustawień przycisku.
-    // --- KONIEC ZMIAN ---
 
     public function item_layout_callback(): void
     {

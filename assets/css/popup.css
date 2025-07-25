@@ -99,10 +99,10 @@
 }
 .item-layout-horizontal .rep-rec-thumb-link {
   flex: 0 0 120px;
-  /* --- ZMIANA --- */
-  /* Usunięto stałą wysokość 'height: 90px;', która blokowała działanie 'aspect-ratio'. */
+  /* --- POCZĄTEK ZMIANY --- */
+  /* Zastąpiono stałą wartość zmienną CSS. */
+  margin-right: var(--rep-rec-thumb-margin-right, 16px);
   /* --- KONIEC ZMIANY --- */
-  margin-right: 16px;
 }
 .item-layout-horizontal .rep-rec-content {
   flex: 1;

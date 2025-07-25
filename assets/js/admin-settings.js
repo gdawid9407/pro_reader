@@ -86,6 +86,7 @@ jQuery(function($) {
         const $previewContainer = $('#rep-intelligent-popup__container');
         const $previewList = $previewContainer.find('#rep-intelligent-popup__list');
 
+        // --- POCZĄTEK ZMIANY ---
         // Mapa prostych pól (1 pole -> 1 zmienna CSS)
         const styleInputsMap = {
             'popup_max_width': { variable: '--rep-popup-max-width', unit: 'px' },
@@ -93,9 +94,11 @@ jQuery(function($) {
             'popup_margin_content_bottom': { variable: '--rep-content-margin-bottom', unit: 'px' },
             'popup_gap_list_items': { variable: '--rep-list-item-gap', unit: 'px' },
             'popup_gap_grid_items': { variable: '--rep-grid-item-gap', unit: 'px' },
+            'popup_rec_thumb_margin_right': { variable: '--rep-rec-thumb-margin-right', unit: 'px' }, // <-- DODANE POLE
             'popup_max_width_mobile': { variable: '--rep-popup-width-mobile', unit: 'vw' },
             'popup_padding_container_mobile': { variable: '--rep-popup-padding-mobile', unit: 'px' }
         };
+        // --- KONIEC ZMIANY ---
 
         $.each(styleInputsMap, function(inputId, data) {
             const $input = $('#' + inputId);
@@ -215,13 +218,16 @@ jQuery(function($) {
 
         $('#rep-spacing-reset-button').on('click', function(e) {
             e.preventDefault();
+            // --- POCZĄTEK ZMIANY ---
             const defaultSpacings = {
                 '#popup_padding_y_desktop': '24',
                 '#popup_padding_x_desktop': '32',
                 '#popup_margin_content_bottom': '20',
                 '#popup_gap_list_items': '16',
-                '#popup_gap_grid_items': '24'
+                '#popup_gap_grid_items': '24',
+                '#popup_rec_thumb_margin_right': '16' // <-- DODANE POLE
             };
+            // --- KONIEC ZMIANY ---
             $.each(defaultSpacings, (selector, value) => $(selector).val(value).trigger('input'));
         });
     }

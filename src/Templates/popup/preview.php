@@ -31,16 +31,13 @@ $button_style   = sprintf(
     (int) $border_radius
 );
 
-// Dynamiczne generowanie stylu dla linka miniaturki, uwzględniając proporcje.
 $aspect_ratio_setting = $options['popup_rec_thumb_aspect_ratio'] ?? '16:9';
 $thumb_link_style = '';
 if ($aspect_ratio_setting !== 'auto') {
-    // Formatujemy '16:9' na '16 / 9' dla CSS
+
     $thumb_link_style = 'aspect-ratio: ' . str_replace(':', ' / ', $aspect_ratio_setting) . ';';
 }
 
-// --- POCZĄTEK ZMIANY ---
-// Zaktualizowano generowanie paddingu dla podglądu.
 $padding_y_desktop = $options['popup_padding_y_desktop'] ?? 24;
 $padding_x_desktop = $options['popup_padding_x_desktop'] ?? 32;
 
@@ -53,11 +50,12 @@ $spacing_styles = [
     '--rep-content-margin-bottom'   => ($options['popup_margin_content_bottom'] ?? 20) . 'px',
     '--rep-list-item-gap'           => ($options['popup_gap_list_items'] ?? 16) . 'px',
     '--rep-grid-item-gap'           => ($options['popup_gap_grid_items'] ?? 24) . 'px',
+    '--rep-rec-thumb-margin-right'  => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px', // Nowa zmienna
     // Mobile
     '--rep-popup-width-mobile'      => ($options['popup_max_width_mobile'] ?? 90) . 'vw',
     '--rep-popup-padding-mobile'    => ($options['popup_padding_container_mobile'] ?? 16) . 'px',
 ];
-// --- KONIEC ZMIANY ---
+
 
 
 $container_styles = 'position: relative; top: auto; left: auto; transform: none; z-index: 1;';
@@ -83,7 +81,6 @@ $images_total = count($preview_images);
 
     <ul id="rep-intelligent-popup__list" class="<?php echo esc_attr($layout_class); ?>">
         <?php
-        // Pętla renderująca podgląd rekomendacji
         for ($i = 0; $i < $posts_count; $i++) :
             $current_image_file = $preview_images[$i % $images_total];
             $image_url = REP_PLUGIN_URL . 'assets/images/' . $current_image_file;
