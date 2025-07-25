@@ -248,3 +248,13 @@
 body.rep-popup-is-open {
   overflow: hidden;
 }
+
+#rep-intelligent-popup__list.layout-grid .rep-rec-item.item-layout-vertical {
+  text-align: center;
+}
+
+#rep-intelligent-popup__list.layout-grid .rep-rec-item.item-layout-vertical .rep-rec-title,
+#rep-intelligent-popup__list.layout-grid .rep-rec-item.item-layout-vertical .rep-rec-meta,
+#rep-intelligent-popup__list.layout-grid .rep-rec-item.item-layout-vertical .rep-rec-excerpt {
+  text-align: left;
+}

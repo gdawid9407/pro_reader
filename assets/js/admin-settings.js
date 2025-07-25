@@ -107,7 +107,6 @@ jQuery(function($) {
             }
         });
 
-        // --- POCZĄTEK ZMIAN: Dedykowana obsługa dla paddingu ---
         const $paddingYInput = $('#popup_padding_y_desktop');
         const $paddingXInput = $('#popup_padding_x_desktop');
 
@@ -119,9 +118,8 @@ jQuery(function($) {
             }
         }
         $settingsForm.on('input change', '#popup_padding_y_desktop, #popup_padding_x_desktop', updatePreviewPadding);
-        updatePreviewPadding(); // Ustawia stan początkowy
-        // --- KONIEC ZMIAN ---
-        
+        updatePreviewPadding();
+
         function updateButtonStyles() {
             const $buttons = $previewContainer.find('.rep-rec-button');
             const bgColor = $('input[name="' + optionPrefix + '[popup_rec_button_bg_color]"]').val();
@@ -191,13 +189,35 @@ jQuery(function($) {
             $countInput.on('input change', updatePreviewPostCount).trigger('change');
         }
         
+        // --- POCZĄTEK NOWEGO KODU: Obsługa podglądu miniaturki ---
+        const $aspectRatioSelect = $('#popup_rec_thumb_aspect_ratio');
+        if ($aspectRatioSelect.length) {
+            $aspectRatioSelect.on('change', function() {
+                const ratio = $(this).val();
+                const $thumbLinks = $previewContainer.find('.rep-rec-thumb-link');
+                if (ratio === 'auto') {
+                    $thumbLinks.css('aspect-ratio', '');
+                } else {
+                    $thumbLinks.css('aspect-ratio', ratio.replace(':', ' / '));
+                }
+            }).trigger('change');
+        }
+
+        const $thumbFitSelect = $('#popup_rec_thumb_fit');
+        if ($thumbFitSelect.length) {
+            $thumbFitSelect.on('change', function() {
+                const fit = $(this).val();
+                const $thumbs = $previewContainer.find('.rep-rec-thumb');
+                $thumbs.removeClass('thumb-fit-cover thumb-fit-contain').addClass('thumb-fit-' + fit);
+            }).trigger('change');
+        }
+        // --- KONIEC NOWEGO KODU ---
+
         $('#rep-spacing-reset-button').on('click', function(e) {
             e.preventDefault();
             const defaultSpacings = {
-                // --- POCZĄTEK ZMIAN: Zaktualizowano resetowanie ---
                 '#popup_padding_y_desktop': '24',
                 '#popup_padding_x_desktop': '32',
-                // --- KONIEC ZMIAN ---
                 '#popup_margin_content_bottom': '20',
                 '#popup_gap_list_items': '16',
                 '#popup_gap_grid_items': '24'
