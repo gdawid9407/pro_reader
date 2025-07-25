@@ -226,7 +226,10 @@ jQuery(function($) {
             '#popup_gap_grid_items': { variable: '--rep-grid-item-gap', unit: 'px' },
             '#popup_max_width': { variable: '--rep-popup-max-width', unit: 'px' },
             '#popup_max_height': { variable: '--rep-popup-max-height', unit: 'vh' },
-            '#popup_rec_thumb_margin_right': { variable: '--rep-rec-thumb-margin-right', unit: 'px' },
+            '#popup_rec_thumb_margin_right': [
+                { variable: '--rep-rec-thumb-margin-right', unit: 'px' },
+                { variable: '--rep-rec-thumb-margin-bottom', unit: 'px' }
+            ],
             '#popup_max_width_mobile': { variable: '--rep-popup-width-mobile', unit: 'vw' },
             '#popup_padding_container_mobile': { variable: '--rep-popup-padding-mobile', unit: 'px' }
         };
@@ -241,7 +244,14 @@ jQuery(function($) {
             const $input = $(selector);
             if ($input.length) {
                 function updateStylePreview() {
-                    $previewContainer.css(data.variable, $input.val() + data.unit);
+                    const value = $input.val();
+                    if (Array.isArray(data)) {
+                        data.forEach(function(style) {
+                            $previewContainer.css(style.variable, value + style.unit);
+                        });
+                    } else {
+                        $previewContainer.css(data.variable, value + data.unit);
+                    }
                 }
                 $input.on('input change', updateStylePreview);
                 updateStylePreview(); 
