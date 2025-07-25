@@ -51,6 +51,7 @@ $spacing_styles = [
     '--rep-list-item-gap'           => ($options['popup_gap_list_items'] ?? 16) . 'px',
     '--rep-grid-item-gap'           => ($options['popup_gap_grid_items'] ?? 24) . 'px',
     '--rep-rec-thumb-margin-right'  => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px', // Nowa zmienna
+    '--rep-rec-thumb-margin-bottom' => ($options['popup_rec_thumb_margin_right'] ?? 12) . 'px', 
     // Mobile
     '--rep-popup-width-mobile'      => ($options['popup_max_width_mobile'] ?? 90) . 'vw',
     '--rep-popup-padding-mobile'    => ($options['popup_padding_container_mobile'] ?? 16) . 'px',

@@ -37,6 +37,7 @@ class Settings_Popup_Desktop
         add_settings_field('popup_margin_content_bottom', __('Odstęp pod treścią (px)', 'pro_reader'), [$this, 'margin_content_bottom_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_gap_list_items', __('Odstęp między elementami - Lista (px)', 'pro_reader'), [$this, 'gap_list_items_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_gap_grid_items', __('Odstęp między elementami - Siatka (px)', 'pro_reader'), [$this, 'gap_grid_items_callback'], $page, 'popup_layout_spacing_section');
+        add_settings_field('popup_rec_thumb_margin_right', __('Odstęp miniaturki od treści (px)', 'pro_reader'), [$this, 'thumb_margin_right_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_rec_thumb_margin_right', __('Odstęp zdjęcia od tekstu (px)', 'pro_reader'), [$this, 'thumb_margin_right_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_spacing_reset', '', [$this, 'spacing_reset_callback'], $page, 'popup_layout_spacing_section');
 
@@ -183,7 +184,7 @@ class Settings_Popup_Desktop
     {
         $value = $this->options['popup_rec_thumb_margin_right'] ?? 16;
         printf('<input type="number" id="popup_rec_thumb_margin_right" name="%s[popup_rec_thumb_margin_right]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
-        echo '<p class="description">' . esc_html__('Dotyczy tylko horyzontalnej struktury elementu.', 'pro_reader') . '</p>';
+        echo '<p class="description">' . esc_html__('Dla układu horyzontalnego kontroluje margines prawy, a dla wertykalnego - margines dolny miniaturki.', 'pro_reader') . '</p>';
     }
 
     public function spacing_reset_callback(): void

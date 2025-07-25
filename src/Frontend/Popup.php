@@ -68,7 +68,8 @@ class Popup
             '--rep-content-margin-bottom'   => ($this->options['popup_margin_content_bottom'] ?? 20) . 'px',
             '--rep-list-item-gap'           => ($this->options['popup_gap_list_items'] ?? 16) . 'px',
             '--rep-grid-item-gap'           => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
-            
+             '--rep-rec-thumb-margin-right'  => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
+            '--rep-rec-thumb-margin-bottom' => ($this->options['popup_rec_thumb_margin_right'] ?? 12) . 'px',
             // Ustawienia Mobilne (z fallbackami)
             '--rep-popup-width-mobile'      => ($this->options['popup_max_width_mobile'] ?? 90) . 'vw',
             '--rep-popup-padding-mobile'    => ($this->options['popup_padding_container_mobile'] ?? 16) . 'px',

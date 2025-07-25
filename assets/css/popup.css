@@ -118,7 +118,7 @@
 .item-layout-vertical .rep-rec-thumb-link {
   width: 100%;
   height: auto;
-  margin-bottom: 12px;
+  margin-bottom: var(--rep-rec-thumb-margin-bottom, 12px);
 }
 
 .rep-rec-thumb-link {
