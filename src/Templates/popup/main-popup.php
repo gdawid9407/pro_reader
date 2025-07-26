@@ -12,7 +12,13 @@ if (!defined('ABSPATH')) {
 }
 ?>
 <div id="rep-intelligent-popup__overlay"></div>
-<div id="rep-intelligent-popup__container" style="<?php echo $container_styles; ?>" role="dialog" aria-modal="true" aria-labelledby="rep-intelligent-popup__title-static">
+<div id="rep-intelligent-popup__container" 
+     style="<?php echo $container_styles; ?>" 
+     role="dialog" 
+     aria-modal="true" 
+     aria-labelledby="rep-intelligent-popup__title-static"
+     data-layout-mobile="<?php echo esc_attr($layout_mobile); ?>"
+     data-item-layout-mobile="<?php echo esc_attr($item_layout_mobile); ?>">
     <header id="rep-intelligent-popup__header">
         <h2 id="rep-intelligent-popup__title-static" class="screen-reader-text">Rekomendowane treści</h2>
         <button id="rep-intelligent-popup__close" aria-label="Zamknij">×</button>

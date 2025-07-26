@@ -148,6 +148,21 @@ jQuery(function($) {
             $previewList.removeClass('layout-list layout-grid').addClass('layout-' + $(this).val());
         }).trigger('change');
 
+        // Aktualizacja podglądu dla ustawień mobilnych
+        const $mobileLayoutSelector = $('select[name="' + optionPrefix + '[popup_recommendations_layout_mobile]"]');
+        if ($mobileLayoutSelector.length) {
+            $mobileLayoutSelector.on('change', function() {
+                $previewContainer.attr('data-layout-mobile', $(this).val());
+            }).trigger('change');
+        }
+
+        const $mobileItemLayoutSelector = $('select[name="' + optionPrefix + '[popup_rec_item_layout_mobile]"]');
+        if ($mobileItemLayoutSelector.length) {
+            $mobileItemLayoutSelector.on('change', function() {
+                $previewContainer.attr('data-item-layout-mobile', $(this).val());
+            }).trigger('change');
+        }
+
         // Aktualizacja struktury pojedynczego elementu (wertykalny vs horyzontalny)
         $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]').on('change', function() {
             const layout = $(this).filter(':checked').val();

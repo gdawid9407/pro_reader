@@ -90,6 +90,8 @@ class Popup
             'item_layout'      => $this->options['popup_rec_item_layout'] ?? 'vertical',
             'components_order' => $this->options['popup_rec_components_order'] ?? ['thumbnail', 'meta', 'title', 'excerpt', 'link'],
             'components_visibility' => $this->options['popup_rec_components_visibility'] ?? array_fill_keys(['thumbnail', 'meta', 'title', 'excerpt', 'link'], '1'),
+            'layout_mobile'    => $this->options['popup_recommendations_layout_mobile'] ?? 'list',
+            'item_layout_mobile' => $this->options['popup_rec_item_layout_mobile'] ?? 'vertical',
         ];
 
         extract($template_vars);
@@ -131,7 +133,10 @@ class Popup
      */
     public function generate_recommendation_item_html(int $post_id): string
     {
-        $item_layout = $this->options['popup_rec_item_layout'] ?? 'vertical';
+        $is_mobile = wp_is_mobile();
+        $item_layout_option = $is_mobile ? 'popup_rec_item_layout_mobile' : 'popup_rec_item_layout';
+        $item_layout = $this->options[$item_layout_option] ?? 'vertical';
+
         $default_order = ['thumbnail', 'meta', 'title', 'excerpt', 'link'];
         $components_order = $this->options['popup_rec_components_order'] ?? $default_order;
         $components_visibility = $this->options['popup_rec_components_visibility'] ?? array_fill_keys($default_order, '1');
