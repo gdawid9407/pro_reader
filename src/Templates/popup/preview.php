@@ -20,17 +20,6 @@ $item_layout    = $options['popup_rec_item_layout'] ?? 'vertical';
 $item_class     = 'rep-rec-item item-layout-' . sanitize_html_class($item_layout);
 $link_text      = $options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
 
-// Domyślne wartości dla stylów przycisku
-$bg_color       = $options['popup_rec_button_bg_color'] ?? '#0073aa';
-$text_color     = $options['popup_rec_button_text_color'] ?? '#ffffff';
-$border_radius  = $options['popup_rec_button_border_radius'] ?? 4;
-$button_style   = sprintf(
-    'background-color: %s; color: %s; border-radius: %dpx;',
-    esc_attr($bg_color),
-    esc_attr($text_color),
-    (int) $border_radius
-);
-
 $aspect_ratio_setting = $options['popup_rec_thumb_aspect_ratio'] ?? '16:9';
 $thumb_link_style = '';
 if ($aspect_ratio_setting !== 'auto') {
@@ -50,8 +39,11 @@ $spacing_styles = [
     '--rep-content-margin-bottom'   => ($options['popup_margin_content_bottom'] ?? 20) . 'px',
     '--rep-list-item-gap'           => ($options['popup_gap_list_items'] ?? 16) . 'px',
     '--rep-grid-item-gap'           => ($options['popup_gap_grid_items'] ?? 24) . 'px',
-    '--rep-rec-thumb-margin-right'  => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px', // Nowa zmienna
-    '--rep-rec-thumb-margin-bottom' => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px', 
+    '--rep-rec-thumb-margin-right'  => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
+    '--rep-rec-thumb-margin-bottom' => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
+    '--rep-btn-bg'            => $options['popup_rec_button_bg_color'] ?? '#0073aa',
+    '--rep-btn-text'          => $options['popup_rec_button_text_color'] ?? '#ffffff',
+    '--rep-btn-border-radius'       => ($options['popup_rec_button_border_radius'] ?? 4) . 'px',
     // Mobile
     '--rep-popup-width-mobile'      => ($options['popup_max_width_mobile'] ?? 90) . 'vw',
     '--rep-popup-padding-mobile'    => ($options['popup_padding_container_mobile'] ?? 16) . 'px',
@@ -94,7 +86,7 @@ $images_total = count($preview_images);
                 <p class="rep-rec-meta"><span class="rep-rec-date">1 Styczeń, 2025</span> <span class="rep-rec-meta-separator">•</span> <span class="rep-rec-category">Kategoria</span></p>
                 <h3 class="rep-rec-title"><a href="#" onclick="return false;">Przykładowy Tytuł Rekomendacji</a></h3>
                 <p class="rep-rec-excerpt">To jest przykład zajawki artykułu, aby pokazać jak będzie wyglądać w popupie i jak tekst może się zawijać.</p>
-                <a href="#" onclick="return false;" class="rep-rec-button" style="<?php echo esc_attr($button_style); ?>"><?php echo wp_kses_post($link_text); ?></a>
+                <a href="#" onclick="return false;" class="rep-rec-button"><?php echo wp_kses_post($link_text); ?></a>
             </div>
         </li>
         <?php endfor; ?>

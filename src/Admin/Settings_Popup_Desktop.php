@@ -50,9 +50,6 @@ class Settings_Popup_Desktop
 
         add_settings_section('popup_thumbnail_settings_section', __('Ustawienia Miniaturki', 'pro_reader'), null, $page);
         $this->register_thumbnail_fields($page, 'popup_thumbnail_settings_section');
-
-        add_settings_section('popup_button_settings_section', __('Ustawienia Przycisku "Czytaj Dalej"', 'pro_reader'), null, $page);
-        add_settings_field('popup_rec_button_width', __('Szerokość przycisku', 'pro_reader'), [$this, 'button_width_callback'], $page, 'popup_button_settings_section');
     }
 
 
@@ -99,9 +96,6 @@ class Settings_Popup_Desktop
         $allowed_fits = ['cover', 'contain'];
         $sanitized['popup_rec_thumb_fit'] = isset($input['popup_rec_thumb_fit']) && in_array($input['popup_rec_thumb_fit'], $allowed_fits) ? $input['popup_rec_thumb_fit'] : 'cover';
         
-        $allowed_widths = ['compact', 'full-width'];
-        $sanitized['popup_rec_button_width'] = isset($input['popup_rec_button_width']) && in_array($input['popup_rec_button_width'], $allowed_widths) ? $input['popup_rec_button_width'] : 'compact';
-
         return $sanitized;
     }
 
@@ -203,20 +197,6 @@ class Settings_Popup_Desktop
         echo '<select id="popup_recommendations_layout" name="' . self::OPTION_NAME . '[popup_recommendations_layout]">';
         echo '<option value="list"' . selected($value, 'list', false) . '>' . esc_html__('Lista', 'pro_reader') . '</option>';
         echo '<option value="grid"' . selected($value, 'grid', false) . '>' . esc_html__('Siatka', 'pro_reader') . '</option>';
-        echo '</select>';
-    }
-
-    public function button_width_callback(): void
-    {
-        $value = $this->options['popup_rec_button_width'] ?? 'compact';
-        $options = [
-            'compact'    => __('Kompaktowy (dopasowany do treści)', 'pro_reader'),
-            'full-width' => __('Pełna szerokość', 'pro_reader'),
-        ];
-        echo '<select id="popup_rec_button_width" name="' . self::OPTION_NAME . '[popup_rec_button_width]">';
-        foreach ($options as $key => $name) {
-            echo '<option value="' . esc_attr($key) . '" ' . selected($value, $key, false) . '>' . esc_html($name) . '</option>';
-        }
         echo '</select>';
     }
 
