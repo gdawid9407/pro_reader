@@ -143,10 +143,30 @@ jQuery(function($) {
         updateButtonWidth();
 
 
-        // Aktualizacja ogólnego układu (lista vs siatka)
-        $('select[name="' + optionPrefix + '[popup_recommendations_layout]"]').on('change', function() {
-            $previewList.removeClass('layout-list layout-grid').addClass('layout-' + $(this).val());
-        }).trigger('change');
+        // Aktualizacja ogólnego układu (lista vs siatka) i powiązanej logiki
+        const $desktopLayoutSelector = $('select[name="' + optionPrefix + '[popup_recommendations_layout]"]');
+        const $itemLayoutRadios = $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]');
+        const $itemLayoutRow = $itemLayoutRadios.closest('tr');
+
+        function handleDesktopLayoutChange() {
+            const layout = $desktopLayoutSelector.val();
+            $previewList.removeClass('layout-list layout-grid').addClass('layout-' + layout);
+
+            if (layout === 'grid') {
+                $itemLayoutRadios.filter('[value="vertical"]').prop('checked', true).trigger('change');
+                $itemLayoutRow.find('input').prop('disabled', true);
+                $itemLayoutRow.css('opacity', 0.6);
+                if ($itemLayoutRow.find('.description.disabled-reason').length === 0) {
+                     $itemLayoutRow.find('td:first').append('<p class="description disabled-reason" style="margin-top: 5px; font-style: italic;">Dla układu siatki dostępna jest tylko struktura wertykalna.</p>');
+                }
+            } else {
+                $itemLayoutRow.find('input').prop('disabled', false);
+                $itemLayoutRow.css('opacity', 1);
+                $itemLayoutRow.find('.description.disabled-reason').remove();
+            }
+        }
+
+        $desktopLayoutSelector.on('change', handleDesktopLayoutChange).trigger('change');
 
         // Aktualizacja podglądu dla ustawień mobilnych
         const $mobileLayoutSelector = $('select[name="' + optionPrefix + '[popup_recommendations_layout_mobile]"]');
