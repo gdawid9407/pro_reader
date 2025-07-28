@@ -256,17 +256,62 @@ jQuery(function($) {
         $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]').filter(':checked').trigger('change');
 
 
-        const $excerpt = $previewList.find('.rep-rec-excerpt');
-        function updateExcerptClamp() {
-            if ($('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]:checked').val() === 'lines') {
-                $excerpt.css('-webkit-line-clamp', $('#popup_rec_excerpt_lines').val());
-            } else {
-                $excerpt.css('-webkit-line-clamp', 'unset');
-            }
+        // --- POCZĄTEK ZMIAN: Ulepszona logika podglądu dla limitu zajawki ---
+        const $excerpts = $previewList.find('.rep-rec-excerpt');
+
+        // Zapisz oryginalną treść zajawki przy pierwszym ładowaniu
+        $excerpts.each(function() {
+            const $excerpt = $(this);
+            $excerpt.data('original-text', $excerpt.text());
+        });
+
+        function updateExcerptPreview() {
+            const limitType = $('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]:checked').val();
+            const wordLimit = $('#popup_rec_excerpt_length').val();
+            const lineLimit = $('#popup_rec_excerpt_lines').val();
+
+            $excerpts.each(function() {
+                const $excerpt = $(this);
+                const originalText = $excerpt.data('original-text');
+
+                if (limitType === 'words') {
+                    // Usuń style CSS dla limitu linii
+                    $excerpt.css({
+                        '-webkit-line-clamp': '',
+                        'display': '',
+                        '-webkit-box-orient': '',
+                        'overflow': '',
+                        'text-overflow': ''
+                    });
+                    
+                    // Przytnij tekst po słowach
+                    const words = originalText.split(/\s+/);
+                    const trimmedText = words.slice(0, wordLimit).join(' ') + (words.length > wordLimit ? '...' : '');
+                    $excerpt.text(trimmedText);
+
+                } else { // 'lines'
+                    // Przywróć oryginalny tekst, aby line-clamp działał poprawnie
+                    $excerpt.text(originalText);
+                    // Zastosuj style CSS dla limitu linii
+                    $excerpt.css({
+                        '-webkit-line-clamp': lineLimit,
+                        'display': '-webkit-box',
+                        '-webkit-box-orient': 'vertical',
+                        'overflow': 'hidden',
+                        'text-overflow': 'ellipsis'
+                    });
+                }
+            });
         }
-        $('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]').on('change', updateExcerptClamp);
-        $('#popup_rec_excerpt_lines').on('input change', updateExcerptClamp);
-        updateExcerptClamp();
+
+        // Podłącz eventy do wszystkich kontrolek
+        $('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]').on('change', updateExcerptPreview);
+        $('#popup_rec_excerpt_length, #popup_rec_excerpt_lines').on('input change', updateExcerptPreview);
+        
+        // Wywołaj funkcję przy pierwszym ładowaniu, aby ustawić stan początkowy
+        updateExcerptPreview();
+        // --- KONIEC ZMIAN ---
+
 
         const $countInput = $('#popup_recommendations_count');
         function updatePreviewPostCount() {
