@@ -77,7 +77,9 @@ jQuery(function($) {
 
     let popupHasBeenShown = false;
     let ajaxRequestSent = false;
-    let lastScrollTop = 0;
+    const scrollDownThreshold = 150;
+    let lastScrollTop = $(window).scrollTop();
+    let hasScrolledDown = lastScrollTop > scrollDownThreshold;
 
     // --- 2. GŁÓWNE FUNKCJE KONTROLUJĄCE POPUP ---
 
