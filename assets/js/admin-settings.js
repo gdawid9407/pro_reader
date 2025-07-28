@@ -330,16 +330,21 @@ jQuery(function($) {
             e.preventDefault();
             const defaultSpacings = {
                 '#popup_padding_y_desktop': '24',
-                '#popup_padding_x_desktop': '32',
+                '#popup_padding_x_desktop': '40',
                 '#popup_margin_content_bottom': '20',
-                '#popup_gap_list_items': '16',
-                '#popup_gap_grid_items': '24',
-                '#popup_rec_thumb_margin_right': '16'
+                '#popup_gap_list_items': '50',
+                '#popup_gap_grid_items': '45',
+                '#popup_rec_thumb_margin_right': '25'
             };
             $.each(defaultSpacings, function(selector, value) {
                 $(selector).val(value).trigger('change');
             });
-            $('#popup_rec_button_width').val('compact').trigger('change');
+            
+            // Dodatkowo zresetuj wymiary i układ
+            $('#popup_max_width').val('670').trigger('change');
+            $('#popup_max_height').val('81').trigger('change');
+            $('#popup_recommendations_layout').val('grid').trigger('change');
+            $('input[name="' + optionPrefix + '[popup_rec_item_layout]"][value="vertical"]').prop('checked', true).trigger('change');
         });
     }
 });

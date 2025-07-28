@@ -16,12 +16,69 @@ jQuery(function($) {
         return;
     }
 
+    // --- Nowa, w pełni responsywna logika układu ---
+    function applyResponsiveLayout() {
+        const isMobileView = window.innerWidth <= 767;
+        const layout = isMobileView 
+            ? $popupContainer.data('layout-mobile') 
+            : $popupContainer.data('layout-desktop');
+        const itemLayout = isMobileView 
+            ? $popupContainer.data('item-layout-mobile') 
+            : $popupContainer.data('item-layout-desktop');
+
+        // 1. Zaktualizuj klasę ogólnego układu (lista/siatka)
+        $recommendationList
+            .removeClass('layout-list layout-grid')
+            .addClass('layout-' + layout);
+
+        // 2. Zaktualizuj klasę i strukturę DOM dla każdego elementu
+        $recommendationList.find('.rep-rec-item').each(function() {
+            const $item = $(this);
+            const $thumb = $item.find('.rep-rec-thumb-link');
+            const $content = $item.find('.rep-rec-content');
+
+            $item.removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + itemLayout);
+
+            // Przebuduj strukturę DOM w zależności od wymaganego układu
+            if (itemLayout === 'horizontal') {
+                if ($thumb.length && $content.length && !$item.find('> .rep-rec-thumb-link').length) {
+                    $thumb.detach().prependTo($item);
+                }
+            } else { // 'vertical'
+                if ($thumb.length && $content.length && !$content.find('> .rep-rec-thumb-link').length) {
+                    $thumb.detach().prependTo($content);
+                }
+            }
+        });
+    }
+
+    // Uruchom logikę przy ładowaniu strony i przy zmianie rozmiaru okna
+    $(window).on('resize.repResponsive', applyResponsiveLayout);
+    
+    // Użyj MutationObserver do śledzenia zmian w liście rekomendacji (bardziej niezawodne niż DOMSubtreeModified)
+    const observer = new MutationObserver(function(mutations) {
+        // Sprawdzamy, czy dodano nowe węzły, aby uniknąć pętli
+        let nodesAdded = false;
+        for(let mutation of mutations) {
+            if (mutation.addedNodes.length) {
+                nodesAdded = true;
+                break;
+            }
+        }
+        if (nodesAdded) {
+            applyResponsiveLayout();
+        }
+    });
+
+    observer.observe($recommendationList[0], { childList: true });
+
+    // Uruchom od razu na wypadek, gdyby treść była już obecna
+    applyResponsiveLayout();
+
+
     let popupHasBeenShown = false;
     let ajaxRequestSent = false;
     let lastScrollTop = 0;
-    let hasScrolledDown = false;
-    const scrollDownThreshold = 500; 
-
 
     // --- 2. GŁÓWNE FUNKCJE KONTROLUJĄCE POPUP ---
 

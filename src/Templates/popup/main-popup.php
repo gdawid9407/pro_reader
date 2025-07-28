@@ -17,6 +17,8 @@ if (!defined('ABSPATH')) {
      role="dialog" 
      aria-modal="true" 
      aria-labelledby="rep-intelligent-popup__title-static"
+     data-layout-desktop="<?php echo esc_attr(str_replace('layout-', '', $layout_class)); ?>"
+     data-item-layout-desktop="<?php echo esc_attr($item_layout); ?>"
      data-layout-mobile="<?php echo esc_attr($layout_mobile); ?>"
      data-item-layout-mobile="<?php echo esc_attr($item_layout_mobile); ?>">
     <header id="rep-intelligent-popup__header">

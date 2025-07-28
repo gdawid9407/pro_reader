@@ -67,17 +67,17 @@ class Settings_Popup_Desktop
     {
         $sanitized = $current_options;
 
-        $sanitized['popup_max_width']                 = isset($input['popup_max_width']) ? absint($input['popup_max_width']) : 800;
-        $sanitized['popup_max_height']                = isset($input['popup_max_height']) ? absint($input['popup_max_height']) : 90;
+        $sanitized['popup_max_width']                 = isset($input['popup_max_width']) ? absint($input['popup_max_width']) : 670;
+        $sanitized['popup_max_height']                = isset($input['popup_max_height']) ? absint($input['popup_max_height']) : 81;
         $sanitized['popup_padding_y_desktop']         = isset($input['popup_padding_y_desktop']) ? absint($input['popup_padding_y_desktop']) : 24;
-        $sanitized['popup_padding_x_desktop']         = isset($input['popup_padding_x_desktop']) ? absint($input['popup_padding_x_desktop']) : 32;
+        $sanitized['popup_padding_x_desktop']         = isset($input['popup_padding_x_desktop']) ? absint($input['popup_padding_x_desktop']) : 40;
         $sanitized['popup_margin_content_bottom']     = isset($input['popup_margin_content_bottom']) ? absint($input['popup_margin_content_bottom']) : 20;
-        $sanitized['popup_gap_list_items']            = isset($input['popup_gap_list_items']) ? absint($input['popup_gap_list_items']) : 16;
-        $sanitized['popup_gap_grid_items']            = isset($input['popup_gap_grid_items']) ? absint($input['popup_gap_grid_items']) : 24;
+        $sanitized['popup_gap_list_items']            = isset($input['popup_gap_list_items']) ? absint($input['popup_gap_list_items']) : 50;
+        $sanitized['popup_gap_grid_items']            = isset($input['popup_gap_grid_items']) ? absint($input['popup_gap_grid_items']) : 45;
         
-         $sanitized['popup_rec_thumb_margin_right']    = isset($input['popup_rec_thumb_margin_right']) ? absint($input['popup_rec_thumb_margin_right']) : 16;
+         $sanitized['popup_rec_thumb_margin_right']    = isset($input['popup_rec_thumb_margin_right']) ? absint($input['popup_rec_thumb_margin_right']) : 25;
         
-        $sanitized['popup_recommendations_layout']    = isset($input['popup_recommendations_layout']) && in_array($input['popup_recommendations_layout'], ['list', 'grid']) ? $input['popup_recommendations_layout'] : 'list';
+        $sanitized['popup_recommendations_layout']    = isset($input['popup_recommendations_layout']) && in_array($input['popup_recommendations_layout'], ['list', 'grid']) ? $input['popup_recommendations_layout'] : 'grid';
         $sanitized['popup_rec_item_layout']           = isset($input['popup_rec_item_layout']) && in_array($input['popup_rec_item_layout'], ['vertical', 'horizontal']) ? $input['popup_rec_item_layout'] : 'vertical';
         $sanitized['popup_rec_excerpt_limit_type']    = isset($input['popup_rec_excerpt_limit_type']) && in_array($input['popup_rec_excerpt_limit_type'], ['words', 'lines']) ? $input['popup_rec_excerpt_limit_type'] : 'words';
         $sanitized['popup_rec_excerpt_length']        = isset($input['popup_rec_excerpt_length']) ? absint($input['popup_rec_excerpt_length']) : 15;
@@ -137,14 +137,14 @@ class Settings_Popup_Desktop
 
     public function max_width_callback(): void
     {
-        $value = $this->options['popup_max_width'] ?? 800;
+        $value = $this->options['popup_max_width'] ?? 670;
         printf('<input type="number" id="popup_max_width" name="%s[popup_max_width]" value="%d" min="300" max="1600" style="width: 100px;" />', self::OPTION_NAME, esc_attr($value));
         echo '<p class="description">' . esc_html__('Dla układu "Lista" zalecana szerokość to maksymalnie 925px. Układ "Siatka" może wymagać większej szerokości.', 'pro_reader') . '</p>';
     }
 
     public function max_height_callback(): void
     {
-        $value = $this->options['popup_max_height'] ?? 90;
+        $value = $this->options['popup_max_height'] ?? 81;
         printf('<input type="number" id="popup_max_height" name="%s[popup_max_height]" value="%d" min="40" max="90" style="width: 100px;" />', self::OPTION_NAME, esc_attr($value));
         echo '<p class="description">' . esc_html__('Dotyczy głównie układu "Lista". Zalecana maksymalna wartość to 70, aby zapewnić pełną widoczność treści na niższych ekranach.', 'pro_reader') . '</p>';
     }
@@ -157,7 +157,7 @@ class Settings_Popup_Desktop
 
     public function padding_x_desktop_callback(): void
     {
-        $value = $this->options['popup_padding_x_desktop'] ?? 32;
+        $value = $this->options['popup_padding_x_desktop'] ?? 40;
         printf('<input type="number" id="popup_padding_x_desktop" name="%s[popup_padding_x_desktop]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
     }
 
@@ -169,19 +169,19 @@ class Settings_Popup_Desktop
 
     public function gap_list_items_callback(): void
     {
-        $value = $this->options['popup_gap_list_items'] ?? 16;
+        $value = $this->options['popup_gap_list_items'] ?? 50;
         printf('<input type="number" id="popup_gap_list_items" name="%s[popup_gap_list_items]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
     }
 
     public function gap_grid_items_callback(): void
     {
-        $value = $this->options['popup_gap_grid_items'] ?? 24;
+        $value = $this->options['popup_gap_grid_items'] ?? 45;
         printf('<input type="number" id="popup_gap_grid_items" name="%s[popup_gap_grid_items]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
     }
 
     public function thumb_margin_right_callback(): void
     {
-        $value = $this->options['popup_rec_thumb_margin_right'] ?? 16;
+        $value = $this->options['popup_rec_thumb_margin_right'] ?? 25;
         printf('<input type="number" id="popup_rec_thumb_margin_right" name="%s[popup_rec_thumb_margin_right]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
         echo '<p class="description">' . esc_html__('Dla układu horyzontalnego kontroluje margines prawy, a dla wertykalnego - margines dolny miniaturki.', 'pro_reader') . '</p>';
     }
@@ -193,7 +193,7 @@ class Settings_Popup_Desktop
     
     public function recommendations_layout_callback(): void
     {
-        $value = $this->options['popup_recommendations_layout'] ?? 'list';
+        $value = $this->options['popup_recommendations_layout'] ?? 'grid';
         echo '<select id="popup_recommendations_layout" name="' . self::OPTION_NAME . '[popup_recommendations_layout]">';
         echo '<option value="list"' . selected($value, 'list', false) . '>' . esc_html__('Lista', 'pro_reader') . '</option>';
         echo '<option value="grid"' . selected($value, 'grid', false) . '>' . esc_html__('Siatka', 'pro_reader') . '</option>';
@@ -202,12 +202,20 @@ class Settings_Popup_Desktop
 
     public function item_layout_callback(): void
     {
-        $value = $this->options['popup_rec_item_layout'] ?? 'vertical';
-        printf(
-            '<fieldset><label><input type="radio" name="%1$s[popup_rec_item_layout]" value="vertical" %2$s> %3$s</label><br><label><input type="radio" name="%1$s[popup_rec_item_layout]" value="horizontal" %4$s> %5$s</label></fieldset>',
-            self::OPTION_NAME, checked($value, 'vertical', false), esc_html__('Wertykalny', 'pro_reader'),
-            checked($value, 'horizontal', false), esc_html__('Horyzontalny', 'pro_reader')
-        );
+        $layout = $this->options['popup_rec_item_layout'] ?? 'vertical';
+        ?>
+        <fieldset>
+            <label>
+                <input type="radio" name="<?php echo self::OPTION_NAME; ?>[popup_rec_item_layout]" value="vertical" <?php checked($layout, 'vertical'); ?>>
+                <?php esc_html_e('Wertykalny', 'pro_reader'); ?>
+            </label>
+            <br>
+            <label>
+                <input type="radio" name="<?php echo self::OPTION_NAME; ?>[popup_rec_item_layout]" value="horizontal" <?php checked($layout, 'horizontal'); ?>>
+                <?php esc_html_e('Horyzontalny', 'pro_reader'); ?>
+            </label>
+        </fieldset>
+        <?php
     }
 
     public function components_order_callback(): void

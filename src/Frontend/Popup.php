@@ -52,7 +52,14 @@ class Popup
             return;
         }
 
+        // Zawsze generuj klasy i układy dla desktopu jako podstawę.
         $layout_class   = 'layout-' . sanitize_html_class($this->options['popup_recommendations_layout'] ?? 'list');
+        $item_layout    = $this->options['popup_rec_item_layout'] ?? 'vertical';
+        
+        // Pobierz ustawienia mobilne, aby przekazać je do atrybutów data-*.
+        $layout_mobile  = $this->options['popup_recommendations_layout_mobile'] ?? 'list';
+        $item_layout_mobile = $this->options['popup_rec_item_layout_mobile'] ?? 'vertical';
+
         $popup_content  = $this->options['popup_content_main'] ?? '';
         $button_width_class = 'btn-width-' . sanitize_html_class($this->options['popup_rec_button_width'] ?? 'compact');
 
@@ -87,11 +94,11 @@ class Popup
             'layout_class'     => $layout_class,
             'popup_content'    => $popup_content,
             'container_styles' => $container_styles,
-            'item_layout'      => $this->options['popup_rec_item_layout'] ?? 'vertical',
+            'item_layout'      => $item_layout,
             'components_order' => $this->options['popup_rec_components_order'] ?? ['thumbnail', 'meta', 'title', 'excerpt', 'link'],
             'components_visibility' => $this->options['popup_rec_components_visibility'] ?? array_fill_keys(['thumbnail', 'meta', 'title', 'excerpt', 'link'], '1'),
-            'layout_mobile'    => $this->options['popup_recommendations_layout_mobile'] ?? 'list',
-            'item_layout_mobile' => $this->options['popup_rec_item_layout_mobile'] ?? 'vertical',
+            'layout_mobile'    => $layout_mobile,
+            'item_layout_mobile' => $item_layout_mobile,
         ];
 
         extract($template_vars);
@@ -133,10 +140,9 @@ class Popup
      */
     public function generate_recommendation_item_html(int $post_id): string
     {
-        $is_mobile = wp_is_mobile();
-        $item_layout_option = $is_mobile ? 'popup_rec_item_layout_mobile' : 'popup_rec_item_layout';
-        $item_layout = $this->options[$item_layout_option] ?? 'vertical';
-
+        // Zawsze renderuj strukturę DOM dla ustawień desktopowych.
+        // JS na froncie zajmie się jej zmianą dla widoku mobilnego.
+        $item_layout = $this->options['popup_rec_item_layout'] ?? 'vertical';
         $default_order = ['thumbnail', 'meta', 'title', 'excerpt', 'link'];
         $components_order = $this->options['popup_rec_components_order'] ?? $default_order;
         $components_visibility = $this->options['popup_rec_components_visibility'] ?? array_fill_keys($default_order, '1');
@@ -153,13 +159,15 @@ class Popup
         ob_start();
 
         extract([
-            'item_class'        => $item_class,
-            'item_layout'       => $item_layout,
-            'components_html'   => $components_html,
-            'components_order'  => $components_order,
+            'post_id' => $post_id,
+            'item_class' => $item_class,
+            'item_layout' => $item_layout,
+            'components_order' => $components_order,
+            'components_html' => $components_html
         ]);
-        include REP_PLUGIN_PATH . 'src/Templates/popup/recommendation-item.php';
 
+        include REP_PLUGIN_PATH . 'src/Templates/popup/recommendation-item.php';
+        
         return ob_get_clean();
     }
 
