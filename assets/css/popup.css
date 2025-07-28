@@ -143,7 +143,7 @@
 .rep-rec-meta {
   font-size: 0.8rem;
   color: #777;
-  margin: 0 0 8px;
+  margin: 0 0 var(--rep-rec-meta-margin-bottom, 8px);
   letter-spacing: 0.5px;
 }
 .rep-rec-meta-separator { margin: 0 0.5em; }
@@ -151,7 +151,7 @@
 .rep-rec-title {
   font-size: 1.1rem;
   line-height: 1.3;
-  margin: 0 0 12px;
+  margin: 0 0 var(--rep-rec-title-margin-bottom, 12px);
 }
 .rep-rec-title a {
   text-decoration: none;
@@ -162,7 +162,7 @@
 .rep-rec-excerpt {
   font-size: 0.9rem;
   color: #555;
-  margin: 0 0 12px;
+  margin: 0 0 var(--rep-rec-excerpt-margin-bottom, 12px);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-box-orient: vertical;

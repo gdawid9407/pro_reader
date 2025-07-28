@@ -342,7 +342,10 @@ jQuery(function($) {
             ],
             '#popup_rec_thumb_width_horizontal': { variable: '--rep-rec-thumb-width-horizontal', unit: 'px' },
             '#popup_max_width_mobile': { variable: '--rep-popup-width-mobile', unit: 'vw' },
-            '#popup_padding_container_mobile': { variable: '--rep-popup-padding-mobile', unit: 'px' }
+            '#popup_padding_container_mobile': { variable: '--rep-popup-padding-mobile', unit: 'px' },
+            '#popup_rec_margin_meta_bottom': { variable: '--rep-rec-meta-margin-bottom', unit: 'px' },
+            '#popup_rec_margin_title_bottom': { variable: '--rep-rec-title-margin-bottom', unit: 'px' },
+            '#popup_rec_margin_excerpt_bottom': { variable: '--rep-rec-excerpt-margin-bottom', unit: 'px' }
         };
 
         function updateDesktopPadding() {
@@ -381,7 +384,10 @@ jQuery(function($) {
                 '#popup_gap_list_items': '50',
                 '#popup_gap_grid_items': '45',
                 '#popup_rec_thumb_margin_right': '25',
-                '#popup_rec_thumb_width_horizontal': '200'
+                '#popup_rec_thumb_width_horizontal': '200',
+                '#popup_rec_margin_meta_bottom': '8',
+                '#popup_rec_margin_title_bottom': '12',
+                '#popup_rec_margin_excerpt_bottom': '12'
             };
             $.each(defaultSpacings, function(selector, value) {
                 $(selector).val(value).trigger('change');

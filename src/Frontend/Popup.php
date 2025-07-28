@@ -80,6 +80,12 @@ class Popup
             '--rep-rec-thumb-margin-bottom' => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
             '--rep-rec-thumb-width-horizontal' => ($this->options['popup_rec_thumb_width_horizontal'] ?? 200) . 'px',
             '--rep-btn-border-radius'       => ($this->options['popup_rec_button_border_radius'] ?? 4) . 'px',
+            
+            // Odstępy wewnątrz komponentu
+            '--rep-rec-meta-margin-bottom'    => ($this->options['popup_rec_margin_meta_bottom'] ?? 8) . 'px',
+            '--rep-rec-title-margin-bottom'   => ($this->options['popup_rec_margin_title_bottom'] ?? 12) . 'px',
+            '--rep-rec-excerpt-margin-bottom' => ($this->options['popup_rec_margin_excerpt_bottom'] ?? 12) . 'px',
+
             // Ustawienia Mobilne (z fallbackami)
             '--rep-popup-width-mobile'      => ($this->options['popup_max_width_mobile'] ?? 90) . 'vw',
             '--rep-popup-padding-mobile'    => ($this->options['popup_padding_container_mobile'] ?? 16) . 'px',

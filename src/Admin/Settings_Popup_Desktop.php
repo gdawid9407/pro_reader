@@ -39,6 +39,11 @@ class Settings_Popup_Desktop
         add_settings_field('popup_gap_grid_items', __('Odstęp między elementami - Siatka (px)', 'pro_reader'), [$this, 'gap_grid_items_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_rec_thumb_margin_right', __('Odstęp zdjęcia od tekstu (px)', 'pro_reader'), [$this, 'thumb_margin_right_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_rec_thumb_width_horizontal', __('Szerokość miniaturki - Horyzontalny (px)', 'pro_reader'), [$this, 'thumb_width_horizontal_callback'], $page, 'popup_layout_spacing_section');
+        
+        add_settings_field('popup_rec_margin_meta_bottom', __('Odstęp pod metadanymi (px)', 'pro_reader'), [$this, 'margin_meta_bottom_callback'], $page, 'popup_layout_spacing_section');
+        add_settings_field('popup_rec_margin_title_bottom', __('Odstęp pod tytułem (px)', 'pro_reader'), [$this, 'margin_title_bottom_callback'], $page, 'popup_layout_spacing_section');
+        add_settings_field('popup_rec_margin_excerpt_bottom', __('Odstęp pod zajawką (px)', 'pro_reader'), [$this, 'margin_excerpt_bottom_callback'], $page, 'popup_layout_spacing_section');
+
         add_settings_field('popup_spacing_reset', '', [$this, 'spacing_reset_callback'], $page, 'popup_layout_spacing_section');
 
         add_settings_section('popup_layout_builder_section', __('Konstruktor Układu Rekomendacji', 'pro_reader'), null, $page);
@@ -79,6 +84,10 @@ class Settings_Popup_Desktop
          $sanitized['popup_rec_thumb_margin_right']    = isset($input['popup_rec_thumb_margin_right']) ? absint($input['popup_rec_thumb_margin_right']) : 25;
          $sanitized['popup_rec_thumb_width_horizontal'] = isset($input['popup_rec_thumb_width_horizontal']) ? absint($input['popup_rec_thumb_width_horizontal']) : 200;
         
+         $sanitized['popup_rec_margin_meta_bottom']    = isset($input['popup_rec_margin_meta_bottom']) ? absint($input['popup_rec_margin_meta_bottom']) : 8;
+         $sanitized['popup_rec_margin_title_bottom']   = isset($input['popup_rec_margin_title_bottom']) ? absint($input['popup_rec_margin_title_bottom']) : 12;
+         $sanitized['popup_rec_margin_excerpt_bottom'] = isset($input['popup_rec_margin_excerpt_bottom']) ? absint($input['popup_rec_margin_excerpt_bottom']) : 12;
+
         $sanitized['popup_recommendations_layout']    = isset($input['popup_recommendations_layout']) && in_array($input['popup_recommendations_layout'], ['list', 'grid']) ? $input['popup_recommendations_layout'] : 'grid';
         $sanitized['popup_rec_item_layout']           = isset($input['popup_rec_item_layout']) && in_array($input['popup_rec_item_layout'], ['vertical', 'horizontal']) ? $input['popup_rec_item_layout'] : 'vertical';
         $sanitized['popup_rec_excerpt_limit_type']    = isset($input['popup_rec_excerpt_limit_type']) && in_array($input['popup_rec_excerpt_limit_type'], ['words', 'lines']) ? $input['popup_rec_excerpt_limit_type'] : 'words';
@@ -193,6 +202,24 @@ class Settings_Popup_Desktop
         $value = $this->options['popup_rec_thumb_width_horizontal'] ?? 200;
         printf('<input type="number" id="popup_rec_thumb_width_horizontal" name="%s[popup_rec_thumb_width_horizontal]" value="%d" min="50" max="500" />', self::OPTION_NAME, esc_attr($value));
         echo '<p class="description">' . esc_html__('Dotyczy tylko struktury horyzontalnej w układzie "Lista".', 'pro_reader') . '</p>';
+    }
+
+    public function margin_meta_bottom_callback(): void
+    {
+        $value = $this->options['popup_rec_margin_meta_bottom'] ?? 8;
+        printf('<input type="number" id="popup_rec_margin_meta_bottom" name="%s[popup_rec_margin_meta_bottom]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
+    }
+
+    public function margin_title_bottom_callback(): void
+    {
+        $value = $this->options['popup_rec_margin_title_bottom'] ?? 12;
+        printf('<input type="number" id="popup_rec_margin_title_bottom" name="%s[popup_rec_margin_title_bottom]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
+    }
+
+    public function margin_excerpt_bottom_callback(): void
+    {
+        $value = $this->options['popup_rec_margin_excerpt_bottom'] ?? 12;
+        printf('<input type="number" id="popup_rec_margin_excerpt_bottom" name="%s[popup_rec_margin_excerpt_bottom]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
     }
 
     public function spacing_reset_callback(): void
