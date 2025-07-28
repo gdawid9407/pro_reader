@@ -38,6 +38,7 @@ class Settings_Popup_Desktop
         add_settings_field('popup_gap_list_items', __('Odstęp między elementami - Lista (px)', 'pro_reader'), [$this, 'gap_list_items_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_gap_grid_items', __('Odstęp między elementami - Siatka (px)', 'pro_reader'), [$this, 'gap_grid_items_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_rec_thumb_margin_right', __('Odstęp zdjęcia od tekstu (px)', 'pro_reader'), [$this, 'thumb_margin_right_callback'], $page, 'popup_layout_spacing_section');
+        add_settings_field('popup_rec_thumb_width_horizontal', __('Szerokość miniaturki - Horyzontalny (px)', 'pro_reader'), [$this, 'thumb_width_horizontal_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_spacing_reset', '', [$this, 'spacing_reset_callback'], $page, 'popup_layout_spacing_section');
 
         add_settings_section('popup_layout_builder_section', __('Konstruktor Układu Rekomendacji', 'pro_reader'), null, $page);
@@ -76,6 +77,7 @@ class Settings_Popup_Desktop
         $sanitized['popup_gap_grid_items']            = isset($input['popup_gap_grid_items']) ? absint($input['popup_gap_grid_items']) : 45;
         
          $sanitized['popup_rec_thumb_margin_right']    = isset($input['popup_rec_thumb_margin_right']) ? absint($input['popup_rec_thumb_margin_right']) : 25;
+         $sanitized['popup_rec_thumb_width_horizontal'] = isset($input['popup_rec_thumb_width_horizontal']) ? absint($input['popup_rec_thumb_width_horizontal']) : 200;
         
         $sanitized['popup_recommendations_layout']    = isset($input['popup_recommendations_layout']) && in_array($input['popup_recommendations_layout'], ['list', 'grid']) ? $input['popup_recommendations_layout'] : 'grid';
         $sanitized['popup_rec_item_layout']           = isset($input['popup_rec_item_layout']) && in_array($input['popup_rec_item_layout'], ['vertical', 'horizontal']) ? $input['popup_rec_item_layout'] : 'vertical';
@@ -184,6 +186,13 @@ class Settings_Popup_Desktop
         $value = $this->options['popup_rec_thumb_margin_right'] ?? 25;
         printf('<input type="number" id="popup_rec_thumb_margin_right" name="%s[popup_rec_thumb_margin_right]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
         echo '<p class="description">' . esc_html__('Dla układu horyzontalnego kontroluje margines prawy, a dla wertykalnego - margines dolny miniaturki.', 'pro_reader') . '</p>';
+    }
+
+    public function thumb_width_horizontal_callback(): void
+    {
+        $value = $this->options['popup_rec_thumb_width_horizontal'] ?? 200;
+        printf('<input type="number" id="popup_rec_thumb_width_horizontal" name="%s[popup_rec_thumb_width_horizontal]" value="%d" min="50" max="500" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Dotyczy tylko struktury horyzontalnej w układzie "Lista".', 'pro_reader') . '</p>';
     }
 
     public function spacing_reset_callback(): void

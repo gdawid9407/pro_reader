@@ -340,6 +340,7 @@ jQuery(function($) {
                 { variable: '--rep-rec-thumb-margin-right', unit: 'px' },
                 { variable: '--rep-rec-thumb-margin-bottom', unit: 'px' }
             ],
+            '#popup_rec_thumb_width_horizontal': { variable: '--rep-rec-thumb-width-horizontal', unit: 'px' },
             '#popup_max_width_mobile': { variable: '--rep-popup-width-mobile', unit: 'vw' },
             '#popup_padding_container_mobile': { variable: '--rep-popup-padding-mobile', unit: 'px' }
         };
@@ -379,7 +380,8 @@ jQuery(function($) {
                 '#popup_margin_content_bottom': '20',
                 '#popup_gap_list_items': '50',
                 '#popup_gap_grid_items': '45',
-                '#popup_rec_thumb_margin_right': '25'
+                '#popup_rec_thumb_margin_right': '25',
+                '#popup_rec_thumb_width_horizontal': '200'
             };
             $.each(defaultSpacings, function(selector, value) {
                 $(selector).val(value).trigger('change');

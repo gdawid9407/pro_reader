@@ -78,6 +78,7 @@ class Popup
             '--rep-grid-item-gap'           => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
              '--rep-rec-thumb-margin-right'  => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
             '--rep-rec-thumb-margin-bottom' => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
+            '--rep-rec-thumb-width-horizontal' => ($this->options['popup_rec_thumb_width_horizontal'] ?? 200) . 'px',
             '--rep-btn-border-radius'       => ($this->options['popup_rec_button_border_radius'] ?? 4) . 'px',
             // Ustawienia Mobilne (z fallbackami)
             '--rep-popup-width-mobile'      => ($this->options['popup_max_width_mobile'] ?? 90) . 'vw',
