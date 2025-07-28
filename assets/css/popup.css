@@ -40,7 +40,17 @@
     min-width: 0;
   }
   
-  /* Usunięto zbędne reguły, ponieważ JS zarządza teraz klasami i strukturą DOM */
+  #rep-intelligent-popup__list.layout-list .rep-rec-item {
+    margin-bottom: var(--rep-list-item-gap-mobile, 16px);
+  }
+
+  #rep-intelligent-popup__list.layout-grid {
+      gap: var(--rep-grid-item-gap-mobile, 16px);
+  }
+
+  .rep-rec-item.item-layout-vertical .rep-rec-thumb-link {
+      margin-bottom: var(--rep-rec-thumb-margin-bottom-mobile, 16px);
+  }
 }
 
 #rep-intelligent-popup__header {

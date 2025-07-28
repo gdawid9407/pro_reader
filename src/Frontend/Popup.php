@@ -76,8 +76,8 @@ class Popup
             '--rep-content-margin-bottom'   => ($this->options['popup_margin_content_bottom'] ?? 20) . 'px',
             '--rep-list-item-gap'           => ($this->options['popup_gap_list_items'] ?? 16) . 'px',
             '--rep-grid-item-gap'           => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
-             '--rep-rec-thumb-margin-right'  => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
-            '--rep-rec-thumb-margin-bottom' => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
+            '--rep-rec-thumb-margin-right'  => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
+            '--rep-rec-thumb-margin-bottom' => ($this->options['popup_rec_thumb_margin_bottom'] ?? 16) . 'px',
             '--rep-rec-thumb-width-horizontal' => ($this->options['popup_rec_thumb_width_horizontal'] ?? 200) . 'px',
             '--rep-btn-border-radius'       => ($this->options['popup_rec_button_border_radius'] ?? 4) . 'px',
             
@@ -86,9 +86,12 @@ class Popup
             '--rep-rec-title-margin-bottom'   => ($this->options['popup_rec_margin_title_bottom'] ?? 12) . 'px',
             '--rep-rec-excerpt-margin-bottom' => ($this->options['popup_rec_margin_excerpt_bottom'] ?? 12) . 'px',
 
-            // Ustawienia Mobilne (z fallbackami)
+            // Ustawienia Mobilne (z fallbackami do wartości desktopowych)
             '--rep-popup-width-mobile'      => ($this->options['popup_max_width_mobile'] ?? 90) . 'vw',
             '--rep-popup-padding-mobile'    => ($this->options['popup_padding_container_mobile'] ?? 16) . 'px',
+            '--rep-list-item-gap-mobile'    => ($this->options['popup_gap_list_items_mobile'] ?? $this->options['popup_gap_list_items'] ?? 16) . 'px',
+            '--rep-grid-item-gap-mobile'    => ($this->options['popup_gap_grid_items_mobile'] ?? $this->options['popup_gap_grid_items'] ?? 16) . 'px',
+            '--rep-rec-thumb-margin-bottom-mobile' => ($this->options['popup_rec_thumb_margin_bottom_mobile'] ?? $this->options['popup_rec_thumb_margin_bottom'] ?? 16) . 'px',
         ];
         // --- KONIEC ZMIAN ---
 
@@ -106,6 +109,7 @@ class Popup
             'components_visibility' => $this->options['popup_rec_components_visibility'] ?? array_fill_keys(['thumbnail', 'meta', 'title', 'excerpt', 'link'], '1'),
             'layout_mobile'    => $layout_mobile,
             'item_layout_mobile' => $item_layout_mobile,
+            'is_mobile_initial' => wp_is_mobile(),
         ];
 
         extract($template_vars);

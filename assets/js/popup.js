@@ -51,7 +51,6 @@ jQuery(function($) {
             }
         });
     }
-
     // Uruchom logikę przy ładowaniu strony i przy zmianie rozmiaru okna
     $(window).on('resize.repResponsive', applyResponsiveLayout);
     

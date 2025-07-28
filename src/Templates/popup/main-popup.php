@@ -20,7 +20,8 @@ if (!defined('ABSPATH')) {
      data-layout-desktop="<?php echo esc_attr(str_replace('layout-', '', $layout_class)); ?>"
      data-item-layout-desktop="<?php echo esc_attr($item_layout); ?>"
      data-layout-mobile="<?php echo esc_attr($layout_mobile); ?>"
-     data-item-layout-mobile="<?php echo esc_attr($item_layout_mobile); ?>">
+     data-item-layout-mobile="<?php echo esc_attr($item_layout_mobile); ?>"
+     data-is-mobile="<?php echo $is_mobile_initial ? 'true' : 'false'; ?>">
     <header id="rep-intelligent-popup__header">
         <h2 id="rep-intelligent-popup__title-static" class="screen-reader-text">Rekomendowane treści</h2>
         <button id="rep-intelligent-popup__close" aria-label="Zamknij">×</button>

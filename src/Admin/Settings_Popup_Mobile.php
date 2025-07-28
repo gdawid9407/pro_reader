@@ -55,6 +55,37 @@ class Settings_Popup_Mobile
         add_settings_section('popup_layout_builder_mobile_section', __('Konstruktor Układu Rekomendacji (Mobilny)', 'pro_reader'), null, $page);
         add_settings_field('popup_recommendations_layout_mobile', __('Układ ogólny (Lista/Siatka)', 'pro_reader'), [$this, 'recommendations_layout_mobile_callback'], $page, 'popup_layout_builder_mobile_section');
         add_settings_field('popup_rec_item_layout_mobile', __('Struktura elementu', 'pro_reader'), [$this, 'item_layout_mobile_callback'], $page, 'popup_layout_builder_mobile_section');
+    
+        add_settings_section(
+            'popup_mobile_spacing_section',
+            __('Ustawienia Odstępów (Mobilny)', 'pro_reader'),
+            null,
+            $page
+        );
+
+        add_settings_field(
+            'popup_gap_list_items_mobile',
+            __('Odstęp między elementami listy (px)', 'pro_reader'),
+            [$this, 'gap_list_items_mobile_callback'],
+            $page,
+            'popup_mobile_spacing_section'
+        );
+
+        add_settings_field(
+            'popup_gap_grid_items_mobile',
+            __('Odstęp między elementami siatki (px)', 'pro_reader'),
+            [$this, 'gap_grid_items_mobile_callback'],
+            $page,
+            'popup_mobile_spacing_section'
+        );
+
+        add_settings_field(
+            'popup_rec_thumb_margin_bottom_mobile',
+            __('Margines dolny miniaturki (px)', 'pro_reader'),
+            [$this, 'rec_thumb_margin_bottom_mobile_callback'],
+            $page,
+            'popup_mobile_spacing_section'
+        );
     }
 
     /**
@@ -74,6 +105,18 @@ class Settings_Popup_Mobile
 
         $sanitized['popup_recommendations_layout_mobile'] = isset($input['popup_recommendations_layout_mobile']) && in_array($input['popup_recommendations_layout_mobile'], ['list', 'grid']) ? $input['popup_recommendations_layout_mobile'] : 'list';
         $sanitized['popup_rec_item_layout_mobile'] = isset($input['popup_rec_item_layout_mobile']) && in_array($input['popup_rec_item_layout_mobile'], ['vertical', 'horizontal']) ? $input['popup_rec_item_layout_mobile'] : 'vertical';
+        
+        $sanitized['popup_gap_list_items_mobile'] = isset($input['popup_gap_list_items_mobile'])
+            ? max(0, min(50, absint($input['popup_gap_list_items_mobile'])))
+            : 16;
+
+        $sanitized['popup_gap_grid_items_mobile'] = isset($input['popup_gap_grid_items_mobile'])
+            ? max(0, min(50, absint($input['popup_gap_grid_items_mobile'])))
+            : 16;
+
+        $sanitized['popup_rec_thumb_margin_bottom_mobile'] = isset($input['popup_rec_thumb_margin_bottom_mobile'])
+            ? max(0, min(50, absint($input['popup_rec_thumb_margin_bottom_mobile'])))
+            : 16;
 
         return $sanitized;
     }
@@ -112,5 +155,26 @@ class Settings_Popup_Mobile
         echo '<option value="horizontal"' . selected($value, 'horizontal', false) . '>' . esc_html__('Horyzontalny', 'pro_reader') . '</option>';
         echo '</select>';
         echo '<p class="description">' . esc_html__('Wybierz strukturę pojedynczego elementu rekomendacji dla urządzeń mobilnych.', 'pro_reader') . '</p>';
+    }
+
+    public function gap_list_items_mobile_callback(): void
+    {
+        $value = $this->options['popup_gap_list_items_mobile'] ?? 16;
+        printf('<input type="number" id="popup_gap_list_items_mobile" name="%s[popup_gap_list_items_mobile]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Odstęp między rekomendacjami w widoku listy na mobile.', 'pro_reader') . '</p>';
+    }
+
+    public function gap_grid_items_mobile_callback(): void
+    {
+        $value = $this->options['popup_gap_grid_items_mobile'] ?? 16;
+        printf('<input type="number" id="popup_gap_grid_items_mobile" name="%s[popup_gap_grid_items_mobile]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Odstęp między rekomendacjami w widoku siatki na mobile.', 'pro_reader') . '</p>';
+    }
+
+    public function rec_thumb_margin_bottom_mobile_callback(): void
+    {
+        $value = $this->options['popup_rec_thumb_margin_bottom_mobile'] ?? 16;
+        printf('<input type="number" id="popup_rec_thumb_margin_bottom_mobile" name="%s[popup_rec_thumb_margin_bottom_mobile]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Margines pod miniaturką w wertykalnym układzie elementu na mobile.', 'pro_reader') . '</p>';
     }
 }
