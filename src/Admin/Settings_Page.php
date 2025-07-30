@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
 use ReaderEngagementPro\Admin\Settings_Progress_Bar;
 use ReaderEngagementPro\Admin\Settings_Popup_General;
 use ReaderEngagementPro\Admin\Settings_Popup_Desktop;
+use ReaderEngagementPro\Admin\Settings_Popup_Mobile;
 
 /**
  * Zarządza główną stroną ustawień wtyczki.
@@ -21,12 +22,14 @@ class Settings_Page
     private Settings_Progress_Bar $progress_bar_settings;
     private Settings_Popup_General $popup_settings_general;
     private Settings_Popup_Desktop $popup_settings_desktop;
+    private Settings_Popup_Mobile $popup_settings_mobile;
 
     public function __construct()
     {
         $this->progress_bar_settings = new Settings_Progress_Bar();
         $this->popup_settings_general = new Settings_Popup_General();
         $this->popup_settings_desktop = new Settings_Popup_Desktop();
+        $this->popup_settings_mobile  = new Settings_Popup_Mobile();
 
         add_action('admin_init', [$this, 'page_init']);
         add_action('admin_menu', [$this, 'add_plugin_page']);
@@ -96,6 +99,8 @@ class Settings_Page
                 return $this->popup_settings_general->sanitize($input, $options);
             case 'desktop':
                 return $this->popup_settings_desktop->sanitize($input, $options);
+            case 'mobile':
+                return $this->popup_settings_mobile->sanitize($input, $options);
         }
         return $options;
         
@@ -140,6 +145,9 @@ class Settings_Page
                                 <a href="?page=reader-engagement-pro&tab=popup&sub_tab=desktop" class="nav-tab <?php echo $active_sub_tab === 'desktop' ? 'nav-tab-active' : ''; ?>">
                                     <?php esc_html_e('Wygląd - Desktop', 'pro_reader'); ?>
                                 </a>
+                                <a href="?page=reader-engagement-pro&tab=popup&sub_tab=mobile" class="nav-tab <?php echo $active_sub_tab === 'mobile' ? 'nav-tab-active' : ''; ?>">
+                                    <?php esc_html_e('Wygląd - Mobilny', 'pro_reader'); ?>
+                                </a>
                             </h2>
                             <?php
                             settings_fields(self::SETTINGS_GROUP);
@@ -150,6 +158,8 @@ class Settings_Page
                                 do_settings_sections('reader-engagement-pro-popup-general');
                             } elseif ($active_sub_tab === 'desktop') {
                                 do_settings_sections('reader-engagement-pro-popup-desktop');
+                            } elseif ($active_sub_tab === 'mobile') {
+                                do_settings_sections('reader-engagement-pro-popup-mobile');
                             }
                             submit_button();
                         }
@@ -160,7 +170,7 @@ class Settings_Page
                 <?php 
                 if ($active_tab === 'popup') :
                     $active_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : 'general';
-                    if (in_array($active_sub_tab, ['desktop'])) :
+                    if (in_array($active_sub_tab, ['desktop', 'mobile'])) :
                         $preview_wrapper_class = 'rep-preview-mode-' . esc_attr($active_sub_tab);
                 ?>
                 <div id="rep-live-preview-wrapper" class="<?php echo $preview_wrapper_class; ?>" style="flex: 1; min-width: 400px;">
