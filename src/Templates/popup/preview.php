@@ -30,9 +30,8 @@ if ($aspect_ratio_setting !== 'auto') {
 $padding_y_desktop = $options['popup_padding_y_desktop'] ?? 24;
 $padding_x_desktop = $options['popup_padding_x_desktop'] ?? 32;
 
-// Przygotowanie zmiennych CSS dla podglądu
+// Przygotowanie zmiennych CSS dla podglądu - UJEDNOLICONE Z FRONTENDEM
 $spacing_styles = [
-    // Desktop
     '--rep-popup-max-width'         => ($options['popup_max_width'] ?? 800) . 'px',
     '--rep-popup-max-height'        => ($options['popup_max_height'] ?? 90) . 'vh',
     '--rep-popup-padding'           => "{$padding_y_desktop}px {$padding_x_desktop}px",
@@ -41,13 +40,16 @@ $spacing_styles = [
     '--rep-grid-item-gap'           => ($options['popup_gap_grid_items'] ?? 24) . 'px',
     '--rep-grid-item-width'         => ($options['popup_grid_item_width'] ?? 234) . 'px',
     '--rep-rec-thumb-margin-right'  => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
-    '--rep-rec-thumb-margin-bottom' => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
-    '--rep-btn-bg'            => $options['popup_rec_button_bg_color'] ?? '#0073aa',
-    '--rep-btn-text'          => $options['popup_rec_button_text_color'] ?? '#ffffff',
+    '--rep-rec-thumb-margin-bottom' => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px', // Używa tej samej opcji co margines prawy
+    '--rep-rec-thumb-width-horizontal' => ($options['popup_rec_thumb_width_horizontal'] ?? 200) . 'px',
+    '--rep-rec-thumb-width-list-vertical' => ($options['popup_rec_thumb_width_list_vertical'] ?? 100) . '%',
+    '--rep-btn-bg'                  => $options['popup_rec_button_bg_color'] ?? '#0073aa',
+    '--rep-btn-text'                => $options['popup_rec_button_text_color'] ?? '#ffffff',
     '--rep-btn-border-radius'       => ($options['popup_rec_button_border_radius'] ?? 4) . 'px',
+    '--rep-rec-meta-margin-bottom'    => ($options['popup_rec_margin_meta_bottom'] ?? 8) . 'px',
+    '--rep-rec-title-margin-bottom'   => ($options['popup_rec_margin_title_bottom'] ?? 12) . 'px',
+    '--rep-rec-excerpt-margin-bottom' => ($options['popup_rec_margin_excerpt_bottom'] ?? 12) . 'px',
 ];
-
-
 
 $container_styles = 'position: relative; top: auto; left: auto; transform: none; z-index: 1;';
 foreach ($spacing_styles as $key => $value) {

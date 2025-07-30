@@ -70,7 +70,7 @@ class Popup
             '--rep-grid-item-gap'           => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
             '--rep-grid-item-width'         => ($this->options['popup_grid_item_width'] ?? 234) . 'px',
             '--rep-rec-thumb-margin-right'  => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
-            '--rep-rec-thumb-margin-bottom' => ($this->options['popup_rec_thumb_margin_bottom'] ?? 16) . 'px',
+            '--rep-rec-thumb-margin-bottom' => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
             '--rep-rec-thumb-width-horizontal' => ($this->options['popup_rec_thumb_width_horizontal'] ?? 200) . 'px',
             '--rep-rec-thumb-width-list-vertical' => ($this->options['popup_rec_thumb_width_list_vertical'] ?? 100) . '%',
             '--rep-btn-border-radius'       => ($this->options['popup_rec_button_border_radius'] ?? 4) . 'px',
