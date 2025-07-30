@@ -38,6 +38,9 @@ class Settings_Popup_General
 
         add_settings_section('popup_button_settings_section', __('Ustawienia Przycisku "Czytaj dalej"', 'pro_reader'), null, $page);
         $this->register_button_fields($page, 'popup_button_settings_section');
+
+        add_settings_section('popup_appearance_template_section', __('Szablony Wyglądu', 'pro_reader'), null, $page);
+        add_settings_field('popup_appearance_template', __('Wybierz szablon wyglądu', 'pro_reader'), [$this, 'appearance_template_callback'], $page, 'popup_appearance_template_section');
     }
 
     private function register_trigger_fields(string $page, string $section): void
@@ -106,6 +109,9 @@ class Settings_Popup_General
         $sanitized['popup_rec_button_bg_hover_color']    = isset($input['popup_rec_button_bg_hover_color']) ? sanitize_hex_color($input['popup_rec_button_bg_hover_color']) : '#005177';
         $sanitized['popup_rec_button_text_hover_color']  = isset($input['popup_rec_button_text_hover_color']) ? sanitize_hex_color($input['popup_rec_button_text_hover_color']) : '#ffffff';
         $sanitized['popup_rec_button_border_radius']     = isset($input['popup_rec_button_border_radius']) ? absint($input['popup_rec_button_border_radius']) : 4;
+
+        $allowed_templates = ['custom', 'template_1', 'template_2'];
+        $sanitized['popup_appearance_template'] = isset($input['popup_appearance_template']) && in_array($input['popup_appearance_template'], $allowed_templates) ? $input['popup_appearance_template'] : 'custom';
 
         return $sanitized;
     }
@@ -252,5 +258,22 @@ class Settings_Popup_General
     {
         $value = $this->options['popup_rec_button_border_radius'] ?? 4;
         printf('<input type="number" name="%s[popup_rec_button_border_radius]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
+    }
+
+    public function appearance_template_callback(): void
+    {
+        $value = $this->options['popup_appearance_template'] ?? 'custom';
+        $templates = [
+            'custom'     => __('Ustawienia własne (z zakładki Wygląd)', 'pro_reader'),
+            'template_1' => __('Szablon 1', 'pro_reader'),
+            'template_2' => __('Szablon 2', 'pro_reader'),
+        ];
+
+        echo '<select id="popup_appearance_template" name="' . self::OPTION_NAME . '[popup_appearance_template]">';
+        foreach ($templates as $key => $label) {
+            echo '<option value="' . esc_attr($key) . '"' . selected($value, $key, false) . '>' . esc_html($label) . '</option>';
+        }
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Wybierz, który zestaw ustawień wyglądu ma być używany dla popupa. Szablony możesz zapisać w zakładce "Wygląd - Desktop".', 'pro_reader') . '</p>';
     }
 }

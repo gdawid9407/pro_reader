@@ -24,6 +24,51 @@ class AjaxHandler
         add_action('wp_ajax_nopriv_fetch_recommendations', [$this, 'fetch_recommendations']);
         add_action('wp_ajax_fetch_recommendations', [$this, 'fetch_recommendations']);
         add_action('wp_ajax_rep_reindex_posts', [$this, 'handle_reindex']);
+        add_action('wp_ajax_save_popup_template', [$this, 'save_popup_template']);
+    }
+
+    /**
+     * Zapisuje ustawienia szablonu wyglądu popupa.
+     */
+    public function save_popup_template(): void
+    {
+        check_ajax_referer('rep_admin_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Brak uprawnień.'], 403);
+            return;
+        }
+
+        if (!isset($_POST['template_id'], $_POST['settings_string'])) {
+            wp_send_json_error(['message' => 'Brakujące dane.'], 400);
+            return;
+        }
+
+        $template_id = sanitize_key($_POST['template_id']);
+        if (!in_array($template_id, ['1', '2'])) {
+            wp_send_json_error(['message' => 'Nieprawidłowy ID szablonu.'], 400);
+            return;
+        }
+
+        // Użyj parse_str do przetworzenia zserializowanego ciągu zapytania
+        parse_str($_POST['settings_string'], $parsed_data);
+
+        // Oczekujemy, że dane będą w kluczu 'reader_engagement_pro_options'
+        $settings = $parsed_data['reader_engagement_pro_options'] ?? [];
+
+        if (empty($settings)) {
+            wp_send_json_error(['message' => 'Nie znaleziono danych ustawień do zapisania.'], 400);
+            return;
+        }
+
+        // Tutaj można dodać głęboką sanitację tablicy $settings, jeśli jest to wymagane
+        // Na ten moment zakładamy, że sanitacja odbywa się przy zapisie głównych opcji
+        // ale dla bezpieczeństwa można by ją tu powtórzyć.
+
+        $option_name = 'reader_engagement_pro_template_' . $template_id;
+        update_option($option_name, $settings);
+
+        wp_send_json_success(['message' => 'Szablon ' . $template_id . ' został pomyślnie zapisany.']);
     }
 
     /**

@@ -23,6 +23,17 @@ class Popup
             return;
         }
 
+        // Wczytaj ustawienia szablonu, jeśli został wybrany
+        $template_slug = $this->options['popup_appearance_template'] ?? 'custom';
+        if (in_array($template_slug, ['template_1', 'template_2'])) {
+            $template_id = str_replace('template_', '', $template_slug);
+            $template_options = get_option('reader_engagement_pro_template_' . $template_id, []);
+            if (!empty($template_options)) {
+                // Nadpisz tylko opcje wyglądu, zachowując ustawienia ogólne
+                $this->options = array_merge($this->options, $template_options);
+            }
+        }
+
         add_action('wp', [$this, 'decide_to_render']);
     }
 

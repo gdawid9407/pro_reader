@@ -233,6 +233,7 @@ class Settings_Page
         wp_localize_script('rep-admin-script', 'REP_Admin_Settings', [
             'option_name_attr'      => self::OPTION_NAME,
             'reindex_nonce'         => wp_create_nonce('rep_reindex_nonce'),
+            'admin_nonce'           => wp_create_nonce('rep_admin_nonce'),
             'reindex_text_default'  => __('Uruchom pełne indeksowanie', 'pro_reader'),
             'reindex_text_running'  => __('Indeksowanie...', 'pro_reader'),
             'reindex_text_wait'     => __('Proszę czekać, to może potrwać kilka minut.', 'pro_reader'),

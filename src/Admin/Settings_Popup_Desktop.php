@@ -58,6 +58,10 @@ class Settings_Popup_Desktop
 
         add_settings_section('popup_thumbnail_settings_section', __('Ustawienia Miniaturki', 'pro_reader'), null, $page);
         $this->register_thumbnail_fields($page, 'popup_thumbnail_settings_section');
+
+        add_settings_section('popup_template_section', __('Zarządzanie szablonami', 'pro_reader'), null, $page);
+        add_settings_field('popup_save_template_1', __('Zapisz jako szablon 1', 'pro_reader'), [$this, 'save_template_1_callback'], $page, 'popup_template_section');
+        add_settings_field('popup_save_template_2', __('Zapisz jako szablon 2', 'pro_reader'), [$this, 'save_template_2_callback'], $page, 'popup_template_section');
     }
 
 
@@ -276,6 +280,14 @@ class Settings_Popup_Desktop
         $order      = $this->options['popup_rec_components_order'] ?? array_keys($defaults);
         $visibility = $this->options['popup_rec_components_visibility'] ?? array_fill_keys(array_keys($defaults), '1');
 
+        // Dodatkowe zabezpieczenie na wypadek, gdyby w bazie danych była nieprawidłowa wartość
+        if (!is_array($order)) {
+            $order = array_keys($defaults);
+        }
+        if (!is_array($visibility)) {
+            $visibility = array_fill_keys(array_keys($defaults), '1');
+        }
+
         foreach (array_keys($defaults) as $key) {
             if (!in_array($key, $order, true)) $order[] = $key;
         }
@@ -351,5 +363,17 @@ class Settings_Popup_Desktop
             echo '<option value="' . esc_attr($key) . '" ' . selected($value, $key, false) . '>' . esc_html($name) . '</option>';
         }
         echo '</select>';
+    }
+
+    public function save_template_1_callback(): void
+    {
+        echo '<button type="button" id="rep-save-template-1" class="button button-secondary rep-save-template-btn" data-template-id="1">' . esc_html__('Zapisz bieżące ustawienia jako Szablon 1', 'pro_reader') . '</button>';
+        echo '<span id="save-template-1-feedback" class="rep-template-feedback" style="margin-left: 10px; display: none;"></span>';
+    }
+
+    public function save_template_2_callback(): void
+    {
+        echo '<button type="button" id="rep-save-template-2" class="button button-secondary rep-save-template-btn" data-template-id="2">' . esc_html__('Zapisz bieżące ustawienia jako Szablon 2', 'pro_reader') . '</button>';
+        echo '<span id="save-template-2-feedback" class="rep-template-feedback" style="margin-left: 10px; display: none;"></span>';
     }
 }

@@ -398,4 +398,38 @@ jQuery(function($) {
             $('input[name="' + optionPrefix + '[popup_rec_item_layout]"][value="vertical"]').prop('checked', true).trigger('change');
         });
     }
+
+    // Logika zapisywania szablonów
+    $('.rep-save-template-btn').on('click', function(e) {
+        e.preventDefault();
+        const $button = $(this);
+        const templateId = $button.data('template-id');
+        const $feedback = $('#save-template-' + templateId + '-feedback');
+        const $form = $button.closest('form');
+        const settingsString = $form.serialize();
+
+        $button.prop('disabled', true);
+        $feedback.html('<span class="spinner is-active" style="float:left; margin-right:5px;"></span>Zapisywanie...').css('color', '').show();
+
+        $.post(ajaxurl, {
+            action: 'save_popup_template',
+            nonce: REP_Admin_Settings.admin_nonce,
+            template_id: templateId,
+            settings_string: settingsString
+        }).done(function(response) {
+            if (response.success) {
+                $feedback.text(response.data.message).css('color', 'green');
+            } else {
+                $feedback.text('Błąd: ' + (response.data.message || 'Unknown error')).css('color', 'red');
+            }
+        }).fail(function() {
+            $feedback.text('Błąd komunikacji z serwerem.').css('color', 'red');
+        }).always(function() {
+            $button.prop('disabled', false);
+            $feedback.find('.spinner').remove();
+            setTimeout(function() {
+                $feedback.fadeOut();
+            }, 5000);
+        });
+    });
 });
