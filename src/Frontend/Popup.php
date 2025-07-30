@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Klasa odpowiedzialna za logikę i wyświetlanie popupa na froncie.
+ * Zarządza logiką i wyświetlaniem popupa na froncie.
  */
 class Popup
 {
@@ -27,7 +27,7 @@ class Popup
     }
 
     /**
-     * Decyduje, czy popup powinien być wyświetlony na bieżącej stronie.
+     * Decyduje, czy popup powinien być wyświetlony.
      */
     public function decide_to_render(): void
     {
@@ -44,7 +44,7 @@ class Popup
     }
 
     /**
-     * Renderuje popup w stopce, przekazując ustawienia jako zmienne CSS.
+     * Renderuje popup w stopce i przekazuje ustawienia jako zmienne CSS.
      */
     public function render_popup_in_footer(): void
      {
@@ -52,24 +52,16 @@ class Popup
             return;
         }
 
-        // Zawsze generuj klasy i układy dla desktopu jako podstawę.
         $layout_class   = 'layout-' . sanitize_html_class($this->options['popup_recommendations_layout'] ?? 'list');
         $item_layout    = $this->options['popup_rec_item_layout'] ?? 'vertical';
         
-        // Pobierz ustawienia mobilne, aby przekazać je do atrybutów data-*.
-        $layout_mobile  = $this->options['popup_recommendations_layout_mobile'] ?? 'list';
-        $item_layout_mobile = $this->options['popup_rec_item_layout_mobile'] ?? 'vertical';
-
         $popup_content  = $this->options['popup_content_main'] ?? '';
         $button_width_class = 'btn-width-' . sanitize_html_class($this->options['popup_rec_button_width'] ?? 'compact');
 
-        // --- POCZĄTEK ZMIAN ---
-        // Zaktualizowano generowanie paddingu dla desktopa.
         $padding_y_desktop = $this->options['popup_padding_y_desktop'] ?? 24;
         $padding_x_desktop = $this->options['popup_padding_x_desktop'] ?? 32;
 
         $styles = [
-            // Ustawienia Desktop (z fallbackami)
             '--rep-popup-max-width'         => ($this->options['popup_max_width'] ?? 800) . 'px',
             '--rep-popup-max-height'        => ($this->options['popup_max_height'] ?? 90) . 'vh',
             '--rep-popup-padding'           => "{$padding_y_desktop}px {$padding_x_desktop}px",
@@ -82,19 +74,10 @@ class Popup
             '--rep-rec-thumb-width-list-vertical' => ($this->options['popup_rec_thumb_width_list_vertical'] ?? 100) . '%',
             '--rep-btn-border-radius'       => ($this->options['popup_rec_button_border_radius'] ?? 4) . 'px',
             
-            // Odstępy wewnątrz komponentu
             '--rep-rec-meta-margin-bottom'    => ($this->options['popup_rec_margin_meta_bottom'] ?? 8) . 'px',
             '--rep-rec-title-margin-bottom'   => ($this->options['popup_rec_margin_title_bottom'] ?? 12) . 'px',
             '--rep-rec-excerpt-margin-bottom' => ($this->options['popup_rec_margin_excerpt_bottom'] ?? 12) . 'px',
-
-            // Ustawienia Mobilne (z fallbackami do wartości desktopowych)
-            '--rep-popup-width-mobile'      => ($this->options['popup_max_width_mobile'] ?? 90) . 'vw',
-            '--rep-popup-padding-mobile'    => ($this->options['popup_padding_container_mobile'] ?? 16) . 'px',
-            '--rep-list-item-gap-mobile'    => ($this->options['popup_gap_list_items_mobile'] ?? $this->options['popup_gap_list_items'] ?? 16) . 'px',
-            '--rep-grid-item-gap-mobile'    => ($this->options['popup_gap_grid_items_mobile'] ?? $this->options['popup_gap_grid_items'] ?? 16) . 'px',
-            '--rep-rec-thumb-margin-bottom-mobile' => ($this->options['popup_rec_thumb_margin_bottom_mobile'] ?? $this->options['popup_rec_thumb_margin_bottom'] ?? 16) . 'px',
         ];
-        // --- KONIEC ZMIAN ---
 
         $container_styles = '';
         foreach ($styles as $key => $value) {
@@ -108,9 +91,6 @@ class Popup
             'item_layout'      => $item_layout,
             'components_order' => $this->options['popup_rec_components_order'] ?? ['thumbnail', 'meta', 'title', 'excerpt', 'link'],
             'components_visibility' => $this->options['popup_rec_components_visibility'] ?? array_fill_keys(['thumbnail', 'meta', 'title', 'excerpt', 'link'], '1'),
-            'layout_mobile'    => $layout_mobile,
-            'item_layout_mobile' => $item_layout_mobile,
-            'is_mobile_initial' => wp_is_mobile(),
         ];
 
         extract($template_vars);
@@ -118,7 +98,7 @@ class Popup
     }
 
     /**
-     * Rejestruje skrypty i style potrzebne dla popupa.
+     * Rejestruje skrypty i style dla popupa.
      */
     public function enqueue_assets(): void
     {
@@ -126,7 +106,7 @@ class Popup
             return;
         }
 
-        wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.3.0'); // Bump wersji
+        wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.3.0');
         wp_enqueue_script('rep-popup-script', REP_PLUGIN_URL . 'assets/js/popup.js', ['jquery'], '1.1.0', true);
 
         wp_localize_script(
@@ -152,15 +132,13 @@ class Popup
      */
     public function generate_recommendation_item_html(int $post_id): string
     {
-        // Zawsze renderuj strukturę DOM dla ustawień desktopowych.
-        // JS na froncie zajmie się jej zmianą dla widoku mobilnego.
         $item_layout = $this->options['popup_rec_item_layout'] ?? 'vertical';
         $default_order = ['thumbnail', 'meta', 'title', 'excerpt', 'link'];
         $components_order = $this->options['popup_rec_components_order'] ?? $default_order;
         $components_visibility = $this->options['popup_rec_components_visibility'] ?? array_fill_keys($default_order, '1');
         $components_html = [];
 
-        foreach ($default_order as $component_key) { // Użyj domyślnej kolejności, aby upewnić się, że wszystkie komponenty są dostępne
+        foreach ($default_order as $component_key) {
             if (!empty($components_visibility[$component_key])) {
                 $components_html[$component_key] = $this->get_component_html($component_key, $post_id);
             }

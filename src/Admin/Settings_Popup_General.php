@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Klasa zarządzająca zakładką "Ustawienia Ogólne" dla modułu Popup.
+ * Zarządza zakładką "Ustawienia Ogólne" dla modułu Popup.
  */
 class Settings_Popup_General
 {
@@ -21,29 +21,23 @@ class Settings_Popup_General
     }
 
     /**
-     * Rejestruje sekcje i pola ustawień dla tej zakładki.
+     * Rejestruje sekcje i pola ustawień.
      */
     public function page_init(): void
     {
         $page = 'reader-engagement-pro-popup-general';
 
-        // Sekcja 1: Wyzwalacze
         add_settings_section('popup_triggers_section', __('Ustawienia Wyzwalaczy i Widoczności', 'pro_reader'), null, $page);
         $this->register_trigger_fields($page, 'popup_triggers_section');
 
-        // Sekcja 2: Treść
         add_settings_section('popup_content_section', __('Treść Popupa', 'pro_reader'), null, $page);
         add_settings_field('popup_content_main', __('Edytor treści', 'pro_reader'), [$this, 'content_main_callback'], $page, 'popup_content_section');
         
-        // Sekcja 3: Rekomendacje Ogólne
         add_settings_section('popup_recommendations_section', __('Ustawienia Ogólne Rekomendacji', 'pro_reader'), null, $page);
         $this->register_recommendation_fields($page, 'popup_recommendations_section');
 
-        // --- POCZĄTEK ZMIAN ---
-        // Sekcja 4: Ustawienia Przycisku
         add_settings_section('popup_button_settings_section', __('Ustawienia Przycisku "Czytaj dalej"', 'pro_reader'), null, $page);
         $this->register_button_fields($page, 'popup_button_settings_section');
-        // --- KONIEC ZMIAN ---
     }
 
     private function register_trigger_fields(string $page, string $section): void
@@ -63,10 +57,6 @@ class Settings_Popup_General
         add_settings_field('popup_recommendation_logic', __('Kolejność rekomendacji', 'pro_reader'), [$this, 'recommendation_logic_callback'], $page, $section);
     }
 
-    // --- POCZĄTEK ZMIAN ---
-    /**
-     * Rejestruje pola dla ustawień przycisku.
-     */
     private function register_button_fields(string $page, string $section): void
     {
         add_settings_field('popup_recommendations_link_text', __('Treść przycisku', 'pro_reader'), [$this, 'recommendations_link_text_callback'], $page, $section);
@@ -76,10 +66,9 @@ class Settings_Popup_General
         add_settings_field('popup_rec_button_text_hover_color', __('Kolor tekstu (hover)', 'pro_reader'), [$this, 'button_text_hover_color_callback'], $page, $section);
         add_settings_field('popup_rec_button_border_radius', __('Zaokrąglenie rogów (px)', 'pro_reader'), [$this, 'button_border_radius_callback'], $page, $section);
     }
-    // --- KONIEC ZMIAN ---
 
     /**
-     * Sanitacja danych tylko dla tej zakładki.
+     * Sanitacja danych dla zakładki "Ustawienia Ogólne".
      */
     public function sanitize(array $input, array $current_options): array
     {
@@ -111,15 +100,12 @@ class Settings_Popup_General
             $sanitized['popup_recommendation_logic'] = 'hybrid_fill';
         }
 
-        // --- POCZĄTEK ZMIAN ---
-        // Dodano sanitację dla opcji przycisku.
         $sanitized['popup_recommendations_link_text'] = isset($input['popup_recommendations_link_text']) ? wp_kses_post($input['popup_recommendations_link_text']) : 'Zobacz więcej →';
         $sanitized['popup_rec_button_bg_color']          = isset($input['popup_rec_button_bg_color']) ? sanitize_hex_color($input['popup_rec_button_bg_color']) : '#0073aa';
         $sanitized['popup_rec_button_text_color']        = isset($input['popup_rec_button_text_color']) ? sanitize_hex_color($input['popup_rec_button_text_color']) : '#ffffff';
         $sanitized['popup_rec_button_bg_hover_color']    = isset($input['popup_rec_button_bg_hover_color']) ? sanitize_hex_color($input['popup_rec_button_bg_hover_color']) : '#005177';
         $sanitized['popup_rec_button_text_hover_color']  = isset($input['popup_rec_button_text_hover_color']) ? sanitize_hex_color($input['popup_rec_button_text_hover_color']) : '#ffffff';
         $sanitized['popup_rec_button_border_radius']     = isset($input['popup_rec_button_border_radius']) ? absint($input['popup_rec_button_border_radius']) : 4;
-        // --- KONIEC ZMIAN ---
 
         return $sanitized;
     }
@@ -229,8 +215,6 @@ class Settings_Popup_General
         echo '<p class="description">' . esc_html__('Wybierz, w jaki sposób sortować treści wybrane w polu "Źródło rekomendacji".', 'pro_reader') . '</p>';
     }
 
-    // --- POCZĄTEK ZMIAN ---
-    // Dodano funkcje callback dla ustawień przycisku.
     public function recommendations_link_text_callback(): void
     {
         $content = $this->options['popup_recommendations_link_text'] ?? 'Zobacz więcej →';
@@ -269,5 +253,4 @@ class Settings_Popup_General
         $value = $this->options['popup_rec_button_border_radius'] ?? 4;
         printf('<input type="number" name="%s[popup_rec_button_border_radius]" value="%d" min="0" max="50" />', self::OPTION_NAME, esc_attr($value));
     }
-    // --- KONIEC ZMIAN ---
 }

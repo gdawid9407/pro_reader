@@ -152,36 +152,12 @@ jQuery(function($) {
             const layout = $desktopLayoutSelector.val();
             $previewList.removeClass('layout-list layout-grid').addClass('layout-' + layout);
 
-            if (layout === 'grid') {
-                $itemLayoutRadios.filter('[value="vertical"]').prop('checked', true).trigger('change');
-                $itemLayoutRow.find('input').prop('disabled', true);
-                $itemLayoutRow.css('opacity', 0.6);
-                if ($itemLayoutRow.find('.description.disabled-reason').length === 0) {
-                     $itemLayoutRow.find('td:first').append('<p class="description disabled-reason" style="margin-top: 5px; font-style: italic;">Dla układu siatki dostępna jest tylko struktura wertykalna.</p>');
-                }
-            } else {
-                $itemLayoutRow.find('input').prop('disabled', false);
-                $itemLayoutRow.css('opacity', 1);
-                $itemLayoutRow.find('.description.disabled-reason').remove();
-            }
+            $itemLayoutRow.find('input').prop('disabled', false);
+            $itemLayoutRow.css('opacity', 1);
+            $itemLayoutRow.find('.description.disabled-reason').remove();
         }
 
         $desktopLayoutSelector.on('change', handleDesktopLayoutChange).trigger('change');
-
-        // Aktualizacja podglądu dla ustawień mobilnych
-        const $mobileLayoutSelector = $('select[name="' + optionPrefix + '[popup_recommendations_layout_mobile]"]');
-        if ($mobileLayoutSelector.length) {
-            $mobileLayoutSelector.on('change', function() {
-                $previewContainer.attr('data-layout-mobile', $(this).val());
-            }).trigger('change');
-        }
-
-        const $mobileItemLayoutSelector = $('select[name="' + optionPrefix + '[popup_rec_item_layout_mobile]"]');
-        if ($mobileItemLayoutSelector.length) {
-            $mobileItemLayoutSelector.on('change', function() {
-                $previewContainer.attr('data-item-layout-mobile', $(this).val());
-            }).trigger('change');
-        }
 
         // Aktualizacja struktury pojedynczego elementu (wertykalny vs horyzontalny)
         $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]').on('change', function() {
@@ -362,8 +338,6 @@ jQuery(function($) {
             ],
             '#popup_rec_thumb_width_horizontal': { variable: '--rep-rec-thumb-width-horizontal', unit: 'px' },
             '#popup_rec_thumb_width_list_vertical': { variable: '--rep-rec-thumb-width-list-vertical', unit: '%' },
-            '#popup_max_width_mobile': { variable: '--rep-popup-width-mobile', unit: 'vw' },
-            '#popup_padding_container_mobile': { variable: '--rep-popup-padding-mobile', unit: 'px' },
             '#popup_rec_margin_meta_bottom': { variable: '--rep-rec-meta-margin-bottom', unit: 'px' },
             '#popup_rec_margin_title_bottom': { variable: '--rep-rec-title-margin-bottom', unit: 'px' },
             '#popup_rec_margin_excerpt_bottom': { variable: '--rep-rec-excerpt-margin-bottom', unit: 'px' }

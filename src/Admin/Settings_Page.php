@@ -6,14 +6,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Import klas, których będziemy używać w tym pliku.
 use ReaderEngagementPro\Admin\Settings_Progress_Bar;
 use ReaderEngagementPro\Admin\Settings_Popup_General;
 use ReaderEngagementPro\Admin\Settings_Popup_Desktop;
-use ReaderEngagementPro\Admin\Settings_Popup_Mobile;
 
 /**
- * Klasa odpowiedzialna za tworzenie i zarządzanie główną stroną ustawień wtyczki.
+ * Zarządza główną stroną ustawień wtyczki.
  */
 class Settings_Page
 {
@@ -23,14 +21,12 @@ class Settings_Page
     private Settings_Progress_Bar $progress_bar_settings;
     private Settings_Popup_General $popup_settings_general;
     private Settings_Popup_Desktop $popup_settings_desktop;
-    private Settings_Popup_Mobile $popup_settings_mobile;
 
     public function __construct()
     {
         $this->progress_bar_settings = new Settings_Progress_Bar();
         $this->popup_settings_general = new Settings_Popup_General();
         $this->popup_settings_desktop = new Settings_Popup_Desktop();
-        $this->popup_settings_mobile  = new Settings_Popup_Mobile();
 
         add_action('admin_init', [$this, 'page_init']);
         add_action('admin_menu', [$this, 'add_plugin_page']);
@@ -38,7 +34,7 @@ class Settings_Page
     }
 
     /**
-     * Rejestruje ustawienia i pola na stronie admina.
+     * Rejestruje ustawienia wtyczki.
      */
     public function page_init(): void
     {
@@ -68,23 +64,23 @@ class Settings_Page
     }
 
     /**
-     * Dodaje stronę ustawień wtyczki do menu w panelu WordPress.
+     * Dodaje stronę ustawień do menu w panelu WordPress.
      */
     public function add_plugin_page(): void
     {
         add_menu_page(
-            __('Ustawienia Pro Reader', 'pro_reader'), // Tytuł strony
-            __('Pro Reader', 'pro_reader'),           // Tytuł w menu
-            'manage_options',                         // Wymagane uprawnienia
-            'reader-engagement-pro',                  // Slug menu
-            [$this, 'create_admin_page'],             // Funkcja renderująca stronę
-            'dashicons-performance',                  // Ikona
-            81                                        // Pozycja w menu
+            __('Ustawienia Pro Reader', 'pro_reader'),
+            __('Pro Reader', 'pro_reader'),
+            'manage_options',
+            'reader-engagement-pro',
+            [$this, 'create_admin_page'],
+            'dashicons-performance',
+            81
         );
     }
 
     /**
-     * Kieruje dane do odpowiedniej funkcji sanitacji na podstawie przesłanych pól.
+     * Kieruje dane do odpowiedniej funkcji sanitacji na podstawie aktywnej zakładki.
      */
     public function route_sanitize_callback(array $input): array
     {
@@ -100,15 +96,13 @@ class Settings_Page
                 return $this->popup_settings_general->sanitize($input, $options);
             case 'desktop':
                 return $this->popup_settings_desktop->sanitize($input, $options);
-            case 'mobile':
-                return $this->popup_settings_mobile->sanitize($input, $options);
         }
         return $options;
         
     }
 
     /**
-     * Renderuje główną strukturę HTML strony ustawień (zakładki, formularz).
+     * Renderuje strukturę HTML strony ustawień.
      */
     public function create_admin_page(): void
     {
@@ -146,9 +140,6 @@ class Settings_Page
                                 <a href="?page=reader-engagement-pro&tab=popup&sub_tab=desktop" class="nav-tab <?php echo $active_sub_tab === 'desktop' ? 'nav-tab-active' : ''; ?>">
                                     <?php esc_html_e('Wygląd - Desktop', 'pro_reader'); ?>
                                 </a>
-                                <a href="?page=reader-engagement-pro&tab=popup&sub_tab=mobile" class="nav-tab <?php echo $active_sub_tab === 'mobile' ? 'nav-tab-active' : ''; ?>">
-                                    <?php esc_html_e('Wygląd - Mobilny', 'pro_reader'); ?>
-                                </a>
                             </h2>
                             <?php
                             settings_fields(self::SETTINGS_GROUP);
@@ -159,8 +150,6 @@ class Settings_Page
                                 do_settings_sections('reader-engagement-pro-popup-general');
                             } elseif ($active_sub_tab === 'desktop') {
                                 do_settings_sections('reader-engagement-pro-popup-desktop');
-                            } elseif ($active_sub_tab === 'mobile') {
-                                do_settings_sections('reader-engagement-pro-popup-mobile');
                             }
                             submit_button();
                         }
@@ -169,12 +158,9 @@ class Settings_Page
                 </div>
 
                 <?php 
-                // --- POCZĄTEK ZMIAN ---
-                // Dodajemy warunek sprawdzający, czy jesteśmy w zakładce "popup",
-                // a następnie czy pod-zakładka to 'desktop' lub 'mobile'.
                 if ($active_tab === 'popup') :
                     $active_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : 'general';
-                    if (in_array($active_sub_tab, ['desktop', 'mobile'])) :
+                    if (in_array($active_sub_tab, ['desktop'])) :
                         $preview_wrapper_class = 'rep-preview-mode-' . esc_attr($active_sub_tab);
                 ?>
                 <div id="rep-live-preview-wrapper" class="<?php echo $preview_wrapper_class; ?>" style="flex: 1; min-width: 400px;">
@@ -186,9 +172,8 @@ class Settings_Page
                     </div>
                 </div>
                 <?php 
-                    endif; // Koniec warunku dla pod-zakładek
-                endif; // Koniec warunku dla głównej zakładki 'popup'
-                // --- KONIEC ZMIAN ---
+                    endif;
+                endif;
                 ?>
 
             </div>
@@ -214,7 +199,7 @@ class Settings_Page
     }
 
     /**
-     * Rejestruje i dołącza skrypty oraz style dla strony ustawień.
+     * Rejestruje skrypty i style dla strony ustawień.
      */
     public function enqueue_admin_assets($hook): void
     {
@@ -247,11 +232,6 @@ class Settings_Page
         $inline_css = "
             #rep-layout-builder .ui-sortable-placeholder { border: 2px dashed #ccd0d4; background: #f6f7f7; height: 40px; margin-bottom: 5px; visibility: visible !important; }
             #rep-layout-builder .ui-sortable-helper { box-shadow: 0 5px 15px rgba(0,0,0,0.15); opacity: 0.95; }
-            #rep-live-preview-wrapper.rep-preview-mode-mobile #rep-live-preview-area {
-                max-width: 415px !important; /* Szerokość symulująca telefon + padding */
-                margin: 0 auto;
-                transition: max-width 0.3s ease-in-out;
-            }
         ";
         wp_add_inline_style('wp-admin', $inline_css);
     }

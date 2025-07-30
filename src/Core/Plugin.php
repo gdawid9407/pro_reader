@@ -14,51 +14,38 @@ use ReaderEngagementPro\Admin\Settings_Page;
 use ReaderEngagementPro\Core\AjaxHandler;
 
 /**
- * Główna klasa wtyczki. Inicjalizuje wszystkie moduły i spina je razem.
+ * Główna klasa wtyczki.
  */
 final class Plugin
 {
-    /**
-     * Konstruktor klasy. To tutaj podpinamy wszystkie akcje i filtry.
-     */
     public function __construct()
     {
-        // Rejestracja haka aktywacyjnego.
         register_activation_hook(REP_PLUGIN_FILE, [Installer::class, 'activate']);
-
-        // Główna akcja inicjalizująca wtyczki.
         add_action('plugins_loaded', [$this, 'init']);
     }
 
     /**
-     * Inicjalizuje poszczególne komponenty wtyczki.
+     * Inicjalizuje komponenty wtyczki.
      */
     public function init(): void
-{
-    // Inicjalizacja komponentów, które działają na froncie strony.
-    new ProgressBar();
-    new Popup();
-    
-    // Inicjalizacja centralnego zarządcy zapytań AJAX.
-    new AjaxHandler();
+    {
+        new ProgressBar();
+        new Popup();
+        new AjaxHandler();
 
-    // Sprawdź, czy jesteśmy w panelu administracyjnym.
-    if (is_admin()) {
-        // Jeśli tak, zainicjalizuj stronę ustawień.
-        new Settings_Page();
+        if (is_admin()) {
+            new Settings_Page();
+        }
+
+        $this->register_save_post_hooks();
     }
 
-    // Zarejestruj hooki 'save_post' do indeksowania linków.
-    $this->register_save_post_hooks();
-}
-
     /**
-     * Rejestruje hooki 'save_post' dla odpowiednich typów treści.
+     * Rejestruje hooki 'save_post' dla wybranych typów treści.
      */
     private function register_save_post_hooks(): void
     {
         $options = get_option('reader_engagement_pro_options', []);
-        // Używamy opcji `popup_display_on` do określenia, które typy postów mają być indeksowane.
         $post_types_to_index = $options['popup_display_on'] ?? ['post'];
 
         if (!empty($post_types_to_index) && is_array($post_types_to_index)) {

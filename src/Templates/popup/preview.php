@@ -44,9 +44,6 @@ $spacing_styles = [
     '--rep-btn-bg'            => $options['popup_rec_button_bg_color'] ?? '#0073aa',
     '--rep-btn-text'          => $options['popup_rec_button_text_color'] ?? '#ffffff',
     '--rep-btn-border-radius'       => ($options['popup_rec_button_border_radius'] ?? 4) . 'px',
-    // Mobile
-    '--rep-popup-width-mobile'      => ($options['popup_max_width_mobile'] ?? 90) . 'vw',
-    '--rep-popup-padding-mobile'    => ($options['popup_padding_container_mobile'] ?? 16) . 'px',
 ];
 
 

@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Klasa zarządzająca zakładką "Wygląd - Desktop" dla modułu Popup.
+ * Zarządza zakładką "Wygląd - Desktop" dla modułu Popup.
  */
 class Settings_Popup_Desktop
 {
@@ -68,7 +68,7 @@ class Settings_Popup_Desktop
     }
 
     /**
-     * Sanitacja danych tylko dla tej zakładki.
+     * Sanitacja danych dla zakładki "Wygląd - Desktop".
      */
     public function sanitize(array $input, array $current_options): array
     {
@@ -152,14 +152,12 @@ class Settings_Popup_Desktop
     {
         $value = $this->options['popup_max_width'] ?? 670;
         printf('<input type="number" id="popup_max_width" name="%s[popup_max_width]" value="%d" min="300" max="1600" style="width: 100px;" />', self::OPTION_NAME, esc_attr($value));
-        echo '<p class="description">' . esc_html__('Dla układu "Lista" zalecana szerokość to maksymalnie 925px. Układ "Siatka" może wymagać większej szerokości.', 'pro_reader') . '</p>';
     }
 
     public function max_height_callback(): void
     {
         $value = $this->options['popup_max_height'] ?? 81;
         printf('<input type="number" id="popup_max_height" name="%s[popup_max_height]" value="%d" min="40" max="90" style="width: 100px;" />', self::OPTION_NAME, esc_attr($value));
-        echo '<p class="description">' . esc_html__('Dotyczy głównie układu "Lista". Zalecana maksymalna wartość to 70, aby zapewnić pełną widoczność treści na niższych ekranach.', 'pro_reader') . '</p>';
     }
 
     public function padding_y_desktop_callback(): void

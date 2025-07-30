@@ -11,7 +11,7 @@ use ReaderEngagementPro\Database\RecommendationQuery;
 use ReaderEngagementPro\Frontend\Popup;
 
 /**
- * Klasa obsługująca wszystkie zapytania AJAX wtyczki.
+ * Obsługuje zapytania AJAX wtyczki.
  */
 class AjaxHandler
 {
@@ -21,16 +21,13 @@ class AjaxHandler
     {
         $this->options = get_option('reader_engagement_pro_options', []);
 
-        // Hook dla pobierania rekomendacji (dla zalogowanych i niezalogowanych)
         add_action('wp_ajax_nopriv_fetch_recommendations', [$this, 'fetch_recommendations']);
         add_action('wp_ajax_fetch_recommendations', [$this, 'fetch_recommendations']);
-
-        // Hook dla reindeksowania postów (tylko dla admina)
         add_action('wp_ajax_rep_reindex_posts', [$this, 'handle_reindex']);
     }
 
     /**
-     * Obsługuje zapytanie AJAX pobierające rekomendacje dla popupa.
+     * Pobiera i zwraca rekomendacje dla popupa.
      */
     public function fetch_recommendations(): void
     {
@@ -97,7 +94,7 @@ class AjaxHandler
 
         if ($query->have_posts()) {
             $html = '';
-            $popup_instance = new Popup(); // Inicjalizacja klasy Popup
+            $popup_instance = new Popup();
 
             while ($query->have_posts()) {
                 $query->the_post();
@@ -111,7 +108,7 @@ class AjaxHandler
     }
 
     /**
-     * Obsługuje zapytanie AJAX do ręcznego reindeksowania postów.
+     * Obsługuje ręczne reindeksowanie postów.
      */
     public function handle_reindex(): void
     {
