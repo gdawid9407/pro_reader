@@ -199,7 +199,7 @@
   gap: var(--rep-grid-item-gap, 24px);
 }
 #rep-intelligent-popup__list.layout-grid .rep-rec-item {
-  width: 234px;
+  width: var(--rep-grid-item-width, 234px);
   flex-shrink: 0;
   margin-bottom: 0; 
 }

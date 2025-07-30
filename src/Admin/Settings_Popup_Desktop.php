@@ -37,6 +37,7 @@ class Settings_Popup_Desktop
         add_settings_field('popup_margin_content_bottom', __('Odstęp pod treścią (px)', 'pro_reader'), [$this, 'margin_content_bottom_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_gap_list_items', __('Odstęp między elementami - Lista (px)', 'pro_reader'), [$this, 'gap_list_items_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_gap_grid_items', __('Odstęp między elementami - Siatka (px)', 'pro_reader'), [$this, 'gap_grid_items_callback'], $page, 'popup_layout_spacing_section');
+        add_settings_field('popup_grid_item_width', __('Szerokość elementu - Siatka (px)', 'pro_reader'), [$this, 'grid_item_width_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_rec_thumb_margin_right', __('Odstęp zdjęcia od tekstu (px)', 'pro_reader'), [$this, 'thumb_margin_right_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_rec_thumb_width_horizontal', __('Szerokość miniaturki - Horyzontalny (px)', 'pro_reader'), [$this, 'thumb_width_horizontal_callback'], $page, 'popup_layout_spacing_section');
         add_settings_field('popup_rec_thumb_width_list_vertical', __('Szerokość miniaturki - Wertykalny (%)', 'pro_reader'), [$this, 'thumb_width_list_vertical_callback'], $page, 'popup_layout_spacing_section');
@@ -81,6 +82,7 @@ class Settings_Popup_Desktop
         $sanitized['popup_margin_content_bottom']     = isset($input['popup_margin_content_bottom']) ? absint($input['popup_margin_content_bottom']) : 20;
         $sanitized['popup_gap_list_items']            = isset($input['popup_gap_list_items']) ? absint($input['popup_gap_list_items']) : 50;
         $sanitized['popup_gap_grid_items']            = isset($input['popup_gap_grid_items']) ? absint($input['popup_gap_grid_items']) : 45;
+        $sanitized['popup_grid_item_width']           = isset($input['popup_grid_item_width']) ? absint($input['popup_grid_item_width']) : 234;
         
          $sanitized['popup_rec_thumb_margin_right']    = isset($input['popup_rec_thumb_margin_right']) ? absint($input['popup_rec_thumb_margin_right']) : 25;
          $sanitized['popup_rec_thumb_width_horizontal'] = isset($input['popup_rec_thumb_width_horizontal']) ? absint($input['popup_rec_thumb_width_horizontal']) : 200;
@@ -188,6 +190,13 @@ class Settings_Popup_Desktop
     {
         $value = $this->options['popup_gap_grid_items'] ?? 45;
         printf('<input type="number" id="popup_gap_grid_items" name="%s[popup_gap_grid_items]" value="%d" min="0" max="100" />', self::OPTION_NAME, esc_attr($value));
+    }
+
+    public function grid_item_width_callback(): void
+    {
+        $value = $this->options['popup_grid_item_width'] ?? 234;
+        printf('<input type="number" id="popup_grid_item_width" name="%s[popup_grid_item_width]" value="%d" min="150" max="500" />', self::OPTION_NAME, esc_attr($value));
+        echo '<p class="description">' . esc_html__('Kontroluje całkowitą szerokość pojedynczego elementu w układzie siatki.', 'pro_reader') . '</p>';
     }
 
     public function thumb_margin_right_callback(): void

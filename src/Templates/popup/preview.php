@@ -39,6 +39,7 @@ $spacing_styles = [
     '--rep-content-margin-bottom'   => ($options['popup_margin_content_bottom'] ?? 20) . 'px',
     '--rep-list-item-gap'           => ($options['popup_gap_list_items'] ?? 16) . 'px',
     '--rep-grid-item-gap'           => ($options['popup_gap_grid_items'] ?? 24) . 'px',
+    '--rep-grid-item-width'         => ($options['popup_grid_item_width'] ?? 234) . 'px',
     '--rep-rec-thumb-margin-right'  => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
     '--rep-rec-thumb-margin-bottom' => ($options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
     '--rep-btn-bg'            => $options['popup_rec_button_bg_color'] ?? '#0073aa',

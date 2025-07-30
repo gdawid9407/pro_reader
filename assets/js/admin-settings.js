@@ -330,6 +330,7 @@ jQuery(function($) {
             '#popup_margin_content_bottom': { variable: '--rep-content-margin-bottom', unit: 'px' },
             '#popup_gap_list_items': { variable: '--rep-list-item-gap', unit: 'px' },
             '#popup_gap_grid_items': { variable: '--rep-grid-item-gap', unit: 'px' },
+            '#popup_grid_item_width': { variable: '--rep-grid-item-width', unit: 'px' },
             '#popup_max_width': { variable: '--rep-popup-max-width', unit: 'px' },
             '#popup_max_height': { variable: '--rep-popup-max-height', unit: 'vh' },
             '#popup_rec_thumb_margin_right': [
@@ -378,6 +379,7 @@ jQuery(function($) {
                 '#popup_margin_content_bottom': '20',
                 '#popup_gap_list_items': '50',
                 '#popup_gap_grid_items': '45',
+                '#popup_grid_item_width': '234',
                 '#popup_rec_thumb_margin_right': '25',
                 '#popup_rec_thumb_width_horizontal': '200',
                 '#popup_rec_thumb_width_list_vertical': '100',

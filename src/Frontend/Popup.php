@@ -68,6 +68,7 @@ class Popup
             '--rep-content-margin-bottom'   => ($this->options['popup_margin_content_bottom'] ?? 20) . 'px',
             '--rep-list-item-gap'           => ($this->options['popup_gap_list_items'] ?? 16) . 'px',
             '--rep-grid-item-gap'           => ($this->options['popup_gap_grid_items'] ?? 24) . 'px',
+            '--rep-grid-item-width'         => ($this->options['popup_grid_item_width'] ?? 234) . 'px',
             '--rep-rec-thumb-margin-right'  => ($this->options['popup_rec_thumb_margin_right'] ?? 16) . 'px',
             '--rep-rec-thumb-margin-bottom' => ($this->options['popup_rec_thumb_margin_bottom'] ?? 16) . 'px',
             '--rep-rec-thumb-width-horizontal' => ($this->options['popup_rec_thumb_width_horizontal'] ?? 200) . 'px',
