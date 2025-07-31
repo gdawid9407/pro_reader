@@ -210,7 +210,7 @@ class Settings_Page
             'rep-admin-settings',
             REP_PLUGIN_URL . 'assets/js/admin-settings.js',
             ['jquery', 'wp-color-picker', 'jquery-ui-sortable'],
-            '2.0.0', // Wersja
+            filemtime(REP_PLUGIN_PATH . 'assets/js/admin-settings.js'), // Kluczowa zmiana: unieważnianie cache
             true
         );
 

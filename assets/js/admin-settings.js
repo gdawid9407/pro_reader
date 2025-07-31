@@ -74,15 +74,128 @@ jQuery(function($) {
 
         const updateLivePreview = () => {
             for (const [selector, { variable, unit = '' }] of Object.entries(styleMap)) {
-                const value = $(selector).val();
-                if (value) {
-                    previewPopup.css(variable, value + unit);
+                const input = $(selector);
+                let value;
+
+                if (input.is(':checkbox')) {
+                    // Dla checkboxów, wartość jest 'true' lub 'false'
+                    value = input.is(':checked'); 
+                    // Możesz potrzebować specyficznej logiki do obsługi true/false w CSS
+                } else if (input.hasClass('wp-color-picker-field')) {
+                    // Dla color pickera, wartość jest pobierana bezpośrednio
+                    value = input.val();
+                } else {
+                    // Dla pozostałych inputów
+                    value = input.val();
+                }
+
+                if (value !== null && value !== undefined) {
+                    if (typeof value === 'string' && unit) {
+                        previewPopup.css(variable, value + unit);
+                    } else {
+                        previewPopup.css(variable, value);
+                    }
                 }
             }
         };
 
-        $('.rep-settings-form-wrapper').on('input change', 'input, select', updateLivePreview);
-        $('.wp-color-picker-field').wpColorPicker({ change: updateLivePreview });
-        updateLivePreview(); // Inicjalizacja
+        // Ulepszone nasłuchiwanie na wszystkie istotne zdarzenia w całym formularzu
+        const form = $('.rep-settings-form-wrapper form');
+
+        // Nasłuchuj na zdarzenia 'input' i 'change' dla standardowych pól
+        form.on('input change', 'input[type="text"], input[type="number"], input[type="range"], input[type="hidden"], select, textarea', updateLivePreview);
+
+        // Specjalne traktowanie dla checkboxów i radio buttonów
+        form.on('change', 'input[type="checkbox"], input[type="radio"]', updateLivePreview);
+
+        // Dla pól wyboru koloru, użyj dedykowanego zdarzenia 'change' z wpColorPicker
+        $('.wp-color-picker-field').each(function() {
+            $(this).wpColorPicker({
+                change: function(event, ui) {
+                    // Opóźnienie, aby zapewnić, że wartość pola jest zaktualizowana
+                    setTimeout(() => {
+                        updateLivePreview();
+                    }, 50);
+                }
+            });
+        });
+        
+        // Inicjalizacja przy załadowaniu strony
+        updateLivePreview(); 
+        updatePreviewOrderAndVisibility('desktop');
+        updatePreviewOrderAndVisibility('mobile');
     }
+
+    function updatePreviewOrderAndVisibility(view) {
+        const builder = $(`#rep-layout-builder-${view}`);
+        if (!builder.length) return;
+    
+        const previewList = $('#rep-popup-preview-area .rep-rec-content');
+        if (!previewList.length) return;
+    
+        const componentMap = {
+            'thumbnail': '.rep-rec-thumb-link',
+            'meta': '.rep-rec-meta',
+            'title': '.rep-rec-title',
+            'excerpt': '.rep-rec-excerpt',
+            'link': '.rep-rec-button'
+        };
+    
+        // Zbieranie kolejności i widoczności z kontrolek
+        const order = builder.find('input[type="hidden"]').map(function() {
+            return $(this).val();
+        }).get();
+    
+        const visibility = {};
+        builder.find('input[type="checkbox"]').each(function() {
+            const key = $(this).attr('id').replace(`v_`, '').replace(`_${view}`, '');
+            visibility[key] = $(this).is(':checked');
+        });
+    
+        // Aktualizacja podglądu
+        previewList.each(function() {
+            const content = $(this);
+            // Zapisz oryginalne elementy, aby uniknąć ich utraty
+            if (!content.data('original-order')) {
+                const originalOrder = {};
+                for (const key in componentMap) {
+                    originalOrder[key] = content.find(componentMap[key]).detach();
+                }
+                content.data('original-order', originalOrder);
+            }
+    
+            const originalElements = content.data('original-order');
+            content.empty(); // Wyczyść kontener
+    
+            // Dodaj elementy w nowej kolejności i z uwzględnieniem widoczności
+            order.forEach(key => {
+                if (visibility[key] && originalElements[key]) {
+                    content.append(originalElements[key]);
+                }
+            });
+        });
+    }
+
+    // --- Logika sortowania ---
+    const initSortable = (containerId, view) => {
+        const container = $(`#${containerId}`);
+        if (container.length) {
+            container.sortable({
+                handle: '.dashicons-menu',
+                placeholder: 'rep-sortable-placeholder',
+                forcePlaceholderSize: true,
+                update: function() {
+                    updatePreviewOrderAndVisibility(view);
+                }
+            }).disableSelection();
+
+            // Nasłuchuj na zmiany checkboxów wewnątrz sortowalnego kontenera
+            container.on('change', 'input[type="checkbox"]', function() {
+                updatePreviewOrderAndVisibility(view);
+            });
+        }
+    };
+
+    initSortable('rep-layout-builder-desktop', 'desktop');
+    initSortable('rep-layout-builder-mobile', 'mobile');
 });
