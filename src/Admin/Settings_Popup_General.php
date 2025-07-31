@@ -40,7 +40,8 @@ class Settings_Popup_General
         $this->register_button_fields($page, 'popup_button_settings_section');
 
         add_settings_section('popup_appearance_template_section', __('Szablony Wyglądu', 'pro_reader'), null, $page);
-        add_settings_field('popup_appearance_template', __('Wybierz szablon wyglądu', 'pro_reader'), [$this, 'appearance_template_callback'], $page, 'popup_appearance_template_section');
+        add_settings_field('popup_appearance_template', __('Szablon - Desktop', 'pro_reader'), [$this, 'appearance_template_callback'], $page, 'popup_appearance_template_section');
+        add_settings_field('popup_appearance_template_mobile', __('Szablon - Mobilny', 'pro_reader'), [$this, 'appearance_template_mobile_callback'], $page, 'popup_appearance_template_section');
     }
 
     private function register_trigger_fields(string $page, string $section): void
@@ -112,6 +113,7 @@ class Settings_Popup_General
 
         $allowed_templates = ['custom', 'template_1', 'template_2'];
         $sanitized['popup_appearance_template'] = isset($input['popup_appearance_template']) && in_array($input['popup_appearance_template'], $allowed_templates) ? $input['popup_appearance_template'] : 'custom';
+        $sanitized['popup_appearance_template_mobile'] = isset($input['popup_appearance_template_mobile']) && in_array($input['popup_appearance_template_mobile'], $allowed_templates) ? $input['popup_appearance_template_mobile'] : 'custom';
 
         return $sanitized;
     }
@@ -264,9 +266,9 @@ class Settings_Popup_General
     {
         $value = $this->options['popup_appearance_template'] ?? 'custom';
         $templates = [
-            'custom'     => __('Ustawienia własne (z zakładki Wygląd)', 'pro_reader'),
-            'template_1' => __('Szablon 1', 'pro_reader'),
-            'template_2' => __('Szablon 2', 'pro_reader'),
+            'custom'     => __('Ustawienia własne (z zakładki Wygląd - Desktop)', 'pro_reader'),
+            'template_1' => __('Szablon 1 (Desktop)', 'pro_reader'),
+            'template_2' => __('Szablon 2 (Desktop)', 'pro_reader'),
         ];
 
         echo '<select id="popup_appearance_template" name="' . self::OPTION_NAME . '[popup_appearance_template]">';
@@ -274,6 +276,23 @@ class Settings_Popup_General
             echo '<option value="' . esc_attr($key) . '"' . selected($value, $key, false) . '>' . esc_html($label) . '</option>';
         }
         echo '</select>';
-        echo '<p class="description">' . esc_html__('Wybierz, który zestaw ustawień wyglądu ma być używany dla popupa. Szablony możesz zapisać w zakładce "Wygląd - Desktop".', 'pro_reader') . '</p>';
+        echo '<p class="description">' . esc_html__('Wybierz, który zestaw ustawień wyglądu ma być używany dla popupa na urządzeniach desktopowych.', 'pro_reader') . '</p>';
+    }
+
+    public function appearance_template_mobile_callback(): void
+    {
+        $value = $this->options['popup_appearance_template_mobile'] ?? 'custom';
+        $templates = [
+            'custom'     => __('Ustawienia własne (z zakładki Wygląd - Mobilny)', 'pro_reader'),
+            'template_1' => __('Szablon 1 (Mobilny)', 'pro_reader'),
+            'template_2' => __('Szablon 2 (Mobilny)', 'pro_reader'),
+        ];
+
+        echo '<select id="popup_appearance_template_mobile" name="' . self::OPTION_NAME . '[popup_appearance_template_mobile]">';
+        foreach ($templates as $key => $label) {
+            echo '<option value="' . esc_attr($key) . '"' . selected($value, $key, false) . '>' . esc_html($label) . '</option>';
+        }
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Wybierz, który zestaw ustawień wyglądu ma być używany dla popupa na urządzeniach mobilnych.', 'pro_reader') . '</p>';
     }
 }

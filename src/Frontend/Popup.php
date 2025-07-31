@@ -47,7 +47,9 @@ class Popup
         }
 
         // 3. Wczytaj ustawienia szablonu, jeśli został wybrany
-        $template_slug = $this->options['popup_appearance_template'] ?? 'custom';
+        $template_slug_key = $is_mobile ? 'popup_appearance_template_mobile' : 'popup_appearance_template';
+        $template_slug = $this->options[$template_slug_key] ?? 'custom';
+
         if (in_array($template_slug, ['template_1', 'template_2'])) {
             $template_id = str_replace('template_', '', $template_slug);
             $template_option_name = 'reader_engagement_pro_template_' . $device_key . '_' . $template_id;
