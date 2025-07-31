@@ -1,7 +1,6 @@
 jQuery(function($) {
     'use strict';
 
-    // Sprawdź, czy obiekt z ustawieniami z PHP istnieje. Jeśli nie, zakończ, aby uniknąć błędów.
     if (typeof REP_Admin_Settings === 'undefined') {
         console.error('REP Admin Settings object not found.');
         return;
@@ -9,8 +8,8 @@ jQuery(function($) {
 
     const optionPrefix = REP_Admin_Settings.option_name_attr;
 
-    // Inicjalizacja sortowania dla konstruktora układu
-    $('#rep-layout-builder').sortable({
+    // Inicjalizacja sortowania dla obu konstruktorów układu
+    $('.rep-layout-builder').sortable({
         axis: 'y',
         cursor: 'move',
         placeholder: 'ui-sortable-placeholder',
@@ -21,7 +20,48 @@ jQuery(function($) {
         }
     });
 
-    // Logika ukrywania/pokazywania opcji zależnych od głównego włącznika popupa
+    // --- Logika zakładek ---
+    const tabs = $('.nav-tab-wrapper .nav-tab[href^="#"]');
+    const tabContents = $('.settings-tab-content');
+    const activeTabInput = $('#rep_active_sub_tab_input');
+    const previewWrapper = $('#rep-live-preview-wrapper');
+
+    tabs.on('click', function(e) {
+        e.preventDefault();
+        const targetId = $(this).attr('href');
+        const target = $(targetId);
+
+        tabs.removeClass('nav-tab-active');
+        $(this).addClass('nav-tab-active');
+
+        tabContents.hide();
+        target.show();
+
+        // Zaktualizuj ukryte pole, aby serwer wiedział, co zapisuje
+        const tabName = targetId.replace('#reader-engagement-pro-popup-', '');
+        activeTabInput.val(tabName);
+
+        // Pokaż lub ukryj podgląd
+        if (tabName === 'desktop' || tabName === 'mobile') {
+            previewWrapper.show();
+        } else {
+            previewWrapper.hide();
+        }
+
+        // Zapisz aktywną zakładkę
+        localStorage.setItem('repActiveSubTab', targetId);
+    });
+
+    // Przywróć ostatnio aktywną zakładkę
+    const activeSubTab = localStorage.getItem('repActiveSubTab');
+    if (activeSubTab && $(activeSubTab).length) {
+        tabs.filter('[href="' + activeSubTab + '"]').click();
+    } else {
+        tabs.first().click();
+    }
+
+
+    // --- Logika pól zależnych (globalne) ---
     const mainPopupEnableCheckbox = $('#popup_enable');
     if (mainPopupEnableCheckbox.length) {
         const dependentPopupOptions = mainPopupEnableCheckbox.closest('tr').siblings();
@@ -36,7 +76,6 @@ jQuery(function($) {
         mainPopupEnableCheckbox.on('change', togglePopupOptionsVisibility).trigger('change');
     }
 
-    // Logika ukrywania/pokazywania opcji zależnej od włącznika "procent przewinięcia"
     const nestedCheckbox = $('#popup_trigger_scroll_percent_enable');
     if (nestedCheckbox.length) {
         const targetRow = $('#popup_trigger_scroll_percent').closest('tr');
@@ -47,19 +86,26 @@ jQuery(function($) {
         nestedCheckbox.on('change', toggleNestedVisibility);
     }
 
-    // Logika przełączania pól dla limitu zajawki (słowa vs. linie)
-    const limitTypeRadios = $('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]');
-    if (limitTypeRadios.length) {
-        const wordsRow = $('#popup_rec_excerpt_length').closest('tr');
-        const linesRow = $('#popup_rec_excerpt_lines').closest('tr');
+    // --- Logika dla obu zakładek (Desktop i Mobile) ---
+    ['desktop', 'mobile'].forEach(device => {
+        const $tab = $('#reader-engagement-pro-popup-' + device);
+        if (!$tab.length) return;
 
-        function toggleExcerptLimitFields() {
-            const selectedType = limitTypeRadios.filter(':checked').val();
-            wordsRow.toggle(selectedType === 'words');
-            linesRow.toggle(selectedType === 'lines');
+        // Logika przełączania pól dla limitu zajawki
+        const limitTypeRadios = $tab.find('input[name*="[popup_rec_excerpt_limit_type]"]');
+        if (limitTypeRadios.length) {
+            const wordsRow = $tab.find('#popup_rec_excerpt_length_' + device).closest('tr');
+            const linesRow = $tab.find('#popup_rec_excerpt_lines_' + device).closest('tr');
+
+            function toggleExcerptLimitFields() {
+                const selectedType = limitTypeRadios.filter(':checked').val();
+                wordsRow.toggle(selectedType === 'words');
+                linesRow.toggle(selectedType === 'lines');
+            }
+            limitTypeRadios.on('change', toggleExcerptLimitFields).trigger('change');
         }
-        limitTypeRadios.on('change', toggleExcerptLimitFields).trigger('change');
-    }
+    });
+
 
     // Obsługa przycisku ręcznego reindeksowania (AJAX)
     $('#rep-reindex-button').on('click', function(e) {
@@ -93,318 +139,145 @@ jQuery(function($) {
     // Inicjalizacja pól wyboru koloru
     $('.wp-color-picker-field').wpColorPicker();
 
-    // --- LOGIKA PODGLĄDU NA ŻYWO ---
-    const $previewWrapper = $('#rep-live-preview-wrapper');
-    if ($previewWrapper.length && $previewWrapper.is(':visible')) {
-        const $previewContainer = $('#rep-intelligent-popup__container');
-        const $previewContent = $previewContainer.find('#rep-intelligent-popup__custom-content');
-        const $previewList = $previewContainer.find('#rep-intelligent-popup__list');
+    // --- LOGIKA PODGLĄDU NA ŻYWO (NOWA, Z UŻYCIEM IFRAME) ---
+    const $previewFrame = $('#rep-live-preview-frame');
+    let isPreviewReady = false;
 
-        // Aktualizacja podglądu z edytorów TinyMCE
-        if (typeof tinymce !== 'undefined') {
-            const contentEditor = tinymce.get('popup_content_main_editor');
-            if (contentEditor) {
-                contentEditor.on('keyup change', function() {
-                    $previewContent.html(this.getContent());
-                });
-            }
-            const linkEditor = tinymce.get('popup_recommendations_link_text_editor');
-            if (linkEditor) {
-                linkEditor.on('keyup change', function() {
-                    $previewContainer.find('.rep-rec-button').html(this.getContent());
-                });
-            }
+    $previewFrame.on('load', function() {
+        isPreviewReady = true;
+        // Po załadowaniu iframe, wyślij wszystkie bieżące ustawienia, aby zsynchronizować podgląd
+        sendAllSettingsToPreview();
+    });
+
+    function sendToPreview(type, payload) {
+        if (isPreviewReady && $previewFrame.length) {
+            $previewFrame[0].contentWindow.postMessage({ type, payload }, '*');
         }
-
-        // Aktualizacja stylów przycisku "Czytaj dalej"
-        function updateButtonStyles() {
-            const $buttons = $previewContainer.find('.rep-rec-button');
-            const bgColor = $('input[name="' + optionPrefix + '[popup_rec_button_bg_color]"]').val();
-            const textColor = $('input[name="' + optionPrefix + '[popup_rec_button_text_color]"]').val();
-            
-            $buttons.css({
-                'background-color': bgColor,
-                'color': textColor
-            });
-        }
-
-        function updateButtonWidth() {
-            const widthClass = 'btn-width-' + $('#popup_rec_button_width').val();
-            $previewContainer.find('.rep-rec-button')
-                .removeClass('btn-width-compact btn-width-full-width')
-                .addClass(widthClass);
-        }
-
-        $('input[name*="[popup_rec_button_bg_color]"], input[name*="[popup_rec_button_text_color]"]').on('input', updateButtonStyles);
-        $('.wp-color-picker-field[name*="[popup_rec_button_"]').on('wpcolorpickerchange', updateButtonStyles);
-        $('#popup_rec_button_width').on('change', updateButtonWidth);
-
-        updateButtonStyles();
-        updateButtonWidth();
-
-
-        // Aktualizacja ogólnego układu (lista vs siatka) i powiązanej logiki
-        const $desktopLayoutSelector = $('select[name="' + optionPrefix + '[popup_recommendations_layout]"]');
-        const $itemLayoutRadios = $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]');
-        const $itemLayoutRow = $itemLayoutRadios.closest('tr');
-
-        function handleDesktopLayoutChange() {
-            const layout = $desktopLayoutSelector.val();
-            $previewList.removeClass('layout-list layout-grid').addClass('layout-' + layout);
-
-            $itemLayoutRow.find('input').prop('disabled', false);
-            $itemLayoutRow.css('opacity', 1);
-            $itemLayoutRow.find('.description.disabled-reason').remove();
-        }
-
-        $desktopLayoutSelector.on('change', handleDesktopLayoutChange).trigger('change');
-
-        // Aktualizacja struktury pojedynczego elementu (wertykalny vs horyzontalny)
-        $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]').on('change', function() {
-            const layout = $(this).filter(':checked').val();
-            $previewList.find('.rep-rec-item').removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + layout);
-        }).filter(':checked').trigger('change');
-
-        // --- POCZĄTEK ZMIAN ---
-        // Dodana obsługa aktualizacji podglądu miniaturki
-        
-        // Aktualizacja proporcji miniaturki (aspect-ratio)
-        $('select[name="' + optionPrefix + '[popup_rec_thumb_aspect_ratio]"]').on('change', function() {
-            const ratio = $(this).val();
-            const cssRatio = (ratio === 'auto') ? 'auto' : ratio.replace(':', ' / ');
-            $previewList.find('.rep-rec-thumb-link').css('aspect-ratio', cssRatio);
-        }).trigger('change');
-
-        // Aktualizacja dopasowania miniaturki (object-fit)
-        $('select[name="' + optionPrefix + '[popup_rec_thumb_fit]"]').on('change', function() {
-            const fitClass = 'thumb-fit-' + $(this).val();
-            $previewList.find('.rep-rec-thumb')
-                .removeClass('thumb-fit-cover thumb-fit-contain')
-                .addClass(fitClass);
-        }).trigger('change');
-
-        // --- KONIEC ZMIAN ---
-
-        // Aktualizacja widoczności i kolejności komponentów
-        function updateComponentVisibilityAndOrder() {
-            const itemLayout = $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]:checked').val();
-
-            $previewList.find('.rep-rec-item').each(function() {
-                const $item = $(this);
-                const $contentWrapper = $item.find('.rep-rec-content');
-                
-                // Odłącz wszystkie komponenty, aby dołączyć je ponownie w prawidłowej kolejności i strukturze.
-                const $components = {
-                    'thumbnail': $item.find('.rep-rec-thumb-link').detach(),
-                    'meta': $item.find('.rep-rec-meta').detach(),
-                    'title': $item.find('.rep-rec-title').detach(),
-                    'excerpt': $item.find('.rep-rec-excerpt').detach(),
-                    'link': $item.find('.rep-rec-button').detach()
-                };
-
-                // Przełącz widoczność komponentów na podstawie checkboxów.
-                Object.keys($components).forEach(key => {
-                    $components[key].toggle($('#v_' + key).is(':checked'));
-                });
-
-                // Wyczyść kontenery przed ponownym dołączeniem elementów.
-                $contentWrapper.empty();
-                $item.empty();
-
-                // Dołącz ponownie komponenty w zależności od wybranego układu.
-                if (itemLayout === 'horizontal') {
-                    // Układ horyzontalny: miniaturka jest obok kontenera z treścią.
-                    $item.append($components.thumbnail);
-                    $item.append($contentWrapper);
-                    
-                    // Dołącz pozostałe komponenty do kontenera z treścią, zgodnie z kolejnością.
-                    $('#rep-layout-builder li').each(function() {
-                        const key = $(this).find('input[type=hidden]').val();
-                        if (key !== 'thumbnail' && $components[key]) {
-                            $contentWrapper.append($components[key]);
-                        }
-                    });
-                } else { // Układ wertykalny
-                    // Układ wertykalny: wszystkie komponenty są wewnątrz kontenera z treścią.
-                    $item.append($contentWrapper);
-                    $('#rep-layout-builder li').each(function() {
-                        const key = $(this).find('input[type=hidden]').val();
-                        if ($components[key]) {
-                            $contentWrapper.append($components[key]);
-                        }
-                    });
-                }
-            });
-        }
-
-        // Połącz obsługę zmiany układu elementu z aktualizacją kolejności
-        $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]').on('change', function() {
-            const layout = $(this).filter(':checked').val();
-            $previewList.find('.rep-rec-item')
-                .removeClass('item-layout-vertical item-layout-horizontal')
-                .addClass('item-layout-' + layout);
-            updateComponentVisibilityAndOrder();
-        });
-
-        $('#rep-layout-builder').on('sortupdate change', updateComponentVisibilityAndOrder);
-        
-        // Inicjalna aktualizacja jest wywoływana przez .trigger('change') na grupie radio
-        $('input[name="' + optionPrefix + '[popup_rec_item_layout]"]').filter(':checked').trigger('change');
-
-
-        // --- POCZĄTEK ZMIAN: Ulepszona logika podglądu dla limitu zajawki ---
-        const $excerpts = $previewList.find('.rep-rec-excerpt');
-
-        // Zapisz oryginalną treść zajawki przy pierwszym ładowaniu
-        $excerpts.each(function() {
-            const $excerpt = $(this);
-            $excerpt.data('original-text', $excerpt.text());
-        });
-
-        function updateExcerptPreview() {
-            const limitType = $('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]:checked').val();
-            const wordLimit = $('#popup_rec_excerpt_length').val();
-            const lineLimit = $('#popup_rec_excerpt_lines').val();
-
-            $excerpts.each(function() {
-                const $excerpt = $(this);
-                const originalText = $excerpt.data('original-text');
-
-                if (limitType === 'words') {
-                    // Usuń style CSS dla limitu linii
-                    $excerpt.css({
-                        '-webkit-line-clamp': '',
-                        'display': '',
-                        '-webkit-box-orient': '',
-                        'overflow': '',
-                        'text-overflow': ''
-                    });
-                    
-                    // Przytnij tekst po słowach
-                    const words = originalText.split(/\s+/);
-                    const trimmedText = words.slice(0, wordLimit).join(' ') + (words.length > wordLimit ? '...' : '');
-                    $excerpt.text(trimmedText);
-
-                } else { // 'lines'
-                    // Przywróć oryginalny tekst, aby line-clamp działał poprawnie
-                    $excerpt.text(originalText);
-                    // Zastosuj style CSS dla limitu linii
-                    $excerpt.css({
-                        '-webkit-line-clamp': lineLimit,
-                        'display': '-webkit-box',
-                        '-webkit-box-orient': 'vertical',
-                        'overflow': 'hidden',
-                        'text-overflow': 'ellipsis'
-                    });
-                }
-            });
-        }
-
-        // Podłącz eventy do wszystkich kontrolek
-        $('input[name="' + optionPrefix + '[popup_rec_excerpt_limit_type]"]').on('change', updateExcerptPreview);
-        $('#popup_rec_excerpt_length, #popup_rec_excerpt_lines').on('input change', updateExcerptPreview);
-        
-        // Wywołaj funkcję przy pierwszym ładowaniu, aby ustawić stan początkowy
-        updateExcerptPreview();
-        // --- KONIEC ZMIAN ---
-
-
-        const $countInput = $('#popup_recommendations_count');
-        function updatePreviewPostCount() {
-            const newCount = parseInt($countInput.val(), 10) || 0;
-            const $items = $previewList.find('.rep-rec-item');
-            const currentCount = $items.length;
-
-            if (newCount > currentCount) {
-                const $template = $items.first().clone();
-                for (let i = 0; i < newCount - currentCount; i++) {
-                    $previewList.append($template.clone());
-                }
-            } else if (newCount < currentCount) {
-                $items.filter(':gt(' + (newCount - 1) + ')').remove();
-            }
-        }
-        $countInput.on('input change', updatePreviewPostCount);
-        
-        const styleInputs = {
-            '#popup_margin_content_bottom': { variable: '--rep-content-margin-bottom', unit: 'px' },
-            '#popup_gap_list_items': { variable: '--rep-list-item-gap', unit: 'px' },
-            '#popup_gap_grid_items': { variable: '--rep-grid-item-gap', unit: 'px' },
-            '#popup_grid_item_width': { variable: '--rep-grid-item-width', unit: 'px' },
-            '#popup_max_width': { variable: '--rep-popup-max-width', unit: 'px' },
-            '#popup_max_height': { variable: '--rep-popup-max-height', unit: 'vh' },
-            '#popup_rec_thumb_margin_right': [
-                { variable: '--rep-rec-thumb-margin-right', unit: 'px' },
-                { variable: '--rep-rec-thumb-margin-bottom', unit: 'px' }
-            ],
-            '#popup_rec_thumb_width_horizontal': { variable: '--rep-rec-thumb-width-horizontal', unit: 'px' },
-            '#popup_rec_thumb_width_list_vertical': { variable: '--rep-rec-thumb-width-list-vertical', unit: '%' },
-            '#popup_rec_margin_meta_bottom': { variable: '--rep-rec-meta-margin-bottom', unit: 'px' },
-            '#popup_rec_margin_title_bottom': { variable: '--rep-rec-title-margin-bottom', unit: 'px' },
-            '#popup_rec_margin_excerpt_bottom': { variable: '--rep-rec-excerpt-margin-bottom', unit: 'px' }
-        };
-
-        function updateDesktopPadding() {
-            const paddingY = $('#popup_padding_y_desktop').val() || '24';
-            const paddingX = $('#popup_padding_x_desktop').val() || '32';
-            $previewContainer.css('--rep-popup-padding', `${paddingY}px ${paddingX}px`);
-        }
-
-        $.each(styleInputs, function(selector, data) {
-            const $input = $(selector);
-            if ($input.length) {
-                function updateStylePreview() {
-                    const value = $input.val();
-                    if (Array.isArray(data)) {
-                        data.forEach(function(style) {
-                            $previewContainer.css(style.variable, value + style.unit);
-                        });
-                    } else {
-                        $previewContainer.css(data.variable, value + data.unit);
-                    }
-                }
-                $input.on('input change', updateStylePreview);
-                updateStylePreview(); 
-            }
-        });
-        
-        $('#popup_padding_y_desktop, #popup_padding_x_desktop').on('input change', updateDesktopPadding);
-        updateDesktopPadding();
-
-        $('#rep-spacing-reset-button').on('click', function(e) {
-            e.preventDefault();
-            const defaultSpacings = {
-                '#popup_padding_y_desktop': '24',
-                '#popup_padding_x_desktop': '40',
-                '#popup_margin_content_bottom': '20',
-                '#popup_gap_list_items': '50',
-                '#popup_gap_grid_items': '45',
-                '#popup_grid_item_width': '234',
-                '#popup_rec_thumb_margin_right': '25',
-                '#popup_rec_thumb_width_horizontal': '200',
-                '#popup_rec_thumb_width_list_vertical': '100',
-                '#popup_rec_margin_meta_bottom': '8',
-                '#popup_rec_margin_title_bottom': '12',
-                '#popup_rec_margin_excerpt_bottom': '12'
-            };
-            $.each(defaultSpacings, function(selector, value) {
-                $(selector).val(value).trigger('change');
-            });
-            
-            // Dodatkowo zresetuj wymiary i układ
-            $('#popup_max_width').val('670').trigger('change');
-            $('#popup_max_height').val('81').trigger('change');
-            $('#popup_recommendations_layout').val('grid').trigger('change');
-            $('input[name="' + optionPrefix + '[popup_rec_item_layout]"][value="vertical"]').prop('checked', true).trigger('change');
-        });
     }
+
+    function sendAllSettingsToPreview() {
+        const settings = {};
+        // Zbierz wszystkie relevantne ustawienia z aktywnej zakładki
+        const activeTabId = $('.nav-tab-active').attr('href');
+        const device = activeTabId.includes('mobile') ? 'mobile' : 'desktop';
+        
+        const $activeTab = $(activeTabId);
+        $activeTab.find('input[type="number"], input[type="radio"]:checked, select').each(function() {
+            const $input = $(this);
+            const name = $input.attr('name');
+            const id = $input.attr('id');
+            if (name || id) {
+                const key = id || name.match(/\[([^\]]+)\]$/)[1];
+                settings[key] = $input.val();
+            }
+        });
+        
+        // Dodaj wartości z color pickerów
+        $activeTab.find('.wp-color-picker-field').each(function() {
+            const $input = $(this);
+            const key = $input.attr('id');
+            settings[key] = $input.val();
+        });
+
+        // Dodaj kolejność i widoczność komponentów
+        settings.components = {
+            order: $('#rep-layout-builder-' + device).sortable('toArray', { attribute: 'data-key' }),
+            visibility: {}
+        };
+        $('#rep-layout-builder-' + device + ' input[type="checkbox"]').each(function() {
+            const $check = $(this);
+            const key = $check.attr('id').replace('v_', '').replace('_' + device, '');
+            settings.components.visibility[key] = $check.is(':checked');
+        });
+
+        // Wyślij cały pakiet
+        sendToPreview('batch_update', settings);
+    }
+
+    // Nasłuchuj na zmiany w obu zakładkach
+    $('.settings-tab-content').on('input change sortupdate', 'input, select, .rep-layout-builder', function(e) {
+        const $input = $(this);
+        const id = $input.attr('id');
+        let value = $input.val();
+        
+        if ($input.is(':radio')) {
+            value = $input.filter(':checked').val();
+        }
+
+        if (e.type === 'sortupdate') {
+            const device = $input.closest('.settings-tab-content').attr('id').includes('mobile') ? 'mobile' : 'desktop';
+            const order = $input.sortable('toArray', { attribute: 'data-key' });
+            sendToPreview('components_order', { device, order });
+            return;
+        }
+        
+        if (id) {
+            sendToPreview('setting_update', { id, value });
+        }
+    });
+    
+    $('.wp-color-picker-field').on('wpcolorpickerchange', function(event, ui) {
+        const id = $(this).attr('id');
+        const value = ui.color.toString();
+        sendToPreview('setting_update', { id, value });
+    });
+
+
+    // --- PRZYCISKI RESETOWANIA ---
+    $('#rep-spacing-reset-button-desktop').on('click', function(e) {
+        e.preventDefault();
+        const defaults = {
+            '#popup_padding_y_desktop': '24',
+            '#popup_padding_x_desktop': '40',
+            '#popup_margin_content_bottom_desktop': '20',
+            '#popup_gap_list_items_desktop': '50',
+            '#popup_gap_grid_items_desktop': '45',
+            '#popup_grid_item_width_desktop': '234',
+            '#popup_rec_thumb_margin_right_desktop': '25',
+            '#popup_rec_thumb_width_horizontal_desktop': '200',
+            '#popup_rec_thumb_width_list_vertical_desktop': '100',
+            '#popup_rec_margin_meta_bottom_desktop': '8',
+            '#popup_rec_margin_title_bottom_desktop': '12',
+            '#popup_rec_margin_excerpt_bottom_desktop': '12',
+            '#popup_max_width_desktop': '670',
+            '#popup_max_height_desktop': '81'
+        };
+        $.each(defaults, (selector, value) => $(selector).val(value).trigger('change'));
+        $('#popup_recommendations_layout_desktop').val('grid').trigger('change');
+        $('input[name*="[desktop][popup_rec_item_layout]"][value="vertical"]').prop('checked', true).trigger('change');
+    });
+
+    $('#rep-spacing-reset-button-mobile').on('click', function(e) {
+        e.preventDefault();
+        const defaults = {
+            '#popup_padding_y_mobile': '20',
+            '#popup_padding_x_mobile': '20',
+            '#popup_margin_content_bottom_mobile': '15',
+            '#popup_gap_list_items_mobile': '30',
+            '#popup_gap_grid_items_mobile': '20',
+            '#popup_grid_item_width_mobile': '150',
+            '#popup_rec_thumb_margin_right_mobile': '15',
+            '#popup_rec_thumb_width_horizontal_mobile': '120',
+            '#popup_rec_thumb_width_list_vertical_mobile': '100',
+            '#popup_rec_margin_meta_bottom_mobile': '5',
+            '#popup_rec_margin_title_bottom_mobile': '8',
+            '#popup_rec_margin_excerpt_bottom_mobile': '8',
+            '#popup_max_width_mobile': '360',
+            '#popup_max_height_mobile': '85'
+        };
+        $.each(defaults, (selector, value) => $(selector).val(value).trigger('change'));
+        $('#popup_recommendations_layout_mobile').val('list').trigger('change');
+        $('input[name*="[mobile][popup_rec_item_layout]"][value="horizontal"]').prop('checked', true).trigger('change');
+    });
+
 
     // Logika zapisywania szablonów
     $('.rep-save-template-btn').on('click', function(e) {
         e.preventDefault();
         const $button = $(this);
         const templateId = $button.data('template-id');
-        const $feedback = $('#save-template-' + templateId + '-feedback');
+        const device = $button.closest('.settings-tab-content').attr('id').includes('mobile') ? 'mobile' : 'desktop';
+        const $feedback = $('#save-template-' + templateId + '-feedback-' + device);
         const $form = $button.closest('form');
         const settingsString = $form.serialize();
 
@@ -415,7 +288,8 @@ jQuery(function($) {
             action: 'save_popup_template',
             nonce: REP_Admin_Settings.admin_nonce,
             template_id: templateId,
-            settings_string: settingsString
+            settings_string: settingsString,
+            device_type: device
         }).done(function(response) {
             if (response.success) {
                 $feedback.text(response.data.message).css('color', 'green');

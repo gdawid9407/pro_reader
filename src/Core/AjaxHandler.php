@@ -25,6 +25,24 @@ class AjaxHandler
         add_action('wp_ajax_fetch_recommendations', [$this, 'fetch_recommendations']);
         add_action('wp_ajax_rep_reindex_posts', [$this, 'handle_reindex']);
         add_action('wp_ajax_save_popup_template', [$this, 'save_popup_template']);
+        add_action('wp_ajax_rep_live_preview', [$this, 'live_preview']);
+    }
+
+    /**
+     * Renderuje podgląd na żywo w izolowanym iframe.
+     */
+    public function live_preview(): void
+    {
+        // Tutaj można dodać weryfikację uprawnień, jeśli to konieczne
+        if (!current_user_can('manage_options')) {
+            wp_die('Brak uprawnień.');
+        }
+
+        // Załaduj szablon podglądu
+        include REP_PLUGIN_PATH . 'src/Templates/popup/preview.php';
+        
+        // Zakończ, aby nic więcej nie było renderowane
+        wp_die();
     }
 
     /**
@@ -39,14 +57,21 @@ class AjaxHandler
             return;
         }
 
-        if (!isset($_POST['template_id'], $_POST['settings_string'])) {
-            wp_send_json_error(['message' => 'Brakujące dane.'], 400);
+        if (!isset($_POST['template_id'], $_POST['settings_string'], $_POST['device_type'])) {
+            wp_send_json_error(['message' => 'Brakujące dane (wymagane: template_id, settings_string, device_type).'], 400);
             return;
         }
 
         $template_id = sanitize_key($_POST['template_id']);
+        $device_type = sanitize_key($_POST['device_type']);
+
         if (!in_array($template_id, ['1', '2'])) {
             wp_send_json_error(['message' => 'Nieprawidłowy ID szablonu.'], 400);
+            return;
+        }
+        
+        if (!in_array($device_type, ['desktop', 'mobile'])) {
+            wp_send_json_error(['message' => 'Nieprawidłowy typ urządzenia.'], 400);
             return;
         }
 
@@ -54,7 +79,7 @@ class AjaxHandler
         parse_str($_POST['settings_string'], $parsed_data);
 
         // Oczekujemy, że dane będą w kluczu 'reader_engagement_pro_options'
-        $settings = $parsed_data['reader_engagement_pro_options'] ?? [];
+        $settings = $parsed_data['reader_engagement_pro_options'][$device_type] ?? [];
 
         if (empty($settings)) {
             wp_send_json_error(['message' => 'Nie znaleziono danych ustawień do zapisania.'], 400);
@@ -65,10 +90,10 @@ class AjaxHandler
         // Na ten moment zakładamy, że sanitacja odbywa się przy zapisie głównych opcji
         // ale dla bezpieczeństwa można by ją tu powtórzyć.
 
-        $option_name = 'reader_engagement_pro_template_' . $template_id;
+        $option_name = 'reader_engagement_pro_template_' . $device_type . '_' . $template_id;
         update_option($option_name, $settings);
 
-        wp_send_json_success(['message' => 'Szablon ' . $template_id . ' został pomyślnie zapisany.']);
+        wp_send_json_success(['message' => 'Szablon ' . $template_id . ' (' . $device_type . ') został pomyślnie zapisany.']);
     }
 
     /**

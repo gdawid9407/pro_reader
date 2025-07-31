@@ -88,7 +88,8 @@ class Settings_Page
     public function route_sanitize_callback(array $input): array
     {
         $options = get_option(self::OPTION_NAME, []);
-        $active_sub_tab = sanitize_key($_POST['rep_active_sub_tab'] ?? '');
+        // Zmiana: Używamy ukrytego pola zamiast parametru GET
+        $active_sub_tab = isset($_POST['rep_active_sub_tab']) ? sanitize_key($_POST['rep_active_sub_tab']) : '';
 
         if (isset($input['position'])) {
             return $this->progress_bar_settings->sanitize($input);
@@ -101,9 +102,10 @@ class Settings_Page
                 return $this->popup_settings_desktop->sanitize($input, $options);
             case 'mobile':
                 return $this->popup_settings_mobile->sanitize($input, $options);
+            default:
+                // Zwróć istniejące opcje, jeśli zakładka nie jest rozpoznana, aby uniknąć utraty danych
+                return $options;
         }
-        return $options;
-        
     }
 
     /**
@@ -136,114 +138,92 @@ class Settings_Page
                             do_settings_sections('reader-engagement-pro-progress-bar');
                             submit_button();
                         } elseif ($active_tab === 'popup') {
-                            $active_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : 'general';
                             ?>
                             <h2 class="nav-tab-wrapper" style="margin-bottom: 20px;">
-                                <a href="?page=reader-engagement-pro&tab=popup&sub_tab=general" class="nav-tab <?php echo $active_sub_tab === 'general' ? 'nav-tab-active' : ''; ?>">
+                                <a href="#reader-engagement-pro-popup-general" class="nav-tab">
                                     <?php esc_html_e('Ustawienia Ogólne', 'pro_reader'); ?>
                                 </a>
-                                <a href="?page=reader-engagement-pro&tab=popup&sub_tab=desktop" class="nav-tab <?php echo $active_sub_tab === 'desktop' ? 'nav-tab-active' : ''; ?>">
+                                <a href="#reader-engagement-pro-popup-desktop" class="nav-tab">
                                     <?php esc_html_e('Wygląd - Desktop', 'pro_reader'); ?>
                                 </a>
-                                <a href="?page=reader-engagement-pro&tab=popup&sub_tab=mobile" class="nav-tab <?php echo $active_sub_tab === 'mobile' ? 'nav-tab-active' : ''; ?>">
+                                <a href="#reader-engagement-pro-popup-mobile" class="nav-tab">
                                     <?php esc_html_e('Wygląd - Mobilny', 'pro_reader'); ?>
                                 </a>
                             </h2>
                             <?php
                             settings_fields(self::SETTINGS_GROUP);
+                            
+                            // Ukryte pole do śledzenia aktywnej zakładki przy zapisie
+                            echo '<input type="hidden" id="rep_active_sub_tab_input" name="rep_active_sub_tab" value="general">';
 
-                            echo '<input type="hidden" name="rep_active_sub_tab" value="' . esc_attr($active_sub_tab) . '">';
+                            // Kontenery dla zakładek
+                            echo '<div id="reader-engagement-pro-popup-general" class="settings-tab-content">';
+                            do_settings_sections('reader-engagement-pro-popup-general');
+                            echo '</div>';
 
-                            if ($active_sub_tab === 'general') {
-                                do_settings_sections('reader-engagement-pro-popup-general');
-                            } elseif ($active_sub_tab === 'desktop') {
-                                do_settings_sections('reader-engagement-pro-popup-desktop');
-                            } elseif ($active_sub_tab === 'mobile') {
-                                do_settings_sections('reader-engagement-pro-popup-mobile');
-                            }
+                            echo '<div id="reader-engagement-pro-popup-desktop" class="settings-tab-content" style="display:none;">';
+                            do_settings_sections('reader-engagement-pro-popup-desktop');
+                            echo '</div>';
+
+                            echo '<div id="reader-engagement-pro-popup-mobile" class="settings-tab-content" style="display:none;">';
+                            do_settings_sections('reader-engagement-pro-popup-mobile');
+                            echo '</div>';
+
                             submit_button();
                         }
                         ?>
                     </form>
                 </div>
 
-                <?php 
-                if ($active_tab === 'popup') :
-                    $active_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : 'general';
-                    if (in_array($active_sub_tab, ['desktop', 'mobile'])) :
-                        $preview_wrapper_class = 'rep-preview-mode-' . esc_attr($active_sub_tab);
-                ?>
-                <div id="rep-live-preview-wrapper" class="<?php echo $preview_wrapper_class; ?>" style="flex: 1; min-width: 400px;">
+                <?php if ($active_tab === 'popup') : ?>
+                <div id="rep-live-preview-wrapper" style="flex: 1; min-width: 400px; display: none;">
                     <div style="position: sticky; top: 50px;">
                         <h3 style="margin: 0 0 10px; padding: 0;"><?php esc_html_e('Podgląd na żywo', 'pro_reader'); ?></h3>
-                        <div id="rep-live-preview-area" style="transform: scale(0.5); transform-origin: top left; width: 200%; height: 200%; pointer-events: none; background: #f0f0f1; padding: 20px; border-radius: 4px;">
-                            <?php echo $this->render_preview_placeholder(); ?>
+                        <div id="rep-live-preview-area" style="border: 1px solid #ccd0d4; background: #f0f0f1; border-radius: 4px; height: 600px;">
+                            <iframe id="rep-live-preview-frame" src="<?php echo esc_url(admin_url('admin-ajax.php?action=rep_live_preview')); ?>" style="width: 100%; height: 100%; border: none;"></iframe>
                         </div>
                     </div>
                 </div>
-                <?php 
-                    endif;
-                endif;
-                ?>
+                <?php endif; ?>
 
             </div>
         </div>
         <?php
     }
 
-    private function render_preview_placeholder(): string
-    {
-        ob_start();
-        include REP_PLUGIN_PATH . 'src/Templates/popup/preview.php';
-        return ob_get_clean();
-    }
-
-    /**
-     * Wyświetla przycisk do ręcznego indeksowania.
-     */
-    public function reindex_button_callback(): void
-    {
-        echo '<button type="button" id="rep-reindex-button" class="button button-secondary">' . esc_html__('Uruchom pełne indeksowanie', 'pro_reader') . '</button>';
-        echo '<p class="description">' . esc_html__('Kliknij, aby przeskanować wszystkie opublikowane wpisy i zbudować bazę linków dla rekomendacji. Może to zająć chwilę.', 'pro_reader') . '</p>';
-        echo '<div id="rep-reindex-status" style="margin-top: 10px;"></div>';
-    }
-
-    /**
-     * Rejestruje skrypty i style dla strony ustawień.
-     */
-    public function enqueue_admin_assets($hook): void
+    public function enqueue_admin_assets(string $hook): void
     {
         if ($hook !== 'toplevel_page_reader-engagement-pro') {
             return;
         }
 
-        wp_enqueue_style('rep-popup-style-preview', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.2.0');
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
         wp_enqueue_script('jquery-ui-sortable');
 
         wp_enqueue_script(
-            'rep-admin-script',
+            'rep-admin-settings',
             REP_PLUGIN_URL . 'assets/js/admin-settings.js',
-            ['jquery', 'wp-color-picker', 'jquery-ui-sortable'], 
-            '1.2.0', 
-            true 
+            ['jquery', 'wp-color-picker', 'jquery-ui-sortable'],
+            '2.0.0', // Wersja
+            true
         );
 
-        wp_localize_script('rep-admin-script', 'REP_Admin_Settings', [
-            'option_name_attr'      => self::OPTION_NAME,
-            'reindex_nonce'         => wp_create_nonce('rep_reindex_nonce'),
-            'admin_nonce'           => wp_create_nonce('rep_admin_nonce'),
-            'reindex_text_default'  => __('Uruchom pełne indeksowanie', 'pro_reader'),
-            'reindex_text_running'  => __('Indeksowanie...', 'pro_reader'),
-            'reindex_text_wait'     => __('Proszę czekać, to może potrwać kilka minut.', 'pro_reader'),
-            'reindex_text_error'    => __('Wystąpił nieoczekiwany błąd serwera.', 'pro_reader'),
+        wp_localize_script('rep-admin-settings', 'REP_Admin_Settings', [
+            'admin_nonce' => wp_create_nonce('rep_admin_nonce'),
+            'reindex_nonce' => wp_create_nonce('rep_reindex_nonce'),
+            'reindex_text_default' => __('Przebuduj indeks linków', 'pro_reader'),
+            'reindex_text_running' => __('Indeksowanie w toku...', 'pro_reader'),
+            'reindex_text_wait' => __('Proszę czekać, to może potrwać chwilę.', 'pro_reader'),
+            'reindex_text_error' => __('Wystąpił błąd serwera.', 'pro_reader'),
+            'option_name_attr' => self::OPTION_NAME
         ]);
+    }
 
-        $inline_css = "
-            #rep-layout-builder .ui-sortable-placeholder { border: 2px dashed #ccd0d4; background: #f6f7f7; height: 40px; margin-bottom: 5px; visibility: visible !important; }
-            #rep-layout-builder .ui-sortable-helper { box-shadow: 0 5px 15px rgba(0,0,0,0.15); opacity: 0.95; }
-        ";
-        wp_add_inline_style('wp-admin', $inline_css);
+    public function reindex_button_callback(): void
+    {
+        echo '<button id="rep-reindex-button" class="button button-secondary">' . esc_html__('Przebuduj indeks linków', 'pro_reader') . '</button>';
+        echo '<p class="description">' . esc_html__('Użyj tego narzędzia, jeśli dodałeś nowe wpisy lub uważasz, że rekomendacje nie działają poprawnie.', 'pro_reader') . '</p>';
+        echo '<div id="rep-reindex-status" style="margin-top: 10px;"></div>';
     }
 }
