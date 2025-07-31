@@ -1,0 +1,95 @@
+/* --- Główny Layout Ustawień --- */
+.rep-settings-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr); /* Domyślnie jedna kolumna */
+    gap: 40px;
+    margin-top: 20px;
+}
+
+/* Dwie kolumny tylko wtedy, gdy jest podgląd */
+.rep-settings-layout:has(.rep-live-preview-wrapper) {
+    grid-template-columns: minmax(0, 2fr) 1fr;
+}
+
+.rep-settings-form-wrapper {
+    min-width: 0; /* Zapobiega przepełnieniu flex/grid */
+}
+
+/* --- Wrapper Podglądu --- */
+.rep-live-preview-wrapper {
+    position: sticky;
+    top: 50px;
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* --- Nagłówek i Kontrolki Podglądu --- */
+.rep-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.rep-preview-header h3 {
+    margin: 0 !important;
+    font-size: 16px;
+}
+
+.rep-preview-controls .button {
+    background: #f0f0f1;
+    border-color: #dcdcde;
+    color: #50575e;
+    transition: all 0.1s ease-in-out;
+}
+
+.rep-preview-controls .button.active {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+}
+
+/* --- Obszar Podglądu --- */
+#rep-popup-preview-area {
+    border: 1px solid #ccd0d4;
+    background: #f0f0f1;
+    padding: 20px;
+    transition: all 0.4s ease-in-out;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+#rep-popup-preview-area.is-desktop-view {
+    width: 100%;
+}
+
+#rep-popup-preview-area.is-mobile-view {
+    max-width: 375px;
+    height: 667px;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border: 8px solid #111;
+    padding: 0;
+}
+
+/* --- Dostosowanie Popupa wewnątrz Podglądu --- */
+#rep-popup-preview-area #rep-intelligent-popup__container {
+    transform: scale(0.95);
+    transform-origin: top center;
+}
+
+#rep-popup-preview-area.is-mobile-view #rep-intelligent-popup__container {
+    transform: scale(1);
+    max-width: 100%;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+#rep-popup-preview-area.is-mobile-view #rep-intelligent-popup__overlay {
+    display: none;
+}

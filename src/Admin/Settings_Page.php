@@ -88,8 +88,7 @@ class Settings_Page
     public function route_sanitize_callback(array $input): array
     {
         $options = get_option(self::OPTION_NAME, []);
-        // Zmiana: Używamy ukrytego pola zamiast parametru GET
-        $active_sub_tab = isset($_POST['rep_active_sub_tab']) ? sanitize_key($_POST['rep_active_sub_tab']) : '';
+        $active_sub_tab = isset($_POST['rep_active_sub_tab']) ? sanitize_key($_POST['rep_active_sub_tab']) : 'general';
 
         if (isset($input['position'])) {
             return $this->progress_bar_settings->sanitize($input);
@@ -128,9 +127,9 @@ class Settings_Page
                 </a>
             </h2>
 
-            <div id="rep-settings-container" style="display: flex; flex-wrap: wrap; gap: 40px; margin-top: 20px;">
+            <div class="rep-settings-layout">
 
-                <div id="rep-settings-form" style="flex: 1; min-width: 500px; max-width: 750px;">
+                <div class="rep-settings-form-wrapper">
                     <form method="post" action="options.php">
                         <?php
                         if ($active_tab === 'progress_bar') {
@@ -153,10 +152,8 @@ class Settings_Page
                             <?php
                             settings_fields(self::SETTINGS_GROUP);
                             
-                            // Ukryte pole do śledzenia aktywnej zakładki przy zapisie
                             echo '<input type="hidden" id="rep_active_sub_tab_input" name="rep_active_sub_tab" value="general">';
 
-                            // Kontenery dla zakładek
                             echo '<div id="reader-engagement-pro-popup-general" class="settings-tab-content">';
                             do_settings_sections('reader-engagement-pro-popup-general');
                             echo '</div>';
@@ -175,6 +172,20 @@ class Settings_Page
                     </form>
                 </div>
 
+                <?php if ($active_tab === 'popup') : ?>
+                    <div class="rep-live-preview-wrapper">
+                        <div class="rep-preview-header">
+                            <h3><?php esc_html_e('Podgląd na żywo', 'pro_reader'); ?></h3>
+                            <div class="rep-preview-controls">
+                                <button type="button" id="rep-preview-desktop-btn" class="button active"><?php esc_html_e('Desktop', 'pro_reader'); ?></button>
+                                <button type="button" id="rep-preview-mobile-btn" class="button"><?php esc_html_e('Mobile', 'pro_reader'); ?></button>
+                            </div>
+                        </div>
+                        <div id="rep-popup-preview-area" class="is-desktop-view">
+                            <?php include REP_PLUGIN_PATH . 'src/Templates/popup/preview.php'; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
         <?php
@@ -184,6 +195,11 @@ class Settings_Page
     {
         if ($hook !== 'toplevel_page_reader-engagement-pro') {
             return;
+        }
+
+        if (isset($_GET['page']) && $_GET['page'] === 'reader-engagement-pro' && isset($_GET['tab']) && $_GET['tab'] === 'popup') {
+            wp_enqueue_style('rep-popup-style', REP_PLUGIN_URL . 'assets/css/popup.css', [], '1.5.0');
+            wp_enqueue_style('rep-admin-preview-style', REP_PLUGIN_URL . 'assets/css/admin-preview.css', [], '1.1.0');
         }
 
         wp_enqueue_style('wp-color-picker');
