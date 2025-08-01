@@ -175,17 +175,6 @@ class Settings_Page
                     </form>
                 </div>
 
-                <?php if ($active_tab === 'popup') : ?>
-                <div id="rep-live-preview-wrapper" style="flex: 1; min-width: 400px; display: none;">
-                    <div style="position: sticky; top: 50px;">
-                        <h3 style="margin: 0 0 10px; padding: 0;"><?php esc_html_e('Podgląd na żywo', 'pro_reader'); ?></h3>
-                        <div id="rep-live-preview-area" style="border: 1px solid #ccd0d4; background: #f0f0f1; border-radius: 4px; height: 600px;">
-                            <iframe id="rep-live-preview-frame" src="<?php echo esc_url(admin_url('admin-ajax.php?action=rep_live_preview')); ?>" style="width: 100%; height: 100%; border: none;"></iframe>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-
             </div>
         </div>
         <?php

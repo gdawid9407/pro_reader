@@ -24,7 +24,6 @@ jQuery(function($) {
     const tabs = $('.nav-tab-wrapper .nav-tab[href^="#"]');
     const tabContents = $('.settings-tab-content');
     const activeTabInput = $('#rep_active_sub_tab_input');
-    const previewWrapper = $('#rep-live-preview-wrapper');
 
     tabs.on('click', function(e) {
         e.preventDefault();
@@ -40,13 +39,6 @@ jQuery(function($) {
         // Zaktualizuj ukryte pole, aby serwer wiedział, co zapisuje
         const tabName = targetId.replace('#reader-engagement-pro-popup-', '');
         activeTabInput.val(tabName);
-
-        // Pokaż lub ukryj podgląd
-        if (tabName === 'desktop' || tabName === 'mobile') {
-            previewWrapper.show();
-        } else {
-            previewWrapper.hide();
-        }
 
         // Zapisz aktywną zakładkę
         localStorage.setItem('repActiveSubTab', targetId);
@@ -138,90 +130,6 @@ jQuery(function($) {
 
     // Inicjalizacja pól wyboru koloru
     $('.wp-color-picker-field').wpColorPicker();
-
-    // --- LOGIKA PODGLĄDU NA ŻYWO (NOWA, Z UŻYCIEM IFRAME) ---
-    const $previewFrame = $('#rep-live-preview-frame');
-    let isPreviewReady = false;
-
-    $previewFrame.on('load', function() {
-        isPreviewReady = true;
-        // Po załadowaniu iframe, wyślij wszystkie bieżące ustawienia, aby zsynchronizować podgląd
-        sendAllSettingsToPreview();
-    });
-
-    function sendToPreview(type, payload) {
-        if (isPreviewReady && $previewFrame.length) {
-            $previewFrame[0].contentWindow.postMessage({ type, payload }, '*');
-        }
-    }
-
-    function sendAllSettingsToPreview() {
-        const settings = {};
-        // Zbierz wszystkie relevantne ustawienia z aktywnej zakładki
-        const activeTabId = $('.nav-tab-active').attr('href');
-        const device = activeTabId.includes('mobile') ? 'mobile' : 'desktop';
-        
-        const $activeTab = $(activeTabId);
-        $activeTab.find('input[type="number"], input[type="radio"]:checked, select').each(function() {
-            const $input = $(this);
-            const name = $input.attr('name');
-            const id = $input.attr('id');
-            if (name || id) {
-                const key = id || name.match(/\[([^\]]+)\]$/)[1];
-                settings[key] = $input.val();
-            }
-        });
-        
-        // Dodaj wartości z color pickerów
-        $activeTab.find('.wp-color-picker-field').each(function() {
-            const $input = $(this);
-            const key = $input.attr('id');
-            settings[key] = $input.val();
-        });
-
-        // Dodaj kolejność i widoczność komponentów
-        settings.components = {
-            order: $('#rep-layout-builder-' + device).sortable('toArray', { attribute: 'data-key' }),
-            visibility: {}
-        };
-        $('#rep-layout-builder-' + device + ' input[type="checkbox"]').each(function() {
-            const $check = $(this);
-            const key = $check.attr('id').replace('v_', '').replace('_' + device, '');
-            settings.components.visibility[key] = $check.is(':checked');
-        });
-
-        // Wyślij cały pakiet
-        sendToPreview('batch_update', settings);
-    }
-
-    // Nasłuchuj na zmiany w obu zakładkach
-    $('.settings-tab-content').on('input change sortupdate', 'input, select, .rep-layout-builder', function(e) {
-        const $input = $(this);
-        const id = $input.attr('id');
-        let value = $input.val();
-        
-        if ($input.is(':radio')) {
-            value = $input.filter(':checked').val();
-        }
-
-        if (e.type === 'sortupdate') {
-            const device = $input.closest('.settings-tab-content').attr('id').includes('mobile') ? 'mobile' : 'desktop';
-            const order = $input.sortable('toArray', { attribute: 'data-key' });
-            sendToPreview('components_order', { device, order });
-            return;
-        }
-        
-        if (id) {
-            sendToPreview('setting_update', { id, value });
-        }
-    });
-    
-    $('.wp-color-picker-field').on('wpcolorpickerchange', function(event, ui) {
-        const id = $(this).attr('id');
-        const value = ui.color.toString();
-        sendToPreview('setting_update', { id, value });
-    });
-
 
     // --- PRZYCISKI RESETOWANIA ---
     $('#rep-spacing-reset-button-desktop').on('click', function(e) {
