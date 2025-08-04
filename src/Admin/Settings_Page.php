@@ -176,30 +176,50 @@ class Settings_Page
                 </div>
 
                 <?php if ($active_tab === 'popup') : ?>
-                <div id="rep-settings-preview-wrapper" style="flex-basis: 380px; position: sticky; top: 40px; height: fit-content;">
-                    <h3 style="margin-top: 0; padding-bottom: 5px; border-bottom: 1px solid #ddd;"><?php esc_html_e('Podgląd na żywo', 'pro_reader'); ?></h3>
-                    
-                    <div id="rep-preview-controls" style="margin-bottom: 15px; padding: 5px; text-align: center;">
-                        <button type="button" class="button button-primary" data-device="desktop">
-                            <span class="dashicons dashicons-desktop" style="vertical-align: text-top;"></span>
-                            <?php esc_html_e('Desktop', 'pro_reader'); ?>
-                        </button>
-                        <button type="button" class="button button-secondary" data-device="mobile">
-                            <span class="dashicons dashicons-smartphone" style="vertical-align: text-top;"></span>
-                            <?php esc_html_e('Mobile', 'pro_reader'); ?>
-                        </button>
+                <div id="rep-settings-preview-wrapper" style="flex: 1; min-width: 400px; position: sticky; top: 40px; height: calc(100vh - 80px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0;"><?php esc_html_e('Podgląd na żywo', 'pro_reader'); ?></h3>
+                        <div id="rep-preview-controls">
+                            <button type="button" class="button button-primary" data-device="desktop" title="<?php esc_attr_e('Podgląd desktopowy', 'pro_reader'); ?>">
+                                <span class="dashicons dashicons-desktop" style="vertical-align: text-top;"></span>
+                            </button>
+                            <button type="button" class="button button-secondary" data-device="mobile" title="<?php esc_attr_e('Podgląd mobilny', 'pro_reader'); ?>">
+                                <span class="dashicons dashicons-smartphone" style="vertical-align: text-top;"></span>
+                            </button>
+                        </div>
                     </div>
-
-                    <div id="rep-preview-device-frame" class="is-desktop">
+                    
+                    <div id="rep-preview-container" class="is-desktop">
                         <iframe id="rep-live-preview-iframe" title="<?php esc_attr_e('Podgląd popupa na żywo', 'pro_reader'); ?>"></iframe>
                     </div>
                     <style>
-                        #rep-preview-device-frame { border: 6px solid #444; border-radius: 10px; background: #444; transition: all 0.3s ease-in-out; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
-                        #rep-live-preview-iframe { width: 100%; height: 100%; border: none; background: #fff; display: block; }
-                        #rep-preview-device-frame.is-desktop { width: 100%; height: auto; aspect-ratio: 16 / 9; }
-                        #rep-preview-device-frame.is-mobile { width: 200px; height: auto; aspect-ratio: 9 / 18; margin: 0 auto; }
+                        #rep-preview-container {
+                            width: 90%;
+                            height: 70%;
+                            border: 1px solid #ccd0d4;
+                            background: #f0f0f1;
+                            box-shadow: 0 1px 1px rgba(0,0,0,.04);
+                            transition: width 0.3s ease-in-out;
+                            margin: 0 auto;
+                        }
+                        #rep-live-preview-iframe {
+                            width: 100%;
+                            height: 100%;
+                            border: none;
+                            transform: scale(1);
+                            transform-origin: top left;
+                            background: #fff;
+                        }
+                        #rep-preview-container.is-mobile {
+                            width: 375px; /* Typowa szerokość iPhone */
+                            height: 90%;
+                            max-height: 667px; /* Typowa wysokość iPhone */
+                            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                            border-radius: 20px;
+                            border: 5px solid #333;
+                        }
                     </style>
-                     <p class="description" style="margin-top: 15px; text-align: center;"><?php esc_html_e('Podgląd odzwierciedla niezapisane zmiany. Niektóre elementy, jak treść, są przykładowe.', 'pro_reader'); ?></p>
+                     <p class="description" style="margin-top: 15px; text-align: center;"><?php esc_html_e('Podgląd odzwierciedla niezapisane zmiany.', 'pro_reader'); ?></p>
                 </div>
                 <?php endif; ?>
 
@@ -227,6 +247,7 @@ class Settings_Page
         );
 
         wp_localize_script('rep-admin-settings', 'REP_Admin_Settings', [
+            'ajax_url' => admin_url('admin-ajax.php'),
             'admin_nonce' => wp_create_nonce('rep_admin_nonce'),
             'reindex_nonce' => wp_create_nonce('rep_reindex_nonce'),
             'reindex_text_default' => __('Przebuduj indeks linków', 'pro_reader'),
