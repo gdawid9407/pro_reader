@@ -175,6 +175,34 @@ class Settings_Page
                     </form>
                 </div>
 
+                <?php if ($active_tab === 'popup') : ?>
+                <div id="rep-settings-preview-wrapper" style="flex-basis: 380px; position: sticky; top: 40px; height: fit-content;">
+                    <h3 style="margin-top: 0; padding-bottom: 5px; border-bottom: 1px solid #ddd;"><?php esc_html_e('Podgląd na żywo', 'pro_reader'); ?></h3>
+                    
+                    <div id="rep-preview-controls" style="margin-bottom: 15px; padding: 5px; text-align: center;">
+                        <button type="button" class="button button-primary" data-device="desktop">
+                            <span class="dashicons dashicons-desktop" style="vertical-align: text-top;"></span>
+                            <?php esc_html_e('Desktop', 'pro_reader'); ?>
+                        </button>
+                        <button type="button" class="button button-secondary" data-device="mobile">
+                            <span class="dashicons dashicons-smartphone" style="vertical-align: text-top;"></span>
+                            <?php esc_html_e('Mobile', 'pro_reader'); ?>
+                        </button>
+                    </div>
+
+                    <div id="rep-preview-device-frame" class="is-desktop">
+                        <iframe id="rep-live-preview-iframe" title="<?php esc_attr_e('Podgląd popupa na żywo', 'pro_reader'); ?>"></iframe>
+                    </div>
+                    <style>
+                        #rep-preview-device-frame { border: 6px solid #444; border-radius: 10px; background: #444; transition: all 0.3s ease-in-out; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+                        #rep-live-preview-iframe { width: 100%; height: 100%; border: none; background: #fff; display: block; }
+                        #rep-preview-device-frame.is-desktop { width: 100%; height: auto; aspect-ratio: 16 / 9; }
+                        #rep-preview-device-frame.is-mobile { width: 200px; height: auto; aspect-ratio: 9 / 18; margin: 0 auto; }
+                    </style>
+                     <p class="description" style="margin-top: 15px; text-align: center;"><?php esc_html_e('Podgląd odzwierciedla niezapisane zmiany. Niektóre elementy, jak treść, są przykładowe.', 'pro_reader'); ?></p>
+                </div>
+                <?php endif; ?>
+
             </div>
         </div>
         <?php
