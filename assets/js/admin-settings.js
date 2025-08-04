@@ -171,6 +171,15 @@ jQuery(function($) {
         },
         
         updatePreview: function($input, value = null) {
+            // --- POCZĄTEK POPRAWKI ---
+            // Jeśli element jest przyciskiem radio i nie jest zaznaczony, przerwij.
+            // To zapobiega nadpisywaniu poprawnych ustawień przez niezaznaczone opcje
+            // podczas inicjalizacji podglądu w pętli `applyStylesFromForm`.
+            if ($input.is(':radio') && !$input.is(':checked')) {
+                return;
+            }
+            // --- KONIEC POPRAWKI ---
+
             const inputDevice = $input.closest('.settings-tab-content').attr('id').includes('desktop') ? 'desktop' : 'mobile';
             if (inputDevice !== (this.currentContext === 'general' ? 'desktop' : this.currentContext) ) {
                 return;
@@ -200,7 +209,37 @@ jQuery(function($) {
             this.$iframeDoc.find(selector).css(property, value + unit); 
         },
         
-        updateItemLayout: function(layout) { const $items = this.$iframeDoc.find('.rep-rec-item'); $items.removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + layout); $items.each((i, item) => { const $item = $(item); const $thumb = $item.find('.rep-rec-thumb-link'); const $content = $item.find('.rep-rec-content'); if (layout === 'horizontal' && !$thumb.parent().is('.rep-rec-item')) { $thumb.prependTo($item); } else if (layout === 'vertical' && !$thumb.parent().is('.rep-rec-content')) { $thumb.prependTo($content); } });},
+        updateItemLayout: function(layout) {
+            const $items = this.$iframeDoc.find('.rep-rec-item');
+            
+            // 1. Zaktualizuj klasę główną, aby dopasować style CSS
+            $items.removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + layout);
+        
+            // 2. Upewnij się, że struktura DOM jest poprawna dla każdego elementu
+            $items.each((i, item) => {
+                const $item = $(item);
+                const $thumb = $item.find('.rep-rec-thumb-link');
+                const $content = $item.find('.rep-rec-content');
+        
+                // Jeśli $thumb lub $content nie istnieją, przerwij dla tego elementu
+                if (!$thumb.length || !$content.length) {
+                    return; 
+                }
+        
+                if (layout === 'horizontal') {
+                    // W układzie horyzontalnym, miniaturka powinna być bezpośrednim dzieckiem .rep-rec-item
+                    // i znajdować się *przed* .rep-rec-content.
+                    if (!$thumb.parent().is($item)) {
+                        $thumb.prependTo($item);
+                    }
+                } else { // layout === 'vertical'
+                    // W układzie wertykalnym, miniaturka powinna być pierwszym dzieckiem .rep-rec-content.
+                    if (!$thumb.parent().is($content)) {
+                        $thumb.prependTo($content);
+                    }
+                }
+            });
+        },
         
         // --- NOWA FUNKCJA: Aktualizuje widoczność komponentu ---
         updateComponentVisibility: function($checkbox) {
