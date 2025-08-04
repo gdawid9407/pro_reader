@@ -1,7 +1,7 @@
 jQuery(function($) {
     'use strict';
 
-    // --- 1. OBSŁUGA RĘCZNEGO RE-INDEKSOWANIA (bez zmian) ---
+    // --- 1. OBSŁUGA RĘCZNEGO RE-INDEKSOWANIA ---
     const $reindexButton = $('#rep-reindex-button');
     const $reindexStatus = $('#rep-reindex-status');
     if ($reindexButton.length) {
@@ -19,54 +19,86 @@ jQuery(function($) {
         });
     }
 
-    // --- 2. PODGLĄD NA ŻYWO - WERSJA Z FUNKCJĄ SORTOWANIA ---
+    // --- 2. LOGIKA POKAZYWANIA/UKRYWANIA PÓL LIMITU ZAJAWKI ---
+    const ExcerptLimitToggle = {
+        init: function() {
+            // Znajdź wszystkie przełączniki radio dla typu limitu (dla desktop i mobile)
+            this.radioButtons = $('input[name*="[popup_rec_excerpt_limit_type]"]');
+            
+            // Ustaw poprawną widoczność pól przy załadowaniu strony
+            this.radioButtons.each((i, radioGroup) => {
+                // Sprawdzamy tylko zaznaczoną opcję, aby uniknąć wielokrotnego uruchamiania
+                const $checkedRadio = $(radioGroup).filter(':checked');
+                if ($checkedRadio.length) {
+                    this.toggleFields($checkedRadio);
+                }
+            });
+
+            // Dodaj event listener do przełączania w przyszłości
+            this.radioButtons.on('change', (e) => {
+                this.toggleFields($(e.currentTarget));
+            });
+        },
+
+        toggleFields: function($radio) {
+            const selectedValue = $radio.val();
+            // Określ kontekst (desktop lub mobile) na podstawie atrybutu 'name'
+            const device = $radio.attr('name').includes('[desktop]') ? 'desktop' : 'mobile';
+
+            // Znajdź wiersze tabeli (<tr>) zawierające odpowiednie pola input
+            const $wordsFieldRow = $(`#popup_rec_excerpt_length_${device}`).closest('tr');
+            const $linesFieldRow = $(`#popup_rec_excerpt_lines_${device}`).closest('tr');
+
+            if (selectedValue === 'words') {
+                $wordsFieldRow.show();
+                $linesFieldRow.hide();
+            } else if (selectedValue === 'lines') {
+                $wordsFieldRow.hide();
+                $linesFieldRow.show();
+            }
+        }
+    };
+
+    // --- 3. PODGLĄD NA ŻYWO - WERSJA Z FUNKCJĄ SORTOWANIA ---
     const LivePreview = {
         // Elementy DOM
         $iframe: null,
         $iframeDoc: null,
         $previewContainer: null,
-        $previewWrapper: null, // <-- NOWY
+        $previewWrapper: null,
         $deviceLabel: null,
         $settingsTabs: null,
         $activeTabInput: null,
-        $httpRefererInput: null, // <-- NOWY
+        $httpRefererInput: null,
 
         // Stan
         currentContext: 'general', // Kontekstem jest aktywna zakładka
 
         init: function() {
             this.$previewContainer = $('#rep-preview-container');
-            this.$previewWrapper = $('#rep-settings-preview-wrapper'); // <-- NOWY
+            this.$previewWrapper = $('#rep-settings-preview-wrapper');
             if (!this.$previewContainer.length) { return; }
 
             this.$iframe = $('#rep-live-preview-iframe');
             this.$deviceLabel = $('#rep-preview-device-label');
-            this.$settingsTabs = $('h2.nav-tab-wrapper a.nav-tab[href*="sub-tab="]'); // ZMIANA
+            this.$settingsTabs = $('h2.nav-tab-wrapper a.nav-tab[href*="sub-tab="]');
             this.$activeTabInput = $('#rep_active_sub_tab_input');
-            this.$httpRefererInput = $('input[name="_wp_http_referer"]'); // <-- NOWY
+            this.$httpRefererInput = $('input[name="_wp_http_referer"]');
 
-            // --- POCZĄTEK ZMIANY: WŁĄCZENIE SORTOWANIA ---
-            // Inicjalizujemy jQuery UI Sortable na obu listach (dla desktopu i mobile).
-            // WordPress domyślnie ładuje tę bibliotekę w panelu admina.
+            // Inicjalizujemy jQuery UI Sortable
             $('.rep-layout-builder').sortable({
-                
-                axis: 'y', // Ogranicz ruch do osi Y
+                axis: 'y',
                 update: (event, ui) => {
-                    // 'update' jest wywoływane po zakończeniu przeciągania.
-                    // Przekazujemy listę, która została zaktualizowana, do funkcji odświeżającej podgląd.
                     this.updateComponentOrder($(event.target));
                 }
-            }).disableSelection(); // Zapobiega zaznaczaniu tekstu podczas przeciągania.
-            // --- KONIEC ZMIANY ---
+            }).disableSelection();
 
             this.bindTabSwitcher();
             this.loadIframe();
             
-            // --- POCZĄTEK ZMIANY: Odczytanie zakładki z URL ---
             const urlParams = new URLSearchParams(window.location.search);
             const initialTab = urlParams.get('sub-tab') || 'general';
-            this.switchToTab(initialTab, true); // true, aby nie modyfikować historii przy pierwszym ładowaniu
-            // --- KONIEC ZMIANY ---
+            this.switchToTab(initialTab, true);
         },
         
         loadIframe: function() {
@@ -89,40 +121,33 @@ jQuery(function($) {
             });
         },
         
-        switchToTab: function(tabKey, isInitialLoad = false) { // ZMIANA
+        switchToTab: function(tabKey, isInitialLoad = false) {
             this.currentContext = tabKey;
             
             this.$settingsTabs.removeClass('nav-tab-active');
-            this.$settingsTabs.filter(`[href*="sub-tab=${tabKey}"]`).addClass('nav-tab-active'); // ZMIANA
+            this.$settingsTabs.filter(`[href*="sub-tab=${tabKey}"]`).addClass('nav-tab-active');
             
             $('.settings-tab-content').hide();
             $(`#reader-engagement-pro-popup-${tabKey}`).show();
 
             this.$activeTabInput.val(tabKey);
 
-            // --- POCZĄTEK ZMIANY: Aktualizacja URL i _wp_http_referer ---
             const newUrl = new URL(window.location);
             newUrl.searchParams.set('sub-tab', tabKey);
 
-            // Aktualizuj _wp_http_referer, aby po zapisaniu wrócić do właściwej zakładki
             if (this.$httpRefererInput.length) {
                 this.$httpRefererInput.val(newUrl.pathname + newUrl.search);
             }
 
-            // Zmień URL w pasku adresu bez przeładowywania strony
             if (!isInitialLoad) {
                 window.history.pushState({path: newUrl.href}, '', newUrl.href);
             }
-            // --- KONIEC ZMIANY ---
 
-
-            // --- POCZĄTEK ZMIANY: KONTROLA WIDOCZNOŚCI PODGLĄDU ---
             if (tabKey === 'general') {
                 this.$previewWrapper.hide();
             } else {
                 this.$previewWrapper.show();
             }
-            // --- KONIEC ZMIANY ---
             
             this.refreshPreview();
         },
@@ -130,17 +155,11 @@ jQuery(function($) {
         bindFormEvents: function() {
             const $inputs = $('#reader-engagement-pro-popup-desktop :input, #reader-engagement-pro-popup-mobile :input');
             
-            // --- ZMIANA: Uproszczono bindowanie zdarzeń ---
-            // 'input' dla pól tekstowych i liczbowych, 'change' dla checkboxów, radio i select
             $inputs.on('input change', (e) => this.updatePreview($(e.currentTarget)));
 
-            // Dla selektorów kolorów używamy ich wbudowanego zdarzenia 'change'
             $('.wp-color-picker-field').wpColorPicker({
                 change: (e, ui) => this.updatePreview($(e.target), ui.color.toString())
             });
-
-            // Zdarzenie sortowania jest teraz obsługiwane w metodzie .sortable() w init()
-            // Nie ma potrzeby bindować go tutaj ponownie.
         },
 
         refreshPreview: function() {
@@ -155,9 +174,8 @@ jQuery(function($) {
                 this.$deviceLabel.text('Podgląd Mobilny');
                 this.applyStylesFromForm('mobile');
             } else {
-                // Domyślnie pokazuj podgląd desktopowy, ale nie pokazuj go w zakładce 'general'
                 this.$previewContainer.removeClass('is-mobile').addClass('is-desktop');
-                this.$deviceLabel.text(''); // Pusty label, bo podgląd jest ukryty
+                this.$deviceLabel.text('');
             }
         },
 
@@ -166,19 +184,13 @@ jQuery(function($) {
             $form.find(':input').each((i, el) => {
                 this.updatePreview($(el));
             });
-            // --- ZMIANA: Zapewnienie aktualizacji kolejności po przełączeniu zakładki ---
             this.updateComponentOrder($form.find('.rep-layout-builder'));
         },
         
         updatePreview: function($input, value = null) {
-            // --- POCZĄTEK POPRAWKI ---
-            // Jeśli element jest przyciskiem radio i nie jest zaznaczony, przerwij.
-            // To zapobiega nadpisywaniu poprawnych ustawień przez niezaznaczone opcje
-            // podczas inicjalizacji podglądu w pętli `applyStylesFromForm`.
             if ($input.is(':radio') && !$input.is(':checked')) {
                 return;
             }
-            // --- KONIEC POPRAWKI ---
 
             const inputDevice = $input.closest('.settings-tab-content').attr('id').includes('desktop') ? 'desktop' : 'mobile';
             if (inputDevice !== (this.currentContext === 'general' ? 'desktop' : this.currentContext) ) {
@@ -196,7 +208,6 @@ jQuery(function($) {
             if (name.includes('[popup_recommendations_layout]')) { this.$iframeDoc.find('#rep-intelligent-popup__list').removeClass('layout-list layout-grid').addClass('layout-' + value); }
             if (name.includes('[popup_rec_item_layout]')) { this.updateItemLayout(value); }
             
-            // --- ZMIANA: Obsługa widoczności jest teraz osobną funkcją dla przejrzystości ---
             if (name.includes('[popup_rec_components_visibility]')) {
                 this.updateComponentVisibility($input);
             }
@@ -212,28 +223,22 @@ jQuery(function($) {
         updateItemLayout: function(layout) {
             const $items = this.$iframeDoc.find('.rep-rec-item');
             
-            // 1. Zaktualizuj klasę główną, aby dopasować style CSS
             $items.removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + layout);
         
-            // 2. Upewnij się, że struktura DOM jest poprawna dla każdego elementu
             $items.each((i, item) => {
                 const $item = $(item);
                 const $thumb = $item.find('.rep-rec-thumb-link');
                 const $content = $item.find('.rep-rec-content');
         
-                // Jeśli $thumb lub $content nie istnieją, przerwij dla tego elementu
                 if (!$thumb.length || !$content.length) {
                     return; 
                 }
         
                 if (layout === 'horizontal') {
-                    // W układzie horyzontalnym, miniaturka powinna być bezpośrednim dzieckiem .rep-rec-item
-                    // i znajdować się *przed* .rep-rec-content.
                     if (!$thumb.parent().is($item)) {
                         $thumb.prependTo($item);
                     }
                 } else { // layout === 'vertical'
-                    // W układzie wertykalnym, miniaturka powinna być pierwszym dzieckiem .rep-rec-content.
                     if (!$thumb.parent().is($content)) {
                         $thumb.prependTo($content);
                     }
@@ -241,11 +246,9 @@ jQuery(function($) {
             });
         },
         
-        // --- NOWA FUNKCJA: Aktualizuje widoczność komponentu ---
         updateComponentVisibility: function($checkbox) {
             const name = $checkbox.attr('name');
             if (!name) return;
-            // Wyciągnij nazwę komponentu (np. 'thumbnail', 'title') z atrybutu name.
             const component = name.match(/\[popup_rec_components_visibility\]\[(.*?)\]/)[1];
             const isVisible = $checkbox.is(':checked');
             
@@ -258,14 +261,11 @@ jQuery(function($) {
             };
             
             if (componentMap[component]) {
-                // Znajdź odpowiedni element w podglądzie i go pokaż/ukryj.
                 this.$iframeDoc.find(componentMap[component]).toggle(isVisible);
             }
         },
 
-        // --- NOWA FUNKCJA: Aktualizuje kolejność komponentów ---
         updateComponentOrder: function($sortableList) {
-            // Pobierz nową kolejność z ukrytych pól input w posortowanej liście.
             const newOrder = $sortableList.find('input[type="hidden"]').map((i, el) => $(el).val()).get();
             if (newOrder.length === 0) return;
 
@@ -274,7 +274,6 @@ jQuery(function($) {
             $contentContainers.each((i, container) => {
                 const $container = $(container);
                 
-                // Przenieś każdy element na koniec kontenera w nowej, poprawnej kolejności.
                 newOrder.forEach(componentKey => {
                     const componentMap = {
                         'meta': '.rep-rec-meta',
@@ -290,27 +289,23 @@ jQuery(function($) {
         }
     };
 
-    // --- POCZĄTEK ZMIANY: Obsługa edytora TinyMCE ---
-    // Musimy poczekać, aż edytor zostanie w pełni zainicjowany.
+    // --- 4. OBSŁUGA EDYTORA TinyMCE ---
     $(document).on('tinymce-init', function(event, editor) {
-        // Sprawdzamy, czy to właściwy edytor.
         if (editor.id === 'popup_content_main_editor') {
-            // Bindowanie do zdarzenia 'keyup' i 'change' w edytorze.
             editor.on('keyup change', function() {
-                // Pobieramy aktualną treść z edytora.
                 const newContent = editor.getContent();
-                // Aktualizujemy podgląd.
                 if (LivePreview.$iframeDoc) {
                     LivePreview.$iframeDoc.find('#rep-intelligent-popup__custom-content').html(newContent);
                 }
             });
         }
     });
-    // --- KONIEC ZMIANY ---
 
+    // --- 5. INICJALIZACJA WSZYSTKICH MODUŁÓW ---
+    ExcerptLimitToggle.init();
     LivePreview.init();
 
-    // --- Obsługa zapisywania szablonów AJAX (bez zmian) ---
+    // --- 6. OBSŁUGA ZAPISYWANIA SZABLONÓW AJAX ---
     $('.rep-save-template-btn').on('click', function(e) {
         e.preventDefault();
         const $button = $(this);
@@ -318,7 +313,6 @@ jQuery(function($) {
         const deviceType = $button.attr('id').includes('desktop') ? 'desktop' : 'mobile';
         const $feedbackSpan = $('#save-template-' + templateId + '-feedback-' + deviceType);
         
-        // Znajdź formularz dla odpowiedniej zakładki
         const $form = $(`#reader-engagement-pro-popup-${deviceType}`);
         const settingsString = $form.find(':input').serialize();
 
@@ -340,7 +334,7 @@ jQuery(function($) {
             }
         })
         .fail(function() {
-            $feedbackSpan.text('Wystąpił błąd serwera.').css('color', 'red');
+            $feedbackSpan.text('Błąd serwera.').css('color', 'red');
         })
         .always(function() {
             $button.prop('disabled', false);
