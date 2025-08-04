@@ -2,7 +2,6 @@ jQuery(function($) {
     'use strict';
 
     // --- 1. OBSŁUGA RĘCZNEGO RE-INDEKSOWANIA (bez zmian) ---
-    // ... (kod z poprzedniej wersji bez zmian)
     const $reindexButton = $('#rep-reindex-button');
     const $reindexStatus = $('#rep-reindex-status');
     if ($reindexButton.length) {
@@ -20,7 +19,7 @@ jQuery(function($) {
         });
     }
 
-    // --- 2. PODGLĄD NA ŻYWO - WERSJA OSTATECZNA ---
+    // --- 2. PODGLĄD NA ŻYWO - WERSJA Z FUNKCJĄ SORTOWANIA ---
     const LivePreview = {
         // Elementy DOM
         $iframe: null,
@@ -42,10 +41,23 @@ jQuery(function($) {
             this.$settingsTabs = $('h2.nav-tab-wrapper a.nav-tab[href^="#reader-engagement-pro-popup-"]');
             this.$activeTabInput = $('#rep_active_sub_tab_input');
 
+            // --- POCZĄTEK ZMIANY: WŁĄCZENIE SORTOWANIA ---
+            // Inicjalizujemy jQuery UI Sortable na obu listach (dla desktopu i mobile).
+            // WordPress domyślnie ładuje tę bibliotekę w panelu admina.
+            $('.rep-layout-builder').sortable({
+                
+                axis: 'y', // Ogranicz ruch do osi Y
+                update: (event, ui) => {
+                    // 'update' jest wywoływane po zakończeniu przeciągania.
+                    // Przekazujemy listę, która została zaktualizowana, do funkcji odświeżającej podgląd.
+                    this.updateComponentOrder($(event.target));
+                }
+            }).disableSelection(); // Zapobiega zaznaczaniu tekstu podczas przeciągania.
+            // --- KONIEC ZMIANY ---
+
             this.bindTabSwitcher();
             this.loadIframe();
             
-            // Pokaż domyślną zakładkę i ustaw stan początkowy
             this.switchToTab('general');
         },
         
@@ -56,7 +68,6 @@ jQuery(function($) {
             this.$iframe.on('load', () => {
                 this.$iframeDoc = this.$iframe.contents();
                 this.bindFormEvents();
-                // Po załadowaniu iframe, zastosuj style z aktywnej zakładki (początkowo 'general' nic nie robi)
                 this.refreshPreview();
             });
         },
@@ -69,36 +80,36 @@ jQuery(function($) {
             });
         },
         
-        // --- NOWA FUNKCJA CENTRALNA ---
-        // Odpowiada za wszystkie zmiany związane z przełączeniem zakładki
         switchToTab: function(tabKey) {
             this.currentContext = tabKey;
             
-            // 1. Zaktualizuj wygląd zakładek
             this.$settingsTabs.removeClass('nav-tab-active');
             this.$settingsTabs.filter(`[href="#reader-engagement-pro-popup-${tabKey}"]`).addClass('nav-tab-active');
             
-            // 2. Pokaż/ukryj odpowiednie sekcje formularza
             $('.settings-tab-content').hide();
             $(`#reader-engagement-pro-popup-${tabKey}`).show();
 
-            // 3. Zapisz aktywną zakładkę do ukrytego pola
             this.$activeTabInput.val(tabKey);
             
-            // 4. Zaktualizuj widok podglądu
             this.refreshPreview();
         },
 
         bindFormEvents: function() {
-            // Nasłuchuj na zmiany we WSZYSTKICH polach, ale logikę izolacji przenieś do updatePreview
             const $inputs = $('#reader-engagement-pro-popup-desktop :input, #reader-engagement-pro-popup-mobile :input');
+            
+            // --- ZMIANA: Uproszczono bindowanie zdarzeń ---
+            // 'input' dla pól tekstowych i liczbowych, 'change' dla checkboxów, radio i select
             $inputs.on('input change', (e) => this.updatePreview($(e.currentTarget)));
-            $('.wp-color-picker-field').wpColorPicker({ change: (e, ui) => this.updatePreview($(e.target), ui.color.toString()) });
-            $('.rep-layout-builder').on('sortupdate', (e) => this.updateComponentOrder($(e.target)));
+
+            // Dla selektorów kolorów używamy ich wbudowanego zdarzenia 'change'
+            $('.wp-color-picker-field').wpColorPicker({
+                change: (e, ui) => this.updatePreview($(e.target), ui.color.toString())
+            });
+
+            // Zdarzenie sortowania jest teraz obsługiwane w metodzie .sortable() w init()
+            // Nie ma potrzeby bindować go tutaj ponownie.
         },
 
-        // --- GŁÓWNA FUNKCJA ODŚWIEŻAJĄCA PODGLĄD ---
-        // Ustawia wygląd podglądu na podstawie AKTYWNEJ ZAKŁADKI
         refreshPreview: function() {
             if (!this.$iframeDoc) return;
             
@@ -111,34 +122,27 @@ jQuery(function($) {
                 this.$deviceLabel.text('Podgląd Mobilny');
                 this.applyStylesFromForm('mobile');
             } else {
-                // Dla zakładki "general", pokaż domyślny wygląd (desktop)
                 this.$previewContainer.removeClass('is-mobile').addClass('is-desktop');
                 this.$deviceLabel.text('Podgląd Desktop (ust. ogólne)');
-                this.applyStylesFromForm('desktop'); // Pokaż styl desktop jako bazowy
+                this.applyStylesFromForm('desktop');
             }
         },
 
-        // --- FUNKCJA APLIKUJĄCA STYLE Z KONKRETNEGO FORMULARZA ---
         applyStylesFromForm: function(device) {
             const $form = $(`#reader-engagement-pro-popup-${device}`);
             $form.find(':input').each((i, el) => {
                 this.updatePreview($(el));
             });
+            // --- ZMIANA: Zapewnienie aktualizacji kolejności po przełączeniu zakładki ---
             this.updateComponentOrder($form.find('.rep-layout-builder'));
         },
         
         updatePreview: function($input, value = null) {
-            // --- KLUCZOWA ZMIANA ---
-            // Zamiast przerywać funkcję, sprawdzamy, czy pole należy do aktywnego kontekstu.
-            // Jeśli nie, to nic się nie stanie, bo pętle i warunki poniżej nie zostaną spełnione.
             const inputDevice = $input.closest('.settings-tab-content').attr('id').includes('desktop') ? 'desktop' : 'mobile';
             if (inputDevice !== (this.currentContext === 'general' ? 'desktop' : this.currentContext) ) {
                 return;
             }
 
-            // ... reszta funkcji `updatePreview` jest praktycznie bez zmian
-            // ... ponieważ teraz `applyStylesFromForm` wywołuje ją tylko z polami z dobrego kontekstu
-            
             if (!this.$iframeDoc) return;
             const name = $input.attr('name');
             value = (value !== null) ? value : $input.val();
@@ -149,17 +153,105 @@ jQuery(function($) {
             if (name.includes('[popup_padding_y]') || name.includes('[popup_padding_x]')) { const paddingY = $(`#popup_padding_y_${inputDevice}`).val(); const paddingX = $(`#popup_padding_x_${inputDevice}`).val(); this.updateCssVar('#rep-intelligent-popup__container', '--rep-popup-padding', `${paddingY}px ${paddingX}px`);}
             if (name.includes('[popup_recommendations_layout]')) { this.$iframeDoc.find('#rep-intelligent-popup__list').removeClass('layout-list layout-grid').addClass('layout-' + value); }
             if (name.includes('[popup_rec_item_layout]')) { this.updateItemLayout(value); }
-            if (name.includes('[popup_rec_components_visibility]')) { this.updateComponentVisibility($input); }
+            
+            // --- ZMIANA: Obsługa widoczności jest teraz osobną funkcją dla przejrzystości ---
+            if (name.includes('[popup_rec_components_visibility]')) {
+                this.updateComponentVisibility($input);
+            }
+
             if (name.includes('[popup_rec_thumb_fit]')) { this.$iframeDoc.find('.rep-rec-thumb').removeClass('thumb-fit-cover thumb-fit-contain').addClass('thumb-fit-' + value); }
             if (name.includes('[popup_rec_thumb_aspect_ratio]')) { const style = (value === 'auto') ? '' : 'aspect-ratio: ' + value.replace(':', ' / '); this.$iframeDoc.find('.rep-rec-thumb-link').attr('style', style);}
         },
         
-        // Funkcje pomocnicze bez zmian
         updateCssVar: function(selector, property, value, unit = '') { this.$iframeDoc.find(selector).css(property, value + unit); },
-        updateItemLayout: function(layout) { const $items = this.$iframeDoc.find('.rep-rec-item'); $items.removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + layout); $items.each((i, item) => { const $item = $(item); const $thumb = $item.find('.rep-rec-thumb-link'); const $content = $item.find('.rep-rec-content'); if (layout === 'horizontal') { $thumb.prependTo($item); } else { $thumb.prependTo($content); } });},
-        updateComponentVisibility: function($checkbox) { const name = $checkbox.attr('name'); const component = name.match(/\[popup_rec_components_visibility\]\[(.*?)\]/)[1]; const isVisible = $checkbox.is(':checked'); const componentMap = { 'thumbnail': '.rep-rec-thumb-link', 'meta': '.rep-rec-meta', 'title': '.rep-rec-title', 'excerpt': '.rep-rec-excerpt', 'link': '.rep-rec-button' }; if (componentMap[component]) { this.$iframeDoc.find(componentMap[component]).toggle(isVisible); }},
-        updateComponentOrder: function($sortableList) { const newOrder = $sortableList.find('input[type="hidden"]').map((i, el) => $(el).val()).get(); const $contentContainers = this.$iframeDoc.find('.rep-rec-content'); $contentContainers.each((i, container) => { const $container = $(container); newOrder.forEach(componentKey => { const componentMap = { 'meta': '.rep-rec-meta', 'title': '.rep-rec-title', 'excerpt': '.rep-rec-excerpt', 'link': '.rep-rec-button' }; if(componentMap[componentKey]) { $container.find(componentMap[componentKey]).appendTo($container); } }); });}
+        updateItemLayout: function(layout) { const $items = this.$iframeDoc.find('.rep-rec-item'); $items.removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + layout); $items.each((i, item) => { const $item = $(item); const $thumb = $item.find('.rep-rec-thumb-link'); const $content = $item.find('.rep-rec-content'); if (layout === 'horizontal' && !$thumb.parent().is('.rep-rec-item')) { $thumb.prependTo($item); } else if (layout === 'vertical' && !$thumb.parent().is('.rep-rec-content')) { $thumb.prependTo($content); } });},
+        
+        // --- NOWA FUNKCJA: Aktualizuje widoczność komponentu ---
+        updateComponentVisibility: function($checkbox) {
+            const name = $checkbox.attr('name');
+            if (!name) return;
+            // Wyciągnij nazwę komponentu (np. 'thumbnail', 'title') z atrybutu name.
+            const component = name.match(/\[popup_rec_components_visibility\]\[(.*?)\]/)[1];
+            const isVisible = $checkbox.is(':checked');
+            
+            const componentMap = {
+                'thumbnail': '.rep-rec-thumb-link',
+                'meta': '.rep-rec-meta',
+                'title': '.rep-rec-title',
+                'excerpt': '.rep-rec-excerpt',
+                'link': '.rep-rec-button'
+            };
+            
+            if (componentMap[component]) {
+                // Znajdź odpowiedni element w podglądzie i go pokaż/ukryj.
+                this.$iframeDoc.find(componentMap[component]).toggle(isVisible);
+            }
+        },
+
+        // --- NOWA FUNKCJA: Aktualizuje kolejność komponentów ---
+        updateComponentOrder: function($sortableList) {
+            // Pobierz nową kolejność z ukrytych pól input w posortowanej liście.
+            const newOrder = $sortableList.find('input[type="hidden"]').map((i, el) => $(el).val()).get();
+            if (newOrder.length === 0) return;
+
+            const $contentContainers = this.$iframeDoc.find('.rep-rec-content');
+            
+            $contentContainers.each((i, container) => {
+                const $container = $(container);
+                
+                // Przenieś każdy element na koniec kontenera w nowej, poprawnej kolejności.
+                newOrder.forEach(componentKey => {
+                    const componentMap = {
+                        'meta': '.rep-rec-meta',
+                        'title': '.rep-rec-title',
+                        'excerpt': '.rep-rec-excerpt',
+                        'link': '.rep-rec-button'
+                    };
+                    if (componentMap[componentKey]) {
+                        $container.find(componentMap[componentKey]).appendTo($container);
+                    }
+                });
+            });
+        }
     };
 
     LivePreview.init();
+
+    // --- Obsługa zapisywania szablonów AJAX (bez zmian) ---
+    $('.rep-save-template-btn').on('click', function(e) {
+        e.preventDefault();
+        const $button = $(this);
+        const templateId = $button.data('template-id');
+        const deviceType = $button.attr('id').includes('desktop') ? 'desktop' : 'mobile';
+        const $feedbackSpan = $('#save-template-' + templateId + '-feedback-' + deviceType);
+        
+        // Znajdź formularz dla odpowiedniej zakładki
+        const $form = $(`#reader-engagement-pro-popup-${deviceType}`);
+        const settingsString = $form.find(':input').serialize();
+
+        $button.prop('disabled', true);
+        $feedbackSpan.text('Zapisywanie...').css('color', 'black').show();
+
+        $.post(REP_Admin_Settings.ajax_url, {
+            action: 'save_popup_template',
+            nonce: REP_Admin_Settings.admin_nonce,
+            template_id: templateId,
+            device_type: deviceType,
+            settings_string: settingsString
+        })
+        .done(function(response) {
+            if (response.success) {
+                $feedbackSpan.text(response.data.message).css('color', 'green');
+            } else {
+                $feedbackSpan.text(response.data.message || 'Błąd zapisu.').css('color', 'red');
+            }
+        })
+        .fail(function() {
+            $feedbackSpan.text('Wystąpił błąd serwera.').css('color', 'red');
+        })
+        .always(function() {
+            $button.prop('disabled', false);
+            setTimeout(() => $feedbackSpan.fadeOut(), 4000);
+        });
+    });
 });
