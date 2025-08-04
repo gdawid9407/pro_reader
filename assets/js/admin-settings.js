@@ -25,6 +25,7 @@ jQuery(function($) {
         $iframe: null,
         $iframeDoc: null,
         $previewContainer: null,
+        $previewWrapper: null, // <-- NOWY
         $deviceLabel: null,
         $settingsTabs: null,
         $activeTabInput: null,
@@ -34,6 +35,7 @@ jQuery(function($) {
 
         init: function() {
             this.$previewContainer = $('#rep-preview-container');
+            this.$previewWrapper = $('#rep-settings-preview-wrapper'); // <-- NOWY
             if (!this.$previewContainer.length) { return; }
 
             this.$iframe = $('#rep-live-preview-iframe');
@@ -58,7 +60,8 @@ jQuery(function($) {
             this.bindTabSwitcher();
             this.loadIframe();
             
-            this.switchToTab('general');
+            // Zaczynamy od zakładki 'general', więc podgląd jest na starcie ukryty
+            this.switchToTab('general'); 
         },
         
         loadIframe: function() {
@@ -90,6 +93,14 @@ jQuery(function($) {
             $(`#reader-engagement-pro-popup-${tabKey}`).show();
 
             this.$activeTabInput.val(tabKey);
+
+            // --- POCZĄTEK ZMIANY: KONTROLA WIDOCZNOŚCI PODGLĄDU ---
+            if (tabKey === 'general') {
+                this.$previewWrapper.hide();
+            } else {
+                this.$previewWrapper.show();
+            }
+            // --- KONIEC ZMIANY ---
             
             this.refreshPreview();
         },

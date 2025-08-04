@@ -107,7 +107,10 @@ class Settings_Page
                         ?>
                     </form>
                 </div>
-                <?php if ($active_tab === 'popup') : ?>
+                <?php 
+                $active_sub_tab = isset($_GET['sub-tab']) ? sanitize_key($_GET['sub-tab']) : 'general';
+                if ($active_tab === 'popup') : 
+                ?>
                 <div id="rep-settings-preview-wrapper" style="flex: 1; min-width: 400px; position: sticky; top: 40px; height: calc(100vh - 80px);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h3 style="margin: 0;"><?php esc_html_e('Podgląd na żywo', 'pro_reader'); ?></h3>
