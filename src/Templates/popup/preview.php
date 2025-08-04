@@ -81,13 +81,14 @@ $sample_image_urls = [
 <body class="rep-popup-is-open">
 
     <?php
-    $container_styles = ''; 
-    $popup_content = '<h3>Przykładowy Nagłówek</h3><p>To jest przykładowa treść, którą można dodać nad listą rekomendacji. Jej wygląd jest kontrolowany przez edytor w ustawieniach ogólnych.</p>';
+    // --- POCZĄTEK ZMIANY: Pobieranie treści z opcji ---
+    $popup_content = $options['popup_content_main'] ?? '<h3>Przykładowy Nagłówek</h3><p>To jest przykładowa treść, którą można dodać nad listą rekomendacji.</p>';
     $layout_class = 'layout-grid';
+    // --- KONIEC ZMIANY ---
     ?>
 
     <div id="rep-intelligent-popup__container" 
-        style="<?php echo $container_styles; ?>" 
+        style="" 
         role="dialog" 
         aria-modal="true" 
         aria-labelledby="rep-intelligent-popup__title-static">
@@ -100,9 +101,25 @@ $sample_image_urls = [
             <?php echo wp_kses_post($popup_content); ?>
         </div>
 
-        <ul id="rep-intelligent-popup__list" class="<?php echo esc_attr($layout_class); ?>">
-            <li class="rep-rec-item-loading">Ładowanie rekomendacji...</li>
-        </ul>
+        <div id="rep-intelligent-popup__list" class="<?php echo esc_attr($layout_class); ?>">
+            <?php for ($i = 0; $i < 3; $i++) : ?>
+                <li class="rep-rec-item item-layout-vertical">
+                    <div class="rep-rec-content">
+                        <a href="#" class="rep-rec-thumb-link" style="aspect-ratio: 16 / 9;" onclick="return false;">
+                            <img src="<?php echo esc_url($sample_image_urls[$i % 3]); ?>" class="rep-rec-thumb thumb-fit-cover">
+                        </a>
+                        <p class="rep-rec-meta">
+                            <span class="rep-rec-date">1 Styczeń, 2025</span>
+                            <span class="rep-rec-meta-separator">•</span>
+                            <span class="rep-rec-category">Kategoria</span>
+                        </p>
+                        <h3 class="rep-rec-title"><a href="#" onclick="return false;">Przykładowy Tytuł Artykułu #<?php echo $i + 1; ?></a></h3>
+                        <p class="rep-rec-excerpt">To jest krótka zajawka przykładowego artykułu, aby zademonstrować wygląd rekomendacji w popupie.</p>
+                        <a href="#" class="rep-rec-button" onclick="return false;"><?php echo esc_html($link_text); ?></a>
+                    </div>
+                </li>
+            <?php endfor; ?>
+        </div>
     </div>
 
 
@@ -118,10 +135,10 @@ $sample_image_urls = [
                     const imageUrl = sampleImages[i % sampleImages.length];
                     sampleHtml += `
                     <li class="rep-rec-item item-layout-vertical">
-                        <a href="#" class="rep-rec-thumb-link" style="aspect-ratio: 16 / 9;" onclick="return false;">
-                            <img src="${imageUrl}" class="rep-rec-thumb thumb-fit-cover">
-                        </a>
                         <div class="rep-rec-content">
+                            <a href="#" class="rep-rec-thumb-link" style="aspect-ratio: 16 / 9;" onclick="return false;">
+                                <img src="${imageUrl}" class="rep-rec-thumb thumb-fit-cover">
+                            </a>
                             <p class="rep-rec-meta">
                                 <span class="rep-rec-date">1 Styczeń, 2025</span>
                                 <span class="rep-rec-meta-separator">•</span>

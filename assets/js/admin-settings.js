@@ -196,7 +196,9 @@ jQuery(function($) {
             if (name.includes('[popup_rec_thumb_aspect_ratio]')) { const style = (value === 'auto') ? '' : 'aspect-ratio: ' + value.replace(':', ' / '); this.$iframeDoc.find('.rep-rec-thumb-link').attr('style', style);}
         },
         
-        updateCssVar: function(selector, property, value, unit = '') { this.$iframeDoc.find(selector).css(property, value + unit); },
+        updateCssVar: function(selector, property, value, unit = '') { 
+            this.$iframeDoc.find(selector).css(property, value + unit); 
+        },
         
         updateItemLayout: function(layout) { const $items = this.$iframeDoc.find('.rep-rec-item'); $items.removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + layout); $items.each((i, item) => { const $item = $(item); const $thumb = $item.find('.rep-rec-thumb-link'); const $content = $item.find('.rep-rec-content'); if (layout === 'horizontal' && !$thumb.parent().is('.rep-rec-item')) { $thumb.prependTo($item); } else if (layout === 'vertical' && !$thumb.parent().is('.rep-rec-content')) { $thumb.prependTo($content); } });},
         
@@ -248,6 +250,24 @@ jQuery(function($) {
             });
         }
     };
+
+    // --- POCZĄTEK ZMIANY: Obsługa edytora TinyMCE ---
+    // Musimy poczekać, aż edytor zostanie w pełni zainicjowany.
+    $(document).on('tinymce-init', function(event, editor) {
+        // Sprawdzamy, czy to właściwy edytor.
+        if (editor.id === 'popup_content_main_editor') {
+            // Bindowanie do zdarzenia 'keyup' i 'change' w edytorze.
+            editor.on('keyup change', function() {
+                // Pobieramy aktualną treść z edytora.
+                const newContent = editor.getContent();
+                // Aktualizujemy podgląd.
+                if (LivePreview.$iframeDoc) {
+                    LivePreview.$iframeDoc.find('#rep-intelligent-popup__custom-content').html(newContent);
+                }
+            });
+        }
+    });
+    // --- KONIEC ZMIANY ---
 
     LivePreview.init();
 
