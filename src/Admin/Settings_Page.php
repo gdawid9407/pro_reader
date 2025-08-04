@@ -84,22 +84,27 @@ class Settings_Page
                             do_settings_sections('reader-engagement-pro-progress-bar');
                             submit_button();
                         } elseif ($active_tab === 'popup') {
+                            $active_sub_tab = isset($_GET['sub-tab']) ? sanitize_key($_GET['sub-tab']) : 'general';
+                            $base_url = admin_url('admin.php?page=reader-engagement-pro&tab=popup');
                             ?>
                             <h2 class="nav-tab-wrapper" style="margin-bottom: 20px;">
-                                <a href="#reader-engagement-pro-popup-general" class="nav-tab"><?php esc_html_e('Ustawienia Ogólne', 'pro_reader'); ?></a>
-                                <a href="#reader-engagement-pro-popup-desktop" class="nav-tab"><?php esc_html_e('Wygląd - Desktop', 'pro_reader'); ?></a>
-                                <a href="#reader-engagement-pro-popup-mobile" class="nav-tab"><?php esc_html_e('Wygląd - Mobilny', 'pro_reader'); ?></a>
+                                <a href="<?php echo esc_url($base_url . '&sub-tab=general'); ?>" class="nav-tab <?php echo $active_sub_tab === 'general' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Ustawienia Ogólne', 'pro_reader'); ?></a>
+                                <a href="<?php echo esc_url($base_url . '&sub-tab=desktop'); ?>" class="nav-tab <?php echo $active_sub_tab === 'desktop' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Wygląd - Desktop', 'pro_reader'); ?></a>
+                                <a href="<?php echo esc_url($base_url . '&sub-tab=mobile'); ?>" class="nav-tab <?php echo $active_sub_tab === 'mobile' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Wygląd - Mobilny', 'pro_reader'); ?></a>
                             </h2>
                             <?php
                             settings_fields(self::SETTINGS_GROUP);
-                            echo '<input type="hidden" id="rep_active_sub_tab_input" name="rep_active_sub_tab" value="general">';
-                            echo '<div id="reader-engagement-pro-popup-general" class="settings-tab-content">';
+                            echo '<input type="hidden" id="rep_active_sub_tab_input" name="rep_active_sub_tab" value="' . esc_attr($active_sub_tab) . '">';
+                            
+                            echo '<div id="reader-engagement-pro-popup-general" class="settings-tab-content" ' . ($active_sub_tab !== 'general' ? 'style="display:none;"' : '') . '>';
                             do_settings_sections('reader-engagement-pro-popup-general');
                             echo '</div>';
-                            echo '<div id="reader-engagement-pro-popup-desktop" class="settings-tab-content" style="display:none;">';
+                            
+                            echo '<div id="reader-engagement-pro-popup-desktop" class="settings-tab-content" ' . ($active_sub_tab !== 'desktop' ? 'style="display:none;"' : '') . '>';
                             do_settings_sections('reader-engagement-pro-popup-desktop');
                             echo '</div>';
-                            echo '<div id="reader-engagement-pro-popup-mobile" class="settings-tab-content" style="display:none;">';
+
+                            echo '<div id="reader-engagement-pro-popup-mobile" class="settings-tab-content" ' . ($active_sub_tab !== 'mobile' ? 'style="display:none;"' : '') . '>';
                             do_settings_sections('reader-engagement-pro-popup-mobile');
                             echo '</div>';
                             submit_button();
@@ -107,10 +112,7 @@ class Settings_Page
                         ?>
                     </form>
                 </div>
-                <?php 
-                $active_sub_tab = isset($_GET['sub-tab']) ? sanitize_key($_GET['sub-tab']) : 'general';
-                if ($active_tab === 'popup') : 
-                ?>
+                <?php if ($active_tab === 'popup') : ?>
                 <div id="rep-settings-preview-wrapper" style="flex: 1; min-width: 400px; position: sticky; top: 40px; height: calc(100vh - 80px);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h3 style="margin: 0;"><?php esc_html_e('Podgląd na żywo', 'pro_reader'); ?></h3>

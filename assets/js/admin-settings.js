@@ -29,7 +29,8 @@ jQuery(function($) {
         $deviceLabel: null,
         $settingsTabs: null,
         $activeTabInput: null,
-        
+        $httpRefererInput: null, // <-- NOWY
+
         // Stan
         currentContext: 'general', // Kontekstem jest aktywna zakładka
 
@@ -40,8 +41,9 @@ jQuery(function($) {
 
             this.$iframe = $('#rep-live-preview-iframe');
             this.$deviceLabel = $('#rep-preview-device-label');
-            this.$settingsTabs = $('h2.nav-tab-wrapper a.nav-tab[href^="#reader-engagement-pro-popup-"]');
+            this.$settingsTabs = $('h2.nav-tab-wrapper a.nav-tab[href*="sub-tab="]'); // ZMIANA
             this.$activeTabInput = $('#rep_active_sub_tab_input');
+            this.$httpRefererInput = $('input[name="_wp_http_referer"]'); // <-- NOWY
 
             // --- POCZĄTEK ZMIANY: WŁĄCZENIE SORTOWANIA ---
             // Inicjalizujemy jQuery UI Sortable na obu listach (dla desktopu i mobile).
@@ -60,8 +62,11 @@ jQuery(function($) {
             this.bindTabSwitcher();
             this.loadIframe();
             
-            // Zaczynamy od zakładki 'general', więc podgląd jest na starcie ukryty
-            this.switchToTab('general'); 
+            // --- POCZĄTEK ZMIANY: Odczytanie zakładki z URL ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialTab = urlParams.get('sub-tab') || 'general';
+            this.switchToTab(initialTab, true); // true, aby nie modyfikować historii przy pierwszym ładowaniu
+            // --- KONIEC ZMIANY ---
         },
         
         loadIframe: function() {
@@ -78,21 +83,38 @@ jQuery(function($) {
         bindTabSwitcher: function() {
             this.$settingsTabs.on('click', (e) => {
                 e.preventDefault();
-                const tabKey = $(e.currentTarget).attr('href').replace('#reader-engagement-pro-popup-', '');
+                const url = new URL(e.currentTarget.href);
+                const tabKey = url.searchParams.get('sub-tab');
                 this.switchToTab(tabKey);
             });
         },
         
-        switchToTab: function(tabKey) {
+        switchToTab: function(tabKey, isInitialLoad = false) { // ZMIANA
             this.currentContext = tabKey;
             
             this.$settingsTabs.removeClass('nav-tab-active');
-            this.$settingsTabs.filter(`[href="#reader-engagement-pro-popup-${tabKey}"]`).addClass('nav-tab-active');
+            this.$settingsTabs.filter(`[href*="sub-tab=${tabKey}"]`).addClass('nav-tab-active'); // ZMIANA
             
             $('.settings-tab-content').hide();
             $(`#reader-engagement-pro-popup-${tabKey}`).show();
 
             this.$activeTabInput.val(tabKey);
+
+            // --- POCZĄTEK ZMIANY: Aktualizacja URL i _wp_http_referer ---
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('sub-tab', tabKey);
+
+            // Aktualizuj _wp_http_referer, aby po zapisaniu wrócić do właściwej zakładki
+            if (this.$httpRefererInput.length) {
+                this.$httpRefererInput.val(newUrl.pathname + newUrl.search);
+            }
+
+            // Zmień URL w pasku adresu bez przeładowywania strony
+            if (!isInitialLoad) {
+                window.history.pushState({path: newUrl.href}, '', newUrl.href);
+            }
+            // --- KONIEC ZMIANY ---
+
 
             // --- POCZĄTEK ZMIANY: KONTROLA WIDOCZNOŚCI PODGLĄDU ---
             if (tabKey === 'general') {
@@ -133,9 +155,9 @@ jQuery(function($) {
                 this.$deviceLabel.text('Podgląd Mobilny');
                 this.applyStylesFromForm('mobile');
             } else {
+                // Domyślnie pokazuj podgląd desktopowy, ale nie pokazuj go w zakładce 'general'
                 this.$previewContainer.removeClass('is-mobile').addClass('is-desktop');
-                this.$deviceLabel.text('Podgląd Desktop (ust. ogólne)');
-                this.applyStylesFromForm('desktop');
+                this.$deviceLabel.text(''); // Pusty label, bo podgląd jest ukryty
             }
         },
 
@@ -175,6 +197,7 @@ jQuery(function($) {
         },
         
         updateCssVar: function(selector, property, value, unit = '') { this.$iframeDoc.find(selector).css(property, value + unit); },
+        
         updateItemLayout: function(layout) { const $items = this.$iframeDoc.find('.rep-rec-item'); $items.removeClass('item-layout-vertical item-layout-horizontal').addClass('item-layout-' + layout); $items.each((i, item) => { const $item = $(item); const $thumb = $item.find('.rep-rec-thumb-link'); const $content = $item.find('.rep-rec-content'); if (layout === 'horizontal' && !$thumb.parent().is('.rep-rec-item')) { $thumb.prependTo($item); } else if (layout === 'vertical' && !$thumb.parent().is('.rep-rec-content')) { $thumb.prependTo($content); } });},
         
         // --- NOWA FUNKCJA: Aktualizuje widoczność komponentu ---
