@@ -93,7 +93,6 @@ $sample_image_urls = [
         aria-modal="true" 
         aria-labelledby="rep-intelligent-popup__title-static">
         <header id="rep-intelligent-popup__header">
-            <h2 id="rep-intelligent-popup__title-static" class="screen-reader-text">Rekomendowane treści</h2>
             <button id="rep-intelligent-popup__close" aria-label="Zamknij">×</button>
         </header>
         
